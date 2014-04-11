@@ -1,0 +1,17 @@
+{% block title %}user login{% endblock %}
+{% block head %}User login{% endblock %}
+{% block content %}{% if form.errors %}
+    <p>Your email and password didn't match</p>
+{% endif %}
+    <form action="/" method="post">
+        {% csrf_token %}
+        <p>
+            <label for="username">Email:</label>{{ form.username }}
+        </p>
+        <p>
+            <label for="password">Password:</label>{{ form.password }}
+        </p>
+        <input type="hidden" name="next" value="/" />
+        <input type="submit" value="subform" />
+    </form>
+{% endblock %}

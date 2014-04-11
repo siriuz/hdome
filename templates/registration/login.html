@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+
+    {% load staticfiles %}
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="../../docs-assets/ico/favicon.png">
+
+    <title>Submissions available</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "subform/css/bootstrap.css" %}" rel="stylesheet">
+
+		<script src="{% static "subform/jquery-2.0.3.min.js" %}">
+		</script>
+
+
+
+    <!-- Just for debugging purposes. Don't actually copy this line! -->
+    <!--[if lt IE 9]><script src="../../docs-assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+<script>
+
+$(document).ready(function() {
+$('#banner').load( "{% url 'subform:banner' %}" );
+});
+
+</script>
+
+
+  </head>
+
+<div id="banner"></div>
+
+<div class="container">
+
+<div class="jumbotron">
+<span class="text-center">
+
+<h1>Please enter your login details</h1>
+
+</span>
+</div>
+
+    {% if form.errors %}
+      <p>Your username and password didn't match, please try again.</p>
+    {% endif %}
+
+    <form method="post" action=".">
+      {% csrf_token %}
+      <p>
+        <label for="id_username">Username:</label>
+        {{ form.username }}
+      </p>
+      <p>
+        <label for="id_password">Password:</label>
+        {{ form.password }}
+      </p>
+      {% if next %}
+        <input type="hidden" name="next" value="{{ next }}" />
+      {% else %}
+        <input type="hidden" name="next" value="/subform/" />
+      {% endif %}
+	<input class="btn btn-success btn-lg" type="submit" value="Login">
+    </form>
+<br>
+<a class="btn btn-danger btn-lg" href="/" value="poo"/>Return to subform homepage</a>
+
+</div>
+
+</html>
