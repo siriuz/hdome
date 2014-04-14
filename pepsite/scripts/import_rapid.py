@@ -88,18 +88,19 @@ class SfTools( object ):
 	ab1.save()
 	for allele in Allele.objects.filter( gene = gene1 ):
 	    ab1.alleles.add( allele )
-	ind1 = Individual( identifier = "unknown SA male", description = 'caucasoid|male|consanguineous|homozygous', nation_origin = 'South Africa' )
+	ind1 = self.get_model_object( Individual, identifier = "unknown SA male", description = 'caucasoid|male|consanguineous|homozygous', nation_origin = 'South Africa' )
 	ind1.save()
-	host1 = Organism( common_name = 'human', sci_name = 'homo sapiens' )
+	host1 = self.get_model_object(Organism, common_name = 'human', sci_name = 'homo sapiens', isHost = True )
 	host1.save()
-	ind1.organism_set.add( host1 )
+	ind1.organism = host1 
 	ind1.save()
 	host1.save()
-	cl1 = CellLine( name='9022', host = host1 )
+	cl1 = CellLine( name='9022' )
 	cl1.save()
-	cl1.alleles.add( Allele.objects.filter(ser_type = 'A1')[0])
-	host1.individuals = ind1
-	host1.save()
+	#cl1.alleles.add( Allele.objects.filter(ser_type = 'A1')[0])
+	cl1.organisms.add( host1 )
+	#host1.individuals = ind1
+	#host1.save()
 	return (gene1, ab1, ind1, host1, cl1)
 	
  
@@ -118,19 +119,21 @@ class SfTools( object ):
 	gene1, ab1, ind1, host1, cl1 = gene_obj, ab_obj, ind_obj, host_obj, cl_obj
 	prot1 = self.get_model_object( Protein, prot_id = row[2], description = row[3] )
 	prot1.save()
-	pep1 = self.get_model_object( Peptide, sequence = row[0], mass = 999.99, protein = prot1 )
+	pep1 = self.get_model_object( Peptide, sequence = row[0], mass = 999.99 ) #, protein = prot1 )
         pep1.save()
-
+	pep1.proteins.add( prot1 )
 
 	dt1 = datetime.datetime.utcnow().replace(tzinfo=utc)
 
-	exp1 = self.get_model_object( Experiment, title = 'First Experiment', date_time = dt1 )
+	exp1 = self.get_model_object( Experiment, title = 'First Experiment', date_time = dt1, cell_line = cl1 )
 	exp1.save()
-	ion1 = self.get_model_object(Ion, charge_state = int(row[6]), precursor_mass = row[7], retention_time = 999.99, experiment = exp1 )
+	ion1 = self.get_model_object(Ion, charge_state = int(row[6]), precursor_mass = row[7], retention_time = 999.99 )
 	ion1.save()
-	ion1.antibodies.add( ab1 )
-	ion1.cell_lines.add( cl1 )
-	id1 = self.get_model_object(IdEstimate, peptide = pep1, ion = ion1, experiment = exp1, delta_mass = float(row[5]), confidence = row[4] )
+	ion1.experiments.add( exp1 )
+	
+	#ion1.antibodies.add( ab1 )
+	#ion1.cell_lines.add( cl1 )
+	id1 = self.get_model_object(IdEstimate, peptide = pep1, ion = ion1, delta_mass = float(row[5]), confidence = row[4] )
 	id1.save()
 
 
@@ -213,11 +216,21 @@ class SfTools( object ):
     def trial_queries( self ):
 	elist = IdEstimate.objects.filter( confidence__lte = 98.0 )
 	for a in elist:
-	    print a, a.peptide, a.ion, a.experiment, a.peptide.protein, a.peptide.ptms.all(), a.ion.cell_lines.all(), a.ion.antibodies.all(), [ b.alleles.all() for b in a.ion.cell_lines.all() ], [ b.infecteds.all() for b in a.ion.cell_lines.all() ], [ a.gene for ent in [ b.alleles.all() for b in a.ion.cell_lines.all() ] for a.gene in ent ]
+	    print a, a.peptide, a.ion, a.peptide.proteins.all(), a.peptide.ptms.all(), a.ion.experiments.all() # a.experiment, a.peptide.protein, a.peptide.ptms.all(), a.ion.cell_lines.all(), a.ion.antibodies.all(), [ b.alleles.all() for b in a.ion.cell_lines.all() ], [ b.infecteds.all() for b in a.ion.cell_lines.all() ], [ a.gene for ent in [ b.alleles.all() for b in a.ion.cell_lines.all() ] for a.gene in ent ]
+	
 
+	
 	    # organism, gene,
 
-	    
+	pepseq = Peptide.objects.get( sequence = 'EENVPSSVTDVALPA' )
+	protz = Protein.objects.filter( peptide__sequence = 'EENVPSSVTDVALPA' )
+	print protz
+	protz = Protein.objects.filter( peptide__idestimate__confidence__gte = 99.0 )
+	print protz
+	protz = Protein.objects.filter( peptide__idestimate__ion__experiments__cell_line__organisms__individual__description = '' )
+	print protz
+	
+	
 
     def teardown(self):
 	

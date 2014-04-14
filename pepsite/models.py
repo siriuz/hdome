@@ -21,43 +21,57 @@ class Allele(models.Model):
     class Meta:
     	unique_together = ( ('gene', 'dna_type'), )
 
-
-class Antibody(models.Model):
-    name = models.CharField(max_length=200, unique = True )
+class Organism(models.Model):
+    common_name = models.CharField(max_length=200)
+    sci_name = models.CharField(max_length=200, unique = True )
     description = models.TextField( default = '' )
-    alleles = models.ManyToManyField( Allele )
+    isHost = models.BooleanField( default = False )
 
     def __str__(self):
-	return self.name
+	return self.sci_name
+
 
 class Individual(models.Model):
     identifier = models.CharField(max_length=200, unique = True )
     description = models.TextField( default = '' )
     nation_origin = models.CharField(max_length=200 )
+    organism = models.ForeignKey( Organism, blank=True, null=True )
 
     def __str__(self):
 	return self.identifier
 
 
 
-class Organism(models.Model):
-    common_name = models.CharField(max_length=200)
-    sci_name = models.CharField(max_length=200, unique = True )
-    description = models.TextField( default = '' )
-    individuals = models.ForeignKey( Individual, blank=True, null=True )
-
-    def __str__(self):
-	return self.sci_name
-
-
 class CellLine(models.Model):
     name = models.CharField(max_length=200)
     tissue_type = models.CharField(max_length=200)
     description = models.TextField( default = '' )
-    host = models.ForeignKey( Organism, related_name = 'HostCell' )
-    infecteds = models.ManyToManyField( Organism, related_name = 'Infections' )
+    #host = models.ForeignKey( Organism, related_name = 'HostCell' )
+    #infecteds = models.ManyToManyField( Organism, related_name = 'Infections' )
+    organisms = models.ManyToManyField( Organism )
+    #alleles = models.ManyToManyField( Allele )
+    #antibodies = models.ManyToManyField( Antibody )
+
+    def __str__(self):
+	return self.name
+
+
+class Experiment( models.Model ):
+    title = models.CharField(max_length=200)
+    description = models.TextField( default = '' )    
+    date_time = models.DateTimeField('date run')
+    data = models.FileField()
+    cell_line = models.ForeignKey( CellLine )
+
+    def __str__(self):
+	return self.title + '|' + str(self.date_time)
+
+
+class Antibody(models.Model):
+    name = models.CharField(max_length=200, unique = True )
+    description = models.TextField( default = '' )
     alleles = models.ManyToManyField( Allele )
-    antibodies = models.ManyToManyField( Antibody )
+    experiments = models.ManyToManyField( Experiment )
 
     def __str__(self):
 	return self.name
@@ -80,20 +94,10 @@ class Protein(models.Model):
     def __str__(self):
 	return self.prot_id + '|' + self.name
 
-
-class Experiment( models.Model ):
-    title = models.CharField(max_length=200)
-    description = models.TextField( default = '' )    
-    date_time = models.DateTimeField('date run')
-    data = models.FileField()
-
-    def __str__(self):
-	return self.title + '|' + str(self.date_time)
-
 class Peptide(models.Model):
     sequence = models.CharField(max_length=200)
     mass = models.FloatField()
-    protein = models.ForeignKey( Protein )
+    proteins = models.ManyToManyField( Protein )
     ptms = models.ManyToManyField( Ptm )
 
     def __str__(self):
@@ -104,10 +108,10 @@ class Ion(models.Model):
     precursor_mass = models.FloatField()
     charge_state = models.IntegerField()
     retention_time = models.FloatField()
-    experiment = models.ForeignKey(Experiment)
+    experiments = models.ManyToManyField(Experiment)
     id_estimates = models.ManyToManyField( Peptide, through='IdEstimate')
-    antibodies = models.ManyToManyField( Antibody )
-    cell_lines = models.ManyToManyField( CellLine )
+    #antibodies = models.ManyToManyField( Antibody )
+    #cell_lines = models.ManyToManyField( CellLine )
 
     def __str__(self):
 	return str(self.precursor_mass) + '|' + str(self.charge_state)
@@ -116,7 +120,7 @@ class Ion(models.Model):
 class IdEstimate(models.Model):
     peptide = models.ForeignKey(Peptide)
     ion = models.ForeignKey(Ion)
-    experiment = models.ForeignKey(Experiment)
+    #experiment = models.ForeignKey(Experiment)
     delta_mass = models.FloatField()
     confidence = models.FloatField()
 
@@ -127,4 +131,3 @@ class IdEstimate(models.Model):
 
 
 
-# Create your models here.
