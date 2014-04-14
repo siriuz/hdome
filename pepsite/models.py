@@ -88,7 +88,7 @@ class Experiment( models.Model ):
     data = models.FileField()
 
     def __str__(self):
-	return self.title + '|' + self.date_time
+	return self.title + '|' + str(self.date_time)
 
 class Peptide(models.Model):
     sequence = models.CharField(max_length=200)
@@ -110,7 +110,7 @@ class Ion(models.Model):
     cell_lines = models.ManyToManyField( CellLine )
 
     def __str__(self):
-	return self.precursor_mass + '|' + self.charge_state
+	return str(self.precursor_mass) + '|' + str(self.charge_state)
 
 
 class IdEstimate(models.Model):
@@ -121,7 +121,7 @@ class IdEstimate(models.Model):
     confidence = models.FloatField()
 
     def __str__(self):
-	return self.delta_mass + '|' + self.confidence
+	return str(self.delta_mass) + '|' + str(self.confidence)
 
 
 

@@ -1,7 +1,7 @@
 import os
 import sys
 import datetime
-import json
+from django.utils.timezone import utc
 
 
 PROJ_NAME = 'hdome'
@@ -13,6 +13,10 @@ print CURDIR
 
 sys.path.append( CURDIR + '/../..' ) # gotta hit settings.py for site
 
+SS = os.path.abspath( os.path.join( CURDIR, '../../background/eg_sheet_01.csv' ) )
+
+print SS
+
 os.environ[ 'DJANGO_SETTINGS_MODULE' ] = '%s.settings' %( PROJ_NAME )
 
 import django #required
@@ -21,15 +25,17 @@ django.setup() #required
 from django.contrib.auth.models import User
 from pepsite.models import *
 
-Allele.objects.all().delete()
-Antibody.objects.all().delete()
-Protein.objects.all().delete()
-Peptide.objects.all().delete()
-Ion.objects.all().delete()
-Organism.objects.all().delete()
-Individual.objects.all().delete()
-CellLine.objects.all().delete()
-IdEstimate.objects.all().delete()
+
+#Allele.objects.all().delete()
+#Gene.objects.all().delete()
+#Antibody.objects.all().delete()
+#Protein.objects.all().delete()
+#Peptide.objects.all().delete()
+#Ion.objects.all().delete()
+#Organism.objects.all().delete()
+#Individual.objects.all().delete()
+#CellLine.objects.all().delete()
+#IdEstimate.objects.all().delete()
 
 
 
@@ -73,10 +79,12 @@ class SfTools( object ):
 
  
     def create_sheet_structures( self ):
-	gene1 = Gene( name = 'HLA', gene_class = 1 )
+	gene1 = self.get_model_object( Gene, name = 'HLA', gene_class = 1 )
 	gene1.save()
-	self.create_alleles( gene1, ALLELES )
-	ab1 = Antibody( name = 'anti-HLA Class-I'	)
+	for entry in ALLELES:
+	    al1 = self.get_model_object( Allele, gene = gene1, dna_type = entry[1], ser_type = entry[2] )
+	    al1.save()
+	ab1 = self.get_model_object( Antibody, name = 'anti-HLA Class-I'	)
 	ab1.save()
 	for allele in Allele.objects.filter( gene = gene1 ):
 	    ab1.alleles.add( allele )
@@ -84,7 +92,7 @@ class SfTools( object ):
 	ind1.save()
 	host1 = Organism( common_name = 'human', sci_name = 'homo sapiens' )
 	host1.save()
-	ind1.organism = host1
+	ind1.organism_set.add( host1 )
 	ind1.save()
 	host1.save()
 	cl1 = CellLine( name='9022', host = host1 )
@@ -95,33 +103,38 @@ class SfTools( object ):
 	return (gene1, ab1, ind1, host1, cl1)
 	
  
-    def setup(self, rowstring, delim = ',' ):
+    def setup(self, csv_ss ):
+	with open( csv_ss, 'r' ) as f:
+	    spreadsheet = [b.strip() for b in f ][1:]
+	print 'spreadsheet has %d rows' %( len(spreadsheet) )
+	gene1, ab1, ind1, host1, cl1 = self.create_sheet_structures()
+	for i in range(len(spreadsheet)):
+	    print i,
+	    self.process_row( spreadsheet[i], gene1, ab1, ind1, host1, cl1 )
+	
+
+    def process_row(self, rowstring, gene_obj, ab_obj, ind_obj, host_obj, cl_obj, delim = ',' ):
 	row = rowstring.strip().split( delim )
-	gene1, ab1, ind1, host1, cl1 = self.create_sheet_structures( )
-	prot1 = Protein( prot_id = row[2], description = row[3] )
+	gene1, ab1, ind1, host1, cl1 = gene_obj, ab_obj, ind_obj, host_obj, cl_obj
+	prot1 = self.get_model_object( Protein, prot_id = row[2], description = row[3] )
 	prot1.save()
-	pep1 = Peptide( sequence = row[0], mass = 999.99, protein = prot1 )
+	pep1 = self.get_model_object( Peptide, sequence = row[0], mass = 999.99, protein = prot1 )
         pep1.save()
-	dt1 = datetime.datetime.now()
-	exp1 = Experiment( title = 'First Experiment', date_time = dt1 )
+
+
+	dt1 = datetime.datetime.utcnow().replace(tzinfo=utc)
+
+	exp1 = self.get_model_object( Experiment, title = 'First Experiment', date_time = dt1 )
 	exp1.save()
-	ion1 = Ion( charge_state = int(row[6]), precursor_mass = row[7], retention_time = 999.99, experiment = exp1 )
+	ion1 = self.get_model_object(Ion, charge_state = int(row[6]), precursor_mass = row[7], retention_time = 999.99, experiment = exp1 )
 	ion1.save()
-	print ab1.alleles.all()
-	print Individual.objects.all()
-	ind2 = Individual.objects.get( identifier = "unknown SA male", description = 'caucasoid|male|consanguineous|homozygous', nation_origin = 'South Africa' )
-	print host1.individuals
-	host2 = Organism.objects.get( sci_name = 'homo sapiens' )
-	print host2.individuals
-	print ind2.organism_set.all()
 	ion1.antibodies.add( ab1 )
 	ion1.cell_lines.add( cl1 )
-	id1 = IdEstimate( peptide = pep1, ion = ion1, experiment = exp1, delta_mass = float(row[5]), confidence = int(row[4]) )
+	id1 = self.get_model_object(IdEstimate, peptide = pep1, ion = ion1, experiment = exp1, delta_mass = float(row[5]), confidence = row[4] )
 	id1.save()
-	print ion1.antibodies.all()
 
 
-    def check_condition( self, obj_type, **conditions ):
+    def get_model_object( self, obj_type, **conditions ):
 	
 	if not len( obj_type.objects.filter( **conditions ) ):
 	    return obj_type( **conditions )
@@ -137,11 +150,6 @@ class SfTools( object ):
 	        al = Allele( gene = gene_obj, dna_type = entry[1], ser_type = entry[2] )
 		al.save()
 
-    def check_condition( self, obj_type, conditions ):
-	if not len( obj_type.objects.filter( conditions ) ):
-	    return obj_type( conditions )
-	else:
-	    return obj_type.objects.filter( conditions )[0]
 	
     def auto_setup_row( self, row, delim = ',' ):
 	row = row.strip().split( delim )
@@ -202,6 +210,13 @@ class SfTools( object ):
 		print p.pubmed_code, k, getattr( p, k )
 	
 
+    def trial_queries( self ):
+	elist = IdEstimate.objects.filter( confidence__lte = 98.0 )
+	for a in elist:
+	    print a, a.peptide, a.ion, a.experiment, a.peptide.protein, a.peptide.ptms.all(), a.ion.cell_lines.all(), a.ion.antibodies.all(), [ b.alleles.all() for b in a.ion.cell_lines.all() ], [ b.infecteds.all() for b in a.ion.cell_lines.all() ], [ a.gene for ent in [ b.alleles.all() for b in a.ion.cell_lines.all() ] for a.gene in ent ]
+
+	    # organism, gene,
+
 	    
 
     def teardown(self):
@@ -234,8 +249,9 @@ class SfTools( object ):
 if __name__ == "__main__":
 
     a1 = SfTools()
-    #a1.teardown()
-    a1.setup( ROW )
+    #a1.setup( SS )
+    a1.trial_queries()
+
     #a1.check_status()
     #a1.test_pdb_obtain()
     #a1.check_status()
