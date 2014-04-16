@@ -12,14 +12,16 @@ class Gene(models.Model):
 
 class Allele(models.Model):
     gene = models.ForeignKey( Gene )
-    dna_type = models.CharField(max_length=200)
-    ser_type = models.CharField(max_length=200)
+    code = models.CharField(max_length=200)
+    #dna_type = models.CharField(max_length=200)
+    #ser_type = models.CharField(max_length=200)
+    isSer = models.BooleanField( default = False )
     description = models.TextField( default = '' )
 
     def __str__(self):
-	return self.dna_type + '|' + self.ser_type
+	return self.code
     class Meta:
-    	unique_together = ( ('gene', 'dna_type'), )
+    	unique_together = ( ('gene', 'code'), )
 
 class Organism(models.Model):
     common_name = models.CharField(max_length=200)
