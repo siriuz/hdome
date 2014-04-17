@@ -23,11 +23,13 @@ class Allele(models.Model):
     class Meta:
     	unique_together = ( ('gene', 'code'), )
 
-class Organism(models.Model):
+
+
+class Entity(models.Model):
     common_name = models.CharField(max_length=200)
     sci_name = models.CharField(max_length=200, unique = True )
     description = models.TextField( default = '' )
-    isHost = models.BooleanField( default = False )
+    isOrganism = models.BooleanField( default = False )
 
     def __str__(self):
 	return self.sci_name
@@ -37,12 +39,16 @@ class Individual(models.Model):
     identifier = models.CharField(max_length=200, unique = True )
     description = models.TextField( default = '' )
     nation_origin = models.CharField(max_length=200 )
-    organism = models.ForeignKey( Organism, blank=True, null=True )
+    entity = models.ForeignKey( Entity, blank=True, null=True )
+    isHost = models.BooleanField( default = False )
+    isAnonymous = models.BooleanField( default = True )
+    web_ref = models.CharField(max_length=200, unique = True )
+
+
+    
 
     def __str__(self):
 	return self.identifier
-
-
 
 class CellLine(models.Model):
     name = models.CharField(max_length=200)
@@ -50,8 +56,8 @@ class CellLine(models.Model):
     description = models.TextField( default = '' )
     #host = models.ForeignKey( Organism, related_name = 'HostCell' )
     #infecteds = models.ManyToManyField( Organism, related_name = 'Infections' )
-    organisms = models.ManyToManyField( Organism )
-    #alleles = models.ManyToManyField( Allele )
+    individuals = models.ManyToManyField( Individual )
+    alleles = models.ManyToManyField( Allele )
     #antibodies = models.ManyToManyField( Antibody )
 
     def __str__(self):

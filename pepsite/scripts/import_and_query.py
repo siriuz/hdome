@@ -2,7 +2,7 @@ import os
 import sys
 import datetime
 from django.utils.timezone import utc
-
+from django.db.models import Q
 
 PROJ_NAME = 'hdome'
 APP_NAME = 'pepsite'
@@ -37,15 +37,41 @@ GENES =  (( 'HLA A', 1 ), ('HLA B', 1), ('HLA C', 1), ('HLA E', 1), ('HLA F', 1)
 
 ANBS= 	( ('pan', 'anti-HLA class-1 non-selective', ['HLA A', 'HLA B', 'HLA C'],), ('anti-DR', 'anti-HLA DR selective', ['HLA DR'],), ('anti-DQ', 'anti-HLA DQ selective', ['HLA DQ'],),  ('anti-DP', 'anti-HLA DP selective', ['HLA DP'],),  ) 
 
-ORGANISMS = ( ( 'human', 'homo sapiens', 'Unhairy ape', True), )
+ENTITIES = ( ( 'human', 'homo sapiens', 'Unhairy ape', True), )
 
-CELL_LINES = ( ( '9022', 'EBV transformed B lymphoblastoid cell line', 'human', True), 
-               ( '9013', 'EBV transformed B lymphoblastoid cell line', 'human', True),
-               ( '9031', 'EBV transformed B lymphoblastoid cell line', 'human', True),
-               ( '9087', 'EBV transformed B lymphoblastoid cell line', 'human', True),
+CELL_LINES = ( ( '9022', 'EBV transformed B lymphoblastoid cell line', '9022 anonymous donor', True), 
+               ( '9013', 'EBV transformed B lymphoblastoid cell line', '9013 anonymous donor', True),
+               ( '9031', 'EBV transformed B lymphoblastoid cell line', '9031 anonymous donor', True),
+               ( '9087', 'EBV transformed B lymphoblastoid cell line', '9087 anonymous donor', True),
 
 		)
 
+
+INDIVIDUALS = (
+		( '9022 anonymous donor', True, True, 'male|caucasoid|homozygous|consanguineous', 'South Africa', 'http://www.ebi.ac.uk/cgi-bin/ipd/imgt/hla/fetch_cell.cgi?10429', 'human' ),
+		( '9013 anonymous donor', True, True, 'male|caucasoid|non-consanguinueous', 'France', 'http://www.ebi.ac.uk/cgi-bin/ipd/imgt/hla/fetch_cell.cgi?11647', 'human' ),
+		( '9031 anonymous donor', True, True, 'male|caucasoid|consanguineous', 'Sweden', 'http://www.ebi.ac.uk/cgi-bin/ipd/imgt/hla/fetch_cell.cgi?10329', 'human' ),
+		( '9087 anonymous donor', True, True, 'female|caucasoid|non-consanguineous', 'France', 'http://www.ebi.ac.uk/cgi-bin/ipd/imgt/hla/fetch_cell.cgi?11648', 'human' ),
+		)
+
+SHEET_LIST = ( 
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9022_class1.csv' ) ), ['pan'], '9022', 'Trial Expt 9022 pan', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9022_DP.csv' ) ), ['anti-DP'], '9022', 'Trial Expt 9022 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9022_DQ.csv' ) ), ['anti-DQ'], '9022', 'Trial Expt 9022 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9022_DR.csv' ) ), ['anti-DR'], '9022', 'Trial Expt 9022 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9013_class1.csv' ) ), ['pan'], '9013', 'Trial Expt 9013 pan', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9013_DP.csv' ) ), ['anti-DP'], '9013', 'Trial Expt 9013 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9013_DQ.csv' ) ), ['anti-DQ'], '9013', 'Trial Expt 9013 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9013_DR.csv' ) ), ['anti-DR'], '9013', 'Trial Expt 9013 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9031_class1.csv' ) ), ['pan'], '9031', 'Trial Expt 9031 pan', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9031_DP.csv' ) ), ['anti-DP'], '9031', 'Trial Expt 9031 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9031_DQ.csv' ) ), ['anti-DQ'], '9031', 'Trial Expt 9031 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9031_DR.csv' ) ), ['anti-DR'], '9031', 'Trial Expt 9031 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9087_class1.csv' ) ), ['pan'], '9087', 'Trial Expt 9087 pan', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9087_DP.csv' ) ), ['anti-DP'], '9087', 'Trial Expt 9087 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9087_DQ.csv' ) ), ['anti-DQ'], '9087', 'Trial Expt 9087 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9087_DR.csv' ) ), ['anti-DR'], '9087', 'Trial Expt 9087 DP', ),
+		 )
 print SF[0][:]
 
 os.environ[ 'DJANGO_SETTINGS_MODULE' ] = '%s.settings' %( PROJ_NAME )
@@ -115,13 +141,13 @@ class SfTools( object ):
 	Protein.objects.all().delete()
 	Peptide.objects.all().delete()
 	Ion.objects.all().delete()
-	Organism.objects.all().delete()
+	Entity.objects.all().delete()
 	Individual.objects.all().delete()
 	CellLine.objects.all().delete()
 	IdEstimate.objects.all().delete()
 
 
-    def create_gene_allele_antibody( self, genes_fields, cell_lines_fields, organisms_fields, alleles_fields, antibodies_fields  ):
+    def create_gene_allele_antibody( self, genes_fields, cell_lines_fields, entities_fields, individuals_fields, alleles_fields, antibodies_fields  ):
 	"""
 
 
@@ -133,21 +159,31 @@ class SfTools( object ):
 	for gene_z in genes_fields: 
 	    gene1 = self.get_model_object( Gene, name = gene_z[0], gene_class = gene_z[1] )
 	    gene1.save()
-	for org in organisms_fields:
-	    org_x = self.get_model_object( Organism, common_name = org[0], sci_name = org[1], description = org[2], isHost = org[3] )
-	    org_x.save()
+	for ent in entities_fields:
+	    ent_x = self.get_model_object( Entity, common_name = ent[0], sci_name = ent[1], description = ent[2], isOrganism = ent[3] )
+	    ent_x.save()
+	for ind in individuals_fields:
+	    ent_z = self.get_model_object( Entity, common_name = ind[6] )
+	    ent_z.save()
+            ind_x = self.get_model_object( Individual, identifier = ind[0], isHost = ind[1], 
+			isAnonymous = ind[2], description = ind[3], nation_origin = ind[4], web_ref = ind[5],  entity = ent_z )
+	    ind_x.save()
 	for cl in cell_lines_fields:
-	    org_z = self.get_model_object( Organism, common_name = cl[2], isHost = cl[3] )
-	    org_z.save()
+	    ind_z = self.get_model_object( Individual, identifier = cl[2], isHost = cl[3] )
+	    ind_z.save()
 	    cl_x = self.get_model_object( CellLine, name = cl[0], description = cl[1] )
 	    cl_x.save()
-	    cl_x.organisms.add( org_z )
+	    cl_x.individuals.add( ind_z )
 	    cl_x.save()
 	for entry in alleles_fields:
 	    gene_z = self.get_model_object( Gene, name = entry[4], gene_class = int(entry[3]) )
 	    gene_z.save()
+	    cl_z = self.get_model_object( CellLine, name = entry[0] )
 	    al1 = self.get_model_object( Allele, gene = gene_z, code = entry[1], isSer = bool(int(entry[2])) )
 	    al1.save()
+	    al1.cellline_set.add( cl_z )
+	    al1.save()
+
 	for ab in antibodies_fields:
 	    anb_x = self.get_model_object( Antibody, name = ab[0], description = ab[1] )
 	    anb_x.save()
@@ -192,38 +228,58 @@ class SfTools( object ):
 	#host1.individuals = ind1
 	#host1.save()
 	return (gene1, ab1, ind1, host1, cl1)
-	
+
+
+    def process_ss_list( self, ss_list ):
+	for ss in ss_list:
+	    self.setup( ss )
  
-    def setup(self, csv_ss, sheet_fields ):
-	with open( csv_ss, 'r' ) as f:
-	    spreadsheet = [b.strip() for b in f ][1:]
-	print 'spreadsheet has %d rows' %( len(spreadsheet) )
-	gene1, ab1, ind1, host1, cl1 = self.create_sheet_structures( *sheet_fields )
+    def setup(self, full_options ):
+	    dt1 = datetime.datetime.utcnow().replace(tzinfo=utc)
+	    csv_ss = full_options[0]
+	    with open( csv_ss, 'r' ) as f:
+	        spreadsheet = [b.strip() for b in f ][1:]
+	    print 'spreadsheet %s has %d rows' %( csv_ss, len(spreadsheet) )
+	    ab_list, cl_name = full_options[1], full_options[2]
+	    cl1 = self.get_model_object( CellLine, name = cl_name) #, date_time = dt1, cell_line = cl1 )
+	    cl1.save()
+	    expt_new = self.get_model_object( Experiment, title = full_options[3], date_time = dt1, cell_line = cl1 )
+	    expt_new.save()
+	    for ab in ab_list:
+		ab_obj = self.get_model_object( Antibody, name = ab )
+		ab_obj.save()
+	        expt_new.antibody_set.add( ab_obj ) 
 	#gene1, ab1, ind1, host1, cl1 = self.create_sheet_structures( ( 'HLA', 1 ), ( ( 'A*01:01:01:01', 'A1' ), ('B*08:01:01', 'B8'), ('C*08:01:01', 'Cw7'), ), 
 	#		('pan', 'anti-HLA class-1 non-selective'), ("unknown SA male", 'caucasoid|male|consanguineous|homozygous', 'South Africa' ),
 	#		(('human', 'homo sapiens', True),), ( '9022', 'adapted from human tissue', 'unknown' ) )
 
-	for i in range(len(spreadsheet)):
-	    print i,
-	    self.process_row( spreadsheet[i], gene1, ab1, ind1, host1, cl1 )
+	    for i in range(len(spreadsheet)):
+	        print i,
+	        self.process_row( spreadsheet[i], expt_new )
 	
 
-    def process_row(self, rowstring, gene_obj, ab_obj, ind_obj, host_obj, cl_obj, delim = ',' ):
+    def process_row(self, rowstring, expt_obj, delim = ',' ):
 	row = rowstring.strip().split( delim )
-	gene1, ab1, ind1, host1, cl1 = gene_obj, ab_obj, ind_obj, host_obj, cl_obj
+	#gene1, ab1, ind1, host1, cl1 = gene_obj, ab_obj, ind_obj, host_obj, cl_obj
 	prot1 = self.get_model_object( Protein, prot_id = row[2], description = row[3] )
 	prot1.save()
 	pep1 = self.get_model_object( Peptide, sequence = row[0], mass = 999.99 ) #, protein = prot1 )
         pep1.save()
 	pep1.proteins.add( prot1 )
 
-	dt1 = datetime.datetime.utcnow().replace(tzinfo=utc)
+	ptm = self.get_model_object( Ptm, description = row[1], mass_change = -22.2 )
+	ptm.save()
+	pep1.ptms.add( ptm )
 
-	exp1 = self.get_model_object( Experiment, title = 'First Experiment', date_time = dt1, cell_line = cl1 )
-	exp1.save()
+	#dt1 = datetime.datetime.utcnow().replace(tzinfo=utc)
+
+	#exp1 = self.get_model_object( Experiment, title = 'First Experiment', date_time = dt1, cell_line = cl1 )
+	#exp1.save()
+	#for ab in ab_obj_list:
+	#    exp1.antibody_set.add( ab )
 	ion1 = self.get_model_object(Ion, charge_state = int(row[6]), precursor_mass = row[7], retention_time = 999.99 )
 	ion1.save()
-	ion1.experiments.add( exp1 )
+	ion1.experiments.add( expt_obj )
 	
 	#ion1.antibodies.add( ab1 )
 	#ion1.cell_lines.add( cl1 )
@@ -308,29 +364,17 @@ class SfTools( object ):
 	
 
     def auto_sheet( self ):
-		self.create_sheet_structures( ( 'HLA', 1 ), ( ( 'A*01:01:01:01', False), ('A1', True ), ('B*08:01:01', False), ('B8', True), ('C*08:01:01', False), ( 'Cw7', True), ), 
+	self.create_sheet_structures( ( 'HLA', 1 ), ( ( 'A*01:01:01:01', False), ('A1', True ), ('B*08:01:01', False), ('B8', True), ('C*08:01:01', False), ( 'Cw7', True), ), 
 			('pan', 'anti-HLA class-1 non-selective'), ("unknown SA male", 'caucasoid|male|consanguineous|homozygous', 'South Africa' ),
 			(('human', 'homo sapiens', True),), ( '9022', 'adapted from human tissue', 'unknown' ) )
 
 
     def trial_queries( self ):
-	elist = IdEstimate.objects.filter( confidence__lte = 98.0 )
-	for a in elist:
-	    print a, a.peptide, a.ion, a.peptide.proteins.all(), a.peptide.ptms.all(), a.ion.experiments.all() # a.experiment, a.peptide.protein, a.peptide.ptms.all(), a.ion.cell_lines.all(), a.ion.antibodies.all(), [ b.alleles.all() for b in a.ion.cell_lines.all() ], [ b.infecteds.all() for b in a.ion.cell_lines.all() ], [ a.gene for ent in [ b.alleles.all() for b in a.ion.cell_lines.all() ] for a.gene in ent ]
-	
+	q1 = Q( ion__experiments__title = 'Trial Expt 9031 DP' )	
+	q2 = Q( ion__charge_state = 6 )
+	q3 = Q( idestimate__confidence__gte = 99 )
+	print len( Peptide.objects.filter( q1 & q2 & q3 ) )
 
-	
-	    # organism, gene,
-
-	pepseq = Peptide.objects.get( sequence = 'EENVPSSVTDVALPA' )
-	protz = Protein.objects.filter( peptide__sequence__contains = 'EENVPSSVTDVALPA' )
-	print 'protz:', protz
-	protz = Protein.objects.filter( peptide__idestimate__confidence__gte = 99.0 )
-	print protz
-	protz = Protein.objects.filter( peptide__idestimate__ion__experiments__cell_line__organisms__individual__description = '' )
-	print protz
-	
-	
 
     def teardown(self):
 	
@@ -363,9 +407,10 @@ if __name__ == "__main__":
 
     a1 = SfTools()
     #a1.clear_all()
-    a1.create_gene_allele_antibody( GENES, CELL_LINES, ORGANISMS, ALLELES, ANBS )
-    #a1.setup( SS, SF[0] )
-    #a1.trial_queries()
+    #a1.create_gene_allele_antibody( GENES, CELL_LINES, ENTITIES, INDIVIDUALS, ALLELES, ANBS )
+    #a1.setup( FULL_OPTIONS )
+    #a1.process_ss_list( SHEET_LIST )
+    a1.trial_queries()
 
     #a1.auto_sheet()
 
