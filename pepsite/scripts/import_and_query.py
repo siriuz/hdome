@@ -406,10 +406,10 @@ class SfTools( object ):
 if __name__ == "__main__":
 
     a1 = SfTools()
-    #a1.clear_all()
-    #a1.create_gene_allele_antibody( GENES, CELL_LINES, ENTITIES, INDIVIDUALS, ALLELES, ANBS )
+    a1.clear_all()
+    a1.create_gene_allele_antibody( GENES, CELL_LINES, ENTITIES, INDIVIDUALS, ALLELES, ANBS )
     #a1.setup( FULL_OPTIONS )
-    #a1.process_ss_list( SHEET_LIST )
+    a1.process_ss_list( SHEET_LIST )
     a1.trial_queries()
 
     #a1.auto_sheet()
