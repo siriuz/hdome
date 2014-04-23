@@ -183,7 +183,6 @@ class SfTools( object ):
 	    al1.save()
 	    al1.cellline_set.add( cl_z )
 	    al1.save()
-
 	for ab in antibodies_fields:
 	    anb_x = self.get_model_object( Antibody, name = ab[0], description = ab[1] )
 	    anb_x.save()
@@ -191,50 +190,13 @@ class SfTools( object ):
 		alleles_z = Allele.objects.filter( gene__name = al_z )
 		for allele in alleles_z:
 		    anb_x.alleles.add( allele )  
-
 	    print anb_x, [ [ b, b.isSer ] for b in anb_x.alleles.all() ]
-
- 
-    def create_sheet_structures( self, gene_fields, alleles_fields, antibody_fields, individual_fields, organisms_fields, cell_line_fields  ):
-	"""
-
-
-	>>>create_sheet_structures( ( 'HLA', 1 ), ( ( 'A*01:01:01:01', 'A1' ), ('B*08:01:01', 'B8'), ('C*08:01:01', 'Cw7'), ), 
-		('pan', 'anti-HLA class-1 non-selective'), ("unknown SA male", 'caucasoid|male|consanguineous|homozygous', 'South Africa' ),
-		(('human', 'homo sapiens', 1),), ( '9022', 'adapted from human tissue', 'unknown' ) )
-
-	"""
-	gene1 = self.get_model_object( Gene, name = gene_fields[0], gene_class = gene_fields[1] )
-	gene1.save()
-	for entry in alleles_fields:
-	    al1 = self.get_model_object( Allele, gene = gene1, code = entry[0], isSer = entry[1] )
-	    al1.save()
-	ab1 = self.get_model_object( Antibody, name = antibody_fields[0], description = antibody_fields[1]	)
-	ab1.save()
-	for allele in Allele.objects.filter( gene = gene1 ):
-	    ab1.alleles.add( allele )
-	ind1 = self.get_model_object( Individual, identifier = individual_fields[0], description = individual_fields[1], nation_origin = individual_fields[2] )
-	ind1.save()
-	host_fields = [ b for b in organisms_fields if b[2] ][0] #Find the host amongst any trasfectants
-	host1 = self.get_model_object(Organism, common_name = host_fields[0], sci_name = host_fields[1], isHost = True )
-	host1.save()
-	ind1.organism = host1 
-	ind1.save()
-	host1.save()
-	cl1 = CellLine( name= cell_line_fields[0], description = cell_line_fields[1], tissue_type = cell_line_fields[2] )
-	cl1.save()
-	#cl1.alleles.add( Allele.objects.filter(ser_type = 'A1')[0])
-	cl1.organisms.add( host1 )
-	#host1.individuals = ind1
-	#host1.save()
-	return (gene1, ab1, ind1, host1, cl1)
-
 
     def process_ss_list( self, ss_list ):
 	for ss in ss_list:
-	    self.setup( ss )
+	    self.create_all_entries( ss )
  
-    def setup(self, full_options ):
+    def create_all_entries(self, full_options ):
 	    dt1 = datetime.datetime.utcnow().replace(tzinfo=utc)
 	    csv_ss = full_options[0]
 	    with open( csv_ss, 'r' ) as f:
@@ -249,10 +211,6 @@ class SfTools( object ):
 		ab_obj = self.get_model_object( Antibody, name = ab )
 		ab_obj.save()
 	        expt_new.antibody_set.add( ab_obj ) 
-	#gene1, ab1, ind1, host1, cl1 = self.create_sheet_structures( ( 'HLA', 1 ), ( ( 'A*01:01:01:01', 'A1' ), ('B*08:01:01', 'B8'), ('C*08:01:01', 'Cw7'), ), 
-	#		('pan', 'anti-HLA class-1 non-selective'), ("unknown SA male", 'caucasoid|male|consanguineous|homozygous', 'South Africa' ),
-	#		(('human', 'homo sapiens', True),), ( '9022', 'adapted from human tissue', 'unknown' ) )
-
 	    for i in range(len(spreadsheet)):
 	        print i,
 	        self.process_row( spreadsheet[i], expt_new )
@@ -260,29 +218,17 @@ class SfTools( object ):
 
     def process_row(self, rowstring, expt_obj, delim = ',' ):
 	row = rowstring.strip().split( delim )
-	#gene1, ab1, ind1, host1, cl1 = gene_obj, ab_obj, ind_obj, host_obj, cl_obj
 	prot1 = self.get_model_object( Protein, prot_id = row[2], description = row[3] )
 	prot1.save()
 	pep1 = self.get_model_object( Peptide, sequence = row[0], mass = 999.99 ) #, protein = prot1 )
         pep1.save()
 	pep1.proteins.add( prot1 )
-
 	ptm = self.get_model_object( Ptm, description = row[1], mass_change = -22.2 )
 	ptm.save()
 	pep1.ptms.add( ptm )
-
-	#dt1 = datetime.datetime.utcnow().replace(tzinfo=utc)
-
-	#exp1 = self.get_model_object( Experiment, title = 'First Experiment', date_time = dt1, cell_line = cl1 )
-	#exp1.save()
-	#for ab in ab_obj_list:
-	#    exp1.antibody_set.add( ab )
 	ion1 = self.get_model_object(Ion, charge_state = int(row[6]), precursor_mass = row[7], retention_time = 999.99 )
 	ion1.save()
 	ion1.experiments.add( expt_obj )
-	
-	#ion1.antibodies.add( ab1 )
-	#ion1.cell_lines.add( cl1 )
 	id1 = self.get_model_object(IdEstimate, peptide = pep1, ion = ion1, delta_mass = float(row[5]), confidence = row[4] )
 	id1.save()
 
@@ -296,78 +242,6 @@ class SfTools( object ):
 	    return obj_type.objects.filter( **conditions )[0]
 	else:
 	    raise NonUniqueError(  )
-	
-    def create_alleles(self, gene_obj, allele_iterable ):
-	for entry in allele_iterable:
-	    if not len( Allele.objects.filter( gene = gene_obj, dna_type = entry[1] ) ): #integer 0 is falsy
-	        al = Allele( gene = gene_obj, dna_type = entry[1], ser_type = entry[2] )
-		al.save()
-
-	
-    def auto_setup_row( self, row, delim = ',' ):
-	row = row.strip().split( delim )
-	
-	
-
-	
-
-    def check_status(self):
-	print 'Owner objects:'
-	print Owner.objects.all()
-	print 'Submission objects:'
-	print Submission.objects.all()
-	print 'Submissions\' projected release dates'
-	for i in range(len( Submission.objects.all() )):
-		print str(  Submission.objects.all()[i].proj_release)
-	#print self.subobj.proj_release
-	print 'PdbRef objects:'
-	print PdbRef.objects.all()
-	for p in PdbRef.objects.all():
-	    print p.release_status
-	print 'PubMedRef objects:'
-	print PubMedRef.objects.all()
-	print 'SubPdb relations'
-	print SubPdb.objects.all()
-	print 'SubPdb relations filtered'
-	print SubPdb.objects.filter( release_override = True, pdbref__valid_entry = True )
-	
-    def test_pdb_obtain(self):
-        pdblist = [ b.pdb_code.lower() for b in PdbRef.objects.all() ]
-	p1 = PdbRef( pdb_code = '1fvk' )
-	p2 = PdbRef( pdb_code = '3h93' )
-	p1.get_descriptors()
-	p1.get_release_status()
-	p2.get_descriptors()	
-	p2.get_release_status()
-        pdblist = [ b.pdb_code.lower() for b in PdbRef.objects.all() ]
-	#for p in ( p1, p2 ):
-	#    if p not in self.subobj.pdbref_set.all():
-	#	p.save()	
-	#	sp = SubPdb.objects.create( submission = self.subobj, pdbref = p, trigger_release = True, release_override = True ) 
-	#	#p.submission.add( self.subobj )
-	#	#p.save()
-	#	self.subobj.save()
-	 
-
-    def test_pubmed_obtain(self):
-        pubmedlist = [ b.pubmed_code for b in PubMedRef.objects.all() ]
-	for pdbent in self.subobj.pdbref_set.all():
-	    if pdbent.pubmed_id != '':
-	        p = PubMedRef( pubmed_code = pdbent.pubmed_id )
-		p.get_descriptors()
-	        if p not in self.subobj.pubmedref_set.all():
-		    p.save()	
-		    p.submission.add( self.subobj )
-		    self.subobj.save() 
-	    for k in ('authors', 'title', 'journal', 'volume', 'year' ):
-		print p.pubmed_code, k, getattr( p, k )
-	
-
-    def auto_sheet( self ):
-	self.create_sheet_structures( ( 'HLA', 1 ), ( ( 'A*01:01:01:01', False), ('A1', True ), ('B*08:01:01', False), ('B8', True), ('C*08:01:01', False), ( 'Cw7', True), ), 
-			('pan', 'anti-HLA class-1 non-selective'), ("unknown SA male", 'caucasoid|male|consanguineous|homozygous', 'South Africa' ),
-			(('human', 'homo sapiens', True),), ( '9022', 'adapted from human tissue', 'unknown' ) )
-
 
     def trial_queries( self ):
 	q1 = Q( ion__experiments__title = 'Trial Expt 9031 DP' )	
@@ -401,23 +275,12 @@ class SfTools( object ):
 	except:
 	    pass
 
-	#print Owner.objects.all()
 
 if __name__ == "__main__":
 
     a1 = SfTools()
     a1.clear_all()
     a1.create_gene_allele_antibody( GENES, CELL_LINES, ENTITIES, INDIVIDUALS, ALLELES, ANBS )
-    #a1.setup( FULL_OPTIONS )
     a1.process_ss_list( SHEET_LIST )
     a1.trial_queries()
 
-    #a1.auto_sheet()
-
-    #a1.check_status()
-    #a1.test_pdb_obtain()
-    #a1.check_status()
-    #a1.test_pubmed_obtain()
-    #a1.check_status()
-    #a1.teardown()
-    #a1.check_status()
