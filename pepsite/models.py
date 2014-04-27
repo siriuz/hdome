@@ -91,7 +91,7 @@ class Ptm(models.Model):
     mass_change = models.FloatField()
 
     def __str__(self):
-	return self.name
+	return self.description + '|' + str( self.mass_change )
 
 
 class Protein(models.Model):
@@ -117,7 +117,7 @@ class Ion(models.Model):
     charge_state = models.IntegerField()
     retention_time = models.FloatField()
     experiments = models.ManyToManyField(Experiment)
-    id_estimates = models.ManyToManyField( Peptide, through='IdEstimate')
+    peptides = models.ManyToManyField( Peptide, through='IdEstimate')
     #antibodies = models.ManyToManyField( Antibody )
     #cell_lines = models.ManyToManyField( CellLine )
 

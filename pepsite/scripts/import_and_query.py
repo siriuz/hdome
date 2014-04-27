@@ -9,13 +9,13 @@ APP_NAME = 'pepsite'
 
 CURDIR = os.path.dirname( os.path.abspath( __file__ ) )
 
-print CURDIR
+#print CURDIR
 
 sys.path.append( CURDIR + '/../..' ) # gotta hit settings.py for site
 
 SS = os.path.abspath( os.path.join( CURDIR, '../../background/eg_sheet_01.csv' ) )
 
-print SS
+#print SS
 
 SF = ( 
 			( ( 'HLA', 1 ), ( ( 'A*01:01:01:01', 'A1' ), ('B*08:01:01', 'B8'), ('C*08:01:01', 'Cw7'), ), 
@@ -57,22 +57,22 @@ INDIVIDUALS = (
 SHEET_LIST = ( 
 		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9022_class1.csv' ) ), ['pan'], '9022', 'Trial Expt 9022 pan', ),
 		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9022_DP.csv' ) ), ['anti-DP'], '9022', 'Trial Expt 9022 DP', ),
-		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9022_DQ.csv' ) ), ['anti-DQ'], '9022', 'Trial Expt 9022 DP', ),
-		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9022_DR.csv' ) ), ['anti-DR'], '9022', 'Trial Expt 9022 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9022_DQ.csv' ) ), ['anti-DQ'], '9022', 'Trial Expt 9022 DQ', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9022_DR.csv' ) ), ['anti-DR'], '9022', 'Trial Expt 9022 DR', ),
 		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9013_class1.csv' ) ), ['pan'], '9013', 'Trial Expt 9013 pan', ),
 		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9013_DP.csv' ) ), ['anti-DP'], '9013', 'Trial Expt 9013 DP', ),
-		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9013_DQ.csv' ) ), ['anti-DQ'], '9013', 'Trial Expt 9013 DP', ),
-		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9013_DR.csv' ) ), ['anti-DR'], '9013', 'Trial Expt 9013 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9013_DQ.csv' ) ), ['anti-DQ'], '9013', 'Trial Expt 9013 DQ', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9013_DR.csv' ) ), ['anti-DR'], '9013', 'Trial Expt 9013 DR', ),
 		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9031_class1.csv' ) ), ['pan'], '9031', 'Trial Expt 9031 pan', ),
 		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9031_DP.csv' ) ), ['anti-DP'], '9031', 'Trial Expt 9031 DP', ),
-		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9031_DQ.csv' ) ), ['anti-DQ'], '9031', 'Trial Expt 9031 DP', ),
-		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9031_DR.csv' ) ), ['anti-DR'], '9031', 'Trial Expt 9031 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9031_DQ.csv' ) ), ['anti-DQ'], '9031', 'Trial Expt 9031 DQ', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9031_DR.csv' ) ), ['anti-DR'], '9031', 'Trial Expt 9031 DR', ),
 		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9087_class1.csv' ) ), ['pan'], '9087', 'Trial Expt 9087 pan', ),
 		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9087_DP.csv' ) ), ['anti-DP'], '9087', 'Trial Expt 9087 DP', ),
-		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9087_DQ.csv' ) ), ['anti-DQ'], '9087', 'Trial Expt 9087 DP', ),
-		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9087_DR.csv' ) ), ['anti-DR'], '9087', 'Trial Expt 9087 DP', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9087_DQ.csv' ) ), ['anti-DQ'], '9087', 'Trial Expt 9087 DQ', ),
+		 ( os.path.abspath( os.path.join( CURDIR, '../../background/9087_DR.csv' ) ), ['anti-DR'], '9087', 'Trial Expt 9087 DR', ),
 		 )
-print SF[0][:]
+#print SF[0][:]
 
 os.environ[ 'DJANGO_SETTINGS_MODULE' ] = '%s.settings' %( PROJ_NAME )
 
@@ -101,7 +101,7 @@ from pepsite.models import *
 
 #setup_environ(settings)
 
-print Allele.objects.all(), Antibody.objects.all()
+#print Allele.objects.all(), Antibody.objects.all()
 
 
 ROW = 'VADVVKDAY,,sp|Q15120|PDK3_HUMAN,[Pyruvate dehydrogenase [lipoamide]] kinase isozyme 3; mitochondrial ,99,0.0064,2,978.5087'
@@ -173,7 +173,7 @@ class SfTools( object ):
 	    ind_z.save()
 	    cl_x = self.get_model_object( CellLine, name = cl[0], description = cl[1] )
 	    cl_x.save()
-	    cl_x.individuals.add( ind_z )
+	    self.add_if_not_already( ind_z, cl_x, cl_x.individuals )
 	    cl_x.save()
 	for entry in alleles_fields:
 	    gene_z = self.get_model_object( Gene, name = entry[4], gene_class = int(entry[3]) )
@@ -181,7 +181,8 @@ class SfTools( object ):
 	    cl_z = self.get_model_object( CellLine, name = entry[0] )
 	    al1 = self.get_model_object( Allele, gene = gene_z, code = entry[1], isSer = bool(int(entry[2])) )
 	    al1.save()
-	    al1.cellline_set.add( cl_z )
+	    #al1.cellline_set.add( cl_z )
+	    self.add_if_not_already( cl_z, al1, al1.cellline_set )
 	    al1.save()
 	for ab in antibodies_fields:
 	    anb_x = self.get_model_object( Antibody, name = ab[0], description = ab[1] )
@@ -189,8 +190,14 @@ class SfTools( object ):
 	    for al_z in ab[2]:
 		alleles_z = Allele.objects.filter( gene__name = al_z )
 		for allele in alleles_z:
-		    anb_x.alleles.add( allele )  
-	    print anb_x, [ [ b, b.isSer ] for b in anb_x.alleles.all() ]
+		    #anb_x.alleles.add( allele )  
+	    	    self.add_if_not_already( allele, anb_x, anb_x.alleles )
+	    #print anb_x, [ [ b, b.isSer ] for b in anb_x.alleles.all() ]
+
+    def add_if_not_already( self, obj1, obj2, obj2_lookup ):
+	if obj1 not in obj2_lookup.all():
+	     obj2_lookup.add( obj1 )
+
 
     def process_ss_list( self, ss_list ):
 	for ss in ss_list:
@@ -201,7 +208,7 @@ class SfTools( object ):
 	    csv_ss = full_options[0]
 	    with open( csv_ss, 'r' ) as f:
 	        spreadsheet = [b.strip() for b in f ][1:]
-	    print 'spreadsheet %s has %d rows' %( csv_ss, len(spreadsheet) )
+	    #print 'spreadsheet %s has %d rows' %( csv_ss, len(spreadsheet) )
 	    ab_list, cl_name = full_options[1], full_options[2]
 	    cl1 = self.get_model_object( CellLine, name = cl_name) #, date_time = dt1, cell_line = cl1 )
 	    cl1.save()
@@ -210,27 +217,33 @@ class SfTools( object ):
 	    for ab in ab_list:
 		ab_obj = self.get_model_object( Antibody, name = ab )
 		ab_obj.save()
-	        expt_new.antibody_set.add( ab_obj ) 
+	    	self.add_if_not_already( ab_obj, expt_new, expt_new.antibody_set )
+	        #expt_new.antibody_set.add( ab_obj ) 
 	    for i in range(len(spreadsheet)):
-	        print i,
+	        print csv_ss + ',' + str(expt_new) + ',' + str( i ) +',',
 	        self.process_row( spreadsheet[i], expt_new )
 	
 
     def process_row(self, rowstring, expt_obj, delim = ',' ):
 	row = rowstring.strip().split( delim )
-	prot1 = self.get_model_object( Protein, prot_id = row[2], description = row[3] )
+	prot1 = self.get_model_object( Protein, prot_id = row[2])#, description = row[3] )
+	prot1.description = row[3]
 	prot1.save()
 	pep1 = self.get_model_object( Peptide, sequence = row[0], mass = 999.99 ) #, protein = prot1 )
         pep1.save()
-	pep1.proteins.add( prot1 )
+	#pep1.proteins.add( prot1 )
+	self.add_if_not_already( prot1, pep1, pep1.proteins )
 	ptm = self.get_model_object( Ptm, description = row[1], mass_change = -22.2 )
 	ptm.save()
-	pep1.ptms.add( ptm )
+	#pep1.ptms.add( ptm )
+	self.add_if_not_already( ptm, pep1, pep1.ptms )
 	ion1 = self.get_model_object(Ion, charge_state = int(row[6]), precursor_mass = row[7], retention_time = 999.99 )
 	ion1.save()
-	ion1.experiments.add( expt_obj )
+	#ion1.experiments.add( expt_obj )
+	self.add_if_not_already( expt_obj, ion1, ion1.experiments )
 	id1 = self.get_model_object(IdEstimate, peptide = pep1, ion = ion1, delta_mass = float(row[5]), confidence = row[4] )
 	id1.save()
+	print ',' + prot1.prot_id + ',' + pep1.sequence + ',' + ptm.description + ',' + str( ion1.charge_state ) + ','
 
 
     def get_model_object( self, obj_type, **conditions ):
@@ -282,5 +295,5 @@ if __name__ == "__main__":
     a1.clear_all()
     a1.create_gene_allele_antibody( GENES, CELL_LINES, ENTITIES, INDIVIDUALS, ALLELES, ANBS )
     a1.process_ss_list( SHEET_LIST )
-    a1.trial_queries()
+    #a1.trial_queries()
 

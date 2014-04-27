@@ -9,6 +9,8 @@ env/
 *.xml
 *.png
 *.log
+*.sql
+*.csv
 *egg/
 build/
 dist/
