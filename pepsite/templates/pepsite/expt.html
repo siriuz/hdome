@@ -18,6 +18,18 @@
 
 		<script src="{% static "js/jquery-2.0.3.min.js" %}">
 		</script>
+<style>
+#cssTable td 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+#cssTable th 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+</style>
 
 </head>
 
@@ -34,16 +46,22 @@
 </div>
 
 {% if details %}
-    <table class="table">
+    <table class="table table-striped" id="cssTable">
+    <tr><th>Protein</th><th/><th>Peptide</th><th>Modification</th><th>Delta Mass</th><th>Charge State</th><th>Retention Time</th><th>Precursor Mass</th>
     {% for line in details %}
         <tr>
 	<td>
-	<a href="http://www.uniprot.org/uniprot/{{line.0}}" class="link" target="_blank">{{line.0}}</a>
+	<a href="{% url 'pepsite:protein_expts' line.1 %}" class="link" target="_blank">{{line.0}}</a>
 	</td>
 	<td>
-	<a href="{% url 'pepsite:peptide_expts' line.1 %}" class="link" target="_blank">{{line.2}}</a>
+	<form action="http://www.uniprot.org/uniprot/{{line.0}}" target="_blank">
+        <input class="btn btn-primary" type="submit" value="UniProt entry for {{line.0}}">
+	</form>
 	</td>
-        {% for element in line|slice:"3:" %}
+	<td>
+	<a href="{% url 'pepsite:peptide_expts' line.2 %}" class="link" target="_blank">{{line.3}}</a>
+	</td>
+        {% for element in line|slice:"4:" %}
 
 	    <td>{{ element }}</td> 
 	{% endfor %}

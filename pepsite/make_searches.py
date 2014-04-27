@@ -29,6 +29,25 @@ class AlleleSearch( BaseSearch ):
 	return expts
 
 
+class PeptideSearch( BaseSearch ):
+    """
+
+
+    """
+    def get_experiments_from_peptide( self, peptide_obj ):
+	expts = Experiment.objects.filter( ion__peptides = peptide_obj )
+	return expts
+    
+
+class ProteinSearch( BaseSearch ):
+    """
+
+
+    """
+    def get_experiments_from_protein( self, protein_obj ):
+	expts = Experiment.objects.filter( ion__peptides__proteins = protein_obj )
+	return expts
+
 class ExptAssemble( BaseSearch ):
     """
 
@@ -43,10 +62,10 @@ class ExptAssemble( BaseSearch ):
 	    q2 = Q( peptide__idestimate = b )
 	    for prot in Protein.objects.filter( q1, q2  ):
    	        if b.ptm:
-	            details.append([ self.extract_uniprot_id(prot.prot_id), b.peptide.id, b.peptide.sequence, b.ptm.description, b.delta_mass, b.ion.charge_state, b.ion.retention_time, b.ion.precursor_mass  ])
+	            details.append([ self.extract_uniprot_id(prot.prot_id), prot.id, b.peptide.id, b.peptide.sequence, b.ptm.description, b.delta_mass, b.ion.charge_state, b.ion.retention_time, b.ion.precursor_mass  ])
 	        else:
-	            details.append([ self.extract_uniprot_id(prot.prot_id), b.peptide.id, b.peptide.sequence, '', b.delta_mass, b.ion.charge_state, b.ion.retention_time, b.ion.precursor_mass  ])
-        return details
+	            details.append([ self.extract_uniprot_id(prot.prot_id), prot.id, b.peptide.id, b.peptide.sequence, '', b.delta_mass, b.ion.charge_state, b.ion.retention_time, b.ion.precursor_mass  ])
+        return sorted( details, key = lambda a: a[0] )
 
     def extract_uniprot_id( self, crude_id ):
 	return crude_id.split('|')[1]

@@ -13,7 +13,7 @@ def allele_search( request ):
         if form.is_valid(): # All validation rules pass
 	    text_input = form.cleaned_data['text_input']
 	    s1 = AlleleSearch()
-	    expts = s1.get_experiments_basic( 'DQ2' )
+	    expts = s1.get_experiments_basic( text_input )
 	    context = { 'msg' : expts }
             return render( request, 'pepsite/allele_results.html', context ) # Redirect after POST
 	else:
@@ -36,6 +36,13 @@ def peptide_expts( request, peptide_id ):
     expts = s1.get_experiments_from_peptide( peptide )
     context = { 'msg' : expts, 'peptide' : peptide }
     return render( request, 'pepsite/peptide_expts.html', context)
+
+def protein_expts( request, protein_id ):
+    prot = get_object_or_404( Protein, id = protein_id )
+    s1 = ProteinSearch()
+    expts = s1.get_experiments_from_protein( prot )
+    context = { 'msg' : expts, 'protein' : prot }
+    return render( request, 'pepsite/protein_expts.html', context)
 
 def expt( request, expt_id ):
     expt = get_object_or_404( Experiment, id = expt_id )
