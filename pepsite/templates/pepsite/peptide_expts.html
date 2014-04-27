@@ -27,14 +27,30 @@
 <div class="jumbotron">
 <span class="text-center">
 
-<h1><strong class="text-primary">Haplodome</strong> peptide search</h1>
-<p class="text-info">A platform for retrieval of immunoproteomic data</p>
+<h1>Experiments containing peptids <span class="text-primary">{{peptide.sequence}}</span></h1>
+<p class="text-info">Interactive results page</p>
 
 </span>
 </div>
 
+{% if msg %}
+    {% for exp in msg %}
+    <a href="{% url 'pepsite:expt' exp.id %}">{{ exp }}</a>
+    <br>
+    {% endfor %}
+{% endif %}
+
+
+<br>
+
 <form action="{% url 'pepsite:allele_search' %}">
-<input class="btn btn-lg btn-success" type="submit" value="Search by allele">
+<input class="btn btn-warning" type="submit" value="Make another allele search">
+</form>
+
+<br>
+
+<form action="{% url 'pepsite:index' %}">
+<input class="btn btn-danger" type="submit" value="Return to Haplodome search index">
 </form>
 
 <br>
@@ -42,8 +58,6 @@
 <form action="{% url 'home' %}">
 <input class="btn btn-danger" type="submit" value="Return to Haplodome home">
 </form>
-
-<br>
 
 
 

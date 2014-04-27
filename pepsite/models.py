@@ -106,7 +106,7 @@ class Peptide(models.Model):
     sequence = models.CharField(max_length=200)
     mass = models.FloatField()
     proteins = models.ManyToManyField( Protein )
-    ptms = models.ManyToManyField( Ptm )
+    #ptms = models.ManyToManyField( Ptm )
 
     def __str__(self):
 	return self.sequence
@@ -128,6 +128,7 @@ class Ion(models.Model):
 class IdEstimate(models.Model):
     peptide = models.ForeignKey(Peptide)
     ion = models.ForeignKey(Ion)
+    ptm = models.ForeignKey(Ptm, null = True)
     #experiment = models.ForeignKey(Experiment)
     delta_mass = models.FloatField()
     confidence = models.FloatField()

@@ -233,17 +233,24 @@ class SfTools( object ):
         pep1.save()
 	#pep1.proteins.add( prot1 )
 	self.add_if_not_already( prot1, pep1, pep1.proteins )
-	ptm = self.get_model_object( Ptm, description = row[1], mass_change = -22.2 )
-	ptm.save()
-	#pep1.ptms.add( ptm )
-	self.add_if_not_already( ptm, pep1, pep1.ptms )
+	#self.add_if_not_already( ptm, pep1, pep1.ptms )
 	ion1 = self.get_model_object(Ion, charge_state = int(row[6]), precursor_mass = row[7], retention_time = 999.99 )
 	ion1.save()
 	#ion1.experiments.add( expt_obj )
+	if row[1]:
+	    ptm = self.get_model_object( Ptm, description = row[1], mass_change = -22.2 )
+	    ptm.save()
+	    id1 = self.get_model_object(IdEstimate, peptide = pep1, ptm = ptm, ion = ion1, delta_mass = float(row[5]), confidence = row[4] )
+	    id1.save()
+	    print ',' + ptm.description + ',',
+	else:
+	    id1 = self.get_model_object(IdEstimate, peptide = pep1, ion = ion1, delta_mass = float(row[5]), confidence = row[4] )
+	    id1.save()
+	    print ',BLANK,',
 	self.add_if_not_already( expt_obj, ion1, ion1.experiments )
-	id1 = self.get_model_object(IdEstimate, peptide = pep1, ion = ion1, delta_mass = float(row[5]), confidence = row[4] )
-	id1.save()
-	print ',' + prot1.prot_id + ',' + pep1.sequence + ',' + ptm.description + ',' + str( ion1.charge_state ) + ','
+	#id1 = self.get_model_object(IdEstimate, peptide = pep1, ion = ion1, delta_mass = float(row[5]), confidence = row[4] )
+	#id1.save()
+	print ',' + prot1.prot_id + ',' + pep1.sequence + ',' + str( ion1.charge_state ) + ','
 
 
     def get_model_object( self, obj_type, **conditions ):

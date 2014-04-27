@@ -63,7 +63,7 @@ WSGI_APPLICATION = 'hdome.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'hdomeone',
+        'NAME': 'hdometwo',
 	'HOST' : '',
 	'USER': 'rimmer',
         'PASSWORD': 'f',
