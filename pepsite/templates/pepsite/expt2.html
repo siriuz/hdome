@@ -44,63 +44,64 @@
 </span>
 </div>
 
-<div class="row">
-    <div class="col-md-4">
-<h2>Experiment details</h2>
-<ul class="list-inline">Cell line:
-<li><a>{{expt.cell_line.name}}</a></li>
-</ul>
-
-	
-	<ul class="list-inline">Antibodies:
-	{% for ab in expt.antibody_set.all %}
-	    <li><a>{{ab.name}}</a></li>
-	{% endfor %}
-	</ul>
-
-<ul class="list-inline">Eluted Alleles:
-{% for allele in alleles %}
-<li>{{allele.code}}</li>
-{% endfor %}
-</ul>
-    </div>
-    <div class="col-md-4">
-<h2>Cell Line details</h2>
-    </div>
-    <div class="col-md-4">
-<h2>Antibody details</h2>
-    </div>
-</div>
-<hr>
-
-
-{% if details %}
-
     <h2>Peptides detected</h2>
 
     <table class="table table-striped" id="cssTable">
-    <tr><th>Protein</th><th/><th>Peptide</th><th>Modification</th><th>Delta Mass</th><th>Charge State</th><th>Retention Time</th><th>Precursor Mass</th></tr>
-    {% for line in details %}
+    <tr><th>Protein</th><th/><th>Peptide</th><th>Modification</th><th>Delta Mass</th><th>Confidence</th><th>Charge State</th><th>Retention Time</th><th>Precursor Mass</th></tr>
+    {% for protein in proteins %}
+      {% for peptide in protein.peptide_set.all %}
+	{% for idestimate in peptide.idestimate_set.all %}
         <tr>
 	<td>
-	<a href="{% url 'pepsite:protein_expts' line.1 %}" class="link">{{line.0}}</a>
+	<a href="{% url 'pepsite:protein_expts' protein.id %}" class="link">{{protein.name}}</a>
 	</td>
 	<td>
-	<form action="http://www.uniprot.org/uniprot/{{line.0}}" target="_blank">
-        <input class="btn btn-primary" type="submit" value="UniProt entry for {{line.0}}">
+	<form action="http://www.uniprot.org/uniprot/{{protein.prot_id}}" target="_blank">
+        <input class="btn btn-primary" type="submit" value="UniProt entry for {{protein.name}}">
 	</form>
 	</td>
 	<td>
-	<a href="{% url 'pepsite:peptide_expts' line.2 %}" class="link">{{line.3}}</a>
+	<a href="{% url 'pepsite:peptide_expts' peptide.id %}" class="link">{{peptide.sequence}}</a>
 	</td>
-        {% for element in line|slice:"4:" %}
-
-	    <td>{{ element }}</td> 
-	{% endfor %}
+	<td>
+	{{ idestimate.ptm.description }}
+	</td>
+	<td>
+	{{ idestimate.delta_mass }}
+	</td>
+	<td>
+	{{ idestimate.confidence }}
+	</td>
+	<td>
+	{{ idestimate.ion.charge_state }}
+	</td>
+	<td>
+	{{ idestimate.ion.retention_time }}
+	</td>
+	<td>
+	{{ idestimate.ion.precursor_mass }}
+	</td>
         </tr>
+	{% endfor %}
+      {% endfor %}
     {% endfor %}
     </table>
-{% endif %}
+
+<div class="pagination">
+    <span class="step-links">
+        {% if proteins.has_previous %}
+            <a href="?page={{ proteins.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ proteins.number }} of {{ proteins.paginator.num_pages }}.
+        </span>
+
+        {% if proteins.has_next %}
+            <a href="?page={{ proteins.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+</div>
 
 
 <br>

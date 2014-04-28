@@ -44,63 +44,60 @@
 </span>
 </div>
 
-<div class="row">
-    <div class="col-md-4">
-<h2>Experiment details</h2>
-<ul class="list-inline">Cell line:
-<li><a>{{expt.cell_line.name}}</a></li>
-</ul>
-
-	
-	<ul class="list-inline">Antibodies:
-	{% for ab in expt.antibody_set.all %}
-	    <li><a>{{ab.name}}</a></li>
-	{% endfor %}
-	</ul>
-
-<ul class="list-inline">Eluted Alleles:
-{% for allele in alleles %}
-<li>{{allele.code}}</li>
-{% endfor %}
-</ul>
-    </div>
-    <div class="col-md-4">
-<h2>Cell Line details</h2>
-    </div>
-    <div class="col-md-4">
-<h2>Antibody details</h2>
-    </div>
-</div>
-<hr>
-
-
-{% if details %}
-
     <h2>Peptides detected</h2>
 
     <table class="table table-striped" id="cssTable">
-    <tr><th>Protein</th><th/><th>Peptide</th><th>Modification</th><th>Delta Mass</th><th>Charge State</th><th>Retention Time</th><th>Precursor Mass</th></tr>
-    {% for line in details %}
+    <tr><th>Protein</th><th/><th>Peptide</th><th>Modification</th><th>Delta Mass</th><th>Confidence</th><th>Charge State</th><th>Retention Time</th><th>Precursor Mass</th></tr>
+    {% for entry in entries %}
         <tr>
 	<td>
-	<a href="{% url 'pepsite:protein_expts' line.1 %}" class="link">{{line.0}}</a>
+	<a href="{% url 'pepsite:protein_expts' entry.0.id %}" class="link">{{entry.0.name}}</a>
 	</td>
 	<td>
-	<form action="http://www.uniprot.org/uniprot/{{line.0}}" target="_blank">
-        <input class="btn btn-primary" type="submit" value="UniProt entry for {{line.0}}">
+	<form action="http://www.uniprot.org/uniprot/{{entry.0.prot_id}}" target="_blank">
+        <input class="btn btn-primary" type="submit" value="UniProt entry for {{entry.0.name}}">
 	</form>
 	</td>
 	<td>
-	<a href="{% url 'pepsite:peptide_expts' line.2 %}" class="link">{{line.3}}</a>
+	<a href="{% url 'pepsite:peptide_expts' entry.1.id %}" class="link">{{entry.1.sequence}}</a>
 	</td>
-        {% for element in line|slice:"4:" %}
-
-	    <td>{{ element }}</td> 
-	{% endfor %}
+	<td>
+	{{ entry.2.ptm.description }}
+	</td>
+	<td>
+	{{ entry.2.delta_mass }}
+	</td>
+	<td>
+	{{ entry.2.confidence }}
+	</td>
+	<td>
+	{{ entry.2.ion.charge_state }}
+	</td>
+	<td>
+	{{ entry.2.ion.retention_time }}
+	</td>
+	<td>
+	{{ entry.2.ion.precursor_mass }}
+	</td>
         </tr>
     {% endfor %}
     </table>
-{% endif %}
+
+<div class="pagination">
+    <span class="step-links">
+        {% if proteins.has_previous %}
+            <a href="?page={{ proteins.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ proteins.number }} of {{ proteins.paginator.num_pages }}.
+        </span>
+
+        {% if proteins.has_next %}
+            <a href="?page={{ proteins.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+</div>
 
 
 <br>

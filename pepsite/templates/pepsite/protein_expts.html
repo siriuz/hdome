@@ -35,13 +35,24 @@
 
 {% if msg %}
     {% for exp in msg %}
-    <a href="{% url 'pepsite:expt' exp.id %}">{{ exp }}</a>
+    <a href="{% url 'pepsite:expt2' exp.id %}">{{ exp.title }}</a>
     <br>
     {% endfor %}
 {% endif %}
 
 
-<br>
+
+<hr>
+
+{% for peptide in protein.peptide_set.all %}
+    {% for ion in peptide.ion_set.all %}
+	{% for experiment in ion.experiments.all %}
+	    {{peptide.sequence}}  {{ ion.charge_state }}  {{ experiment.title }} <br>
+        {% endfor %}
+    {% endfor %}
+{% endfor %}
+
+<hr>
 
 <form action="{% url 'pepsite:allele_search' %}">
 <input class="btn btn-warning" type="submit" value="Make another allele search">

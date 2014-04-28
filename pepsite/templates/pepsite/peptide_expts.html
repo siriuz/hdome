@@ -35,7 +35,7 @@
 
 {% if msg %}
     {% for exp in msg %}
-    <a href="{% url 'pepsite:expt' exp.id %}">{{ exp }}</a>
+    <a href="{% url 'pepsite:expt2' exp.id %}">{{ exp.title }}</a>
     <br>
     {% endfor %}
 {% endif %}

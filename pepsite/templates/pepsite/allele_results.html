@@ -37,7 +37,7 @@
     <h3>Expermiments found for query <span class="text-primary">{{text_input}}</span>:</h3>
     <ul>
     {% for exp in msg %}
-        <li><a href="{% url 'pepsite:expt' exp.id %}">{{ exp.title }}</a>
+        <li><a href="{% url 'pepsite:expt2' exp.id %}">{{ exp.title }}</a>
 	Cell Line : {{exp.cell_line.name}},
 	Antibodies :
 	{% for ab in exp.antibody_set.all %}

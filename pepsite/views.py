@@ -51,3 +51,53 @@ def expt( request, expt_id ):
     alleles = s1.get_common_alleles( expt )
     context = { 'details' : details, 'expt' : expt, 'alleles' : alleles }
     return render( request, 'pepsite/expt.html', context)
+
+
+def expt3( request, expt_id ):
+    proteins = set(Protein.objects.filter( peptide__ion__experiments__id = expt_id))
+    
+    context = { 'proteins' : proteins,  }
+    return render( request, 'pepsite/expt2.html', context)
+
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+def expt2( request, expt_id ):
+    proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
+    expt = get_object_or_404( Experiment, id = expt_id )
+    paginator = Paginator(proteins, 25 ) # Show 25 contacts per page
+
+    page = request.GET.get('page')
+    try:
+        proteins = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        proteins = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        proteins = paginator.page(paginator.num_pages)
+    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt })
+
+def expt2_alternate( request, expt_id ):
+    proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
+    expt = get_object_or_404( Experiment, id = expt_id )
+    paginator = Paginator(proteins, 25 ) # Show 25 contacts per page
+
+    page = request.GET.get('page')
+    try:
+        proteins = paginator.page(page)
+	#s1 = ExptAssemble()
+	#proteins = s1.get_ancillaries( proteins, expt )
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        proteins = paginator.page(1)
+	#s1 = ExptAssemble()
+	#proteins = s1.get_ancillaries( proteins, expt )
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        proteins = paginator.page(paginator.num_pages)
+
+    s1 = ExptAssemble()
+    entries = s1.get_ancillaries( proteins, expt )
+
+    return render( request, 'pepsite/new_expt2.html', {"proteins": proteins, 'entries' : entries, 'expt' : expt })
+
