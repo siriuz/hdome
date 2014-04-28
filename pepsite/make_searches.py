@@ -25,9 +25,22 @@ class AlleleSearch( BaseSearch ):
 
     """
     def get_experiments_basic( self, allele_code ):
-	expts = Experiment.objects.filter( cell_line__alleles__code = allele_code, antibody__alleles__code = allele_code )
-	return expts
+	expts = set( Experiment.objects.filter( cell_line__alleles__code__iexact = allele_code, antibody__alleles__code__iexact = allele_code ) )
+	if len( expts ):
+	    return expts
+        else:
+	    return self.get_experiments_startswith( allele_code )
 
+    def get_experiments_startswith( self, allele_code ):
+	expts = set( Experiment.objects.filter( cell_line__alleles__code__istartswith = allele_code, antibody__alleles__code__istartswith = allele_code ) )
+	if len( expts ):
+	    return expts
+        else:
+	    return self.get_experiments_contains( allele_code )
+
+    def get_experiments_contains( self, allele_code ):
+	expts = set( Experiment.objects.filter( cell_line__alleles__code__icontains = allele_code, antibody__alleles__code__icontains = allele_code ) )
+	return expts
 
 class PeptideSearch( BaseSearch ):
     """
@@ -69,3 +82,7 @@ class ExptAssemble( BaseSearch ):
 
     def extract_uniprot_id( self, crude_id ):
 	return crude_id.split('|')[1]
+    
+    def get_common_alleles( self, expt_obj ):
+	return Allele.objects.filter( cellline__experiment = expt_obj, antibody__experiments = expt_obj )
+	 

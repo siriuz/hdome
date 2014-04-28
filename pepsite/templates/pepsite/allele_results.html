@@ -27,17 +27,27 @@
 <div class="jumbotron">
 <span class="text-center">
 
-<h1>Search results for <span class="text-primary">allele</span> search</h1>
+<h1>Search results for <span class="text-primary">allele</span> search on <span class="text-info">{{text_input}}</span></h1>
 <p class="text-info">Interactive results page</p>
 
 </span>
 </div>
 
 {% if msg %}
+    <h3>Expermiments found for query <span class="text-primary">{{text_input}}</span>:</h3>
+    <ul>
     {% for exp in msg %}
-    <a href="{% url 'pepsite:expt' exp.id %}">{{ exp }}</a>
-    <br>
+        <li><a href="{% url 'pepsite:expt' exp.id %}">{{ exp.title }}</a>
+	Cell Line : {{exp.cell_line.name}},
+	Antibodies :
+	{% for ab in exp.antibody_set.all %}
+	    {{ab.name}},
+	{% endfor %}
+        </li>
     {% endfor %}
+    </ul>
+{% else %}
+    <h3 class="text-danger">No Expermiments found for query <span class="text-primary">{{text_input}}</span></h3>
 {% endif %}
 
 

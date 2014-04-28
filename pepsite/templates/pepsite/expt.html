@@ -11,7 +11,7 @@
     <meta name="author" content="">
     <link rel="shortcut icon" href="../../docs-assets/ico/favicon.png">
 
-    <title>HaploDome - Welcome</title>
+    <title>HaploDome - Peptides in Experiment</title>
 
     <!-- Bootstrap core CSS -->
     <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
@@ -40,18 +40,38 @@
 <span class="text-center">
 
 <h1>Peptide complement of Experiment <span class="text-primary">{{expt.title}}</span></h1>
-<p class="text-info">Interactive results page</p>
 
 </span>
 </div>
 
+<h2>Experiment details</h2>
+Cell line: {{expt.cell_line.name}} <br>
+
+	Antibodies:
+	<ul>
+	{% for ab in expt.antibody_set.all %}
+	    <li>{{ab.name}}</li>
+	{% endfor %}
+	</ul>
+Alleles:
+<ul>
+{% for allele in alleles %}
+<li>{{allele.code}}</li>
+{% endfor %}
+</ul>
+<hr>
+
+
 {% if details %}
+
+    <h2>Peptides detected</h2>
+
     <table class="table table-striped" id="cssTable">
-    <tr><th>Protein</th><th/><th>Peptide</th><th>Modification</th><th>Delta Mass</th><th>Charge State</th><th>Retention Time</th><th>Precursor Mass</th>
+    <tr><th>Protein</th><th/><th>Peptide</th><th>Modification</th><th>Delta Mass</th><th>Charge State</th><th>Retention Time</th><th>Precursor Mass</th></tr>
     {% for line in details %}
         <tr>
 	<td>
-	<a href="{% url 'pepsite:protein_expts' line.1 %}" class="link" target="_blank">{{line.0}}</a>
+	<a href="{% url 'pepsite:protein_expts' line.1 %}" class="link">{{line.0}}</a>
 	</td>
 	<td>
 	<form action="http://www.uniprot.org/uniprot/{{line.0}}" target="_blank">
@@ -59,7 +79,7 @@
 	</form>
 	</td>
 	<td>
-	<a href="{% url 'pepsite:peptide_expts' line.2 %}" class="link" target="_blank">{{line.3}}</a>
+	<a href="{% url 'pepsite:peptide_expts' line.2 %}" class="link">{{line.3}}</a>
 	</td>
         {% for element in line|slice:"4:" %}
 

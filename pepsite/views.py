@@ -14,7 +14,7 @@ def allele_search( request ):
 	    text_input = form.cleaned_data['text_input']
 	    s1 = AlleleSearch()
 	    expts = s1.get_experiments_basic( text_input )
-	    context = { 'msg' : expts }
+	    context = { 'msg' : expts, 'text_input' : text_input }
             return render( request, 'pepsite/allele_results.html', context ) # Redirect after POST
 	else:
 	    text_input = request.POST['text_input']
@@ -48,5 +48,6 @@ def expt( request, expt_id ):
     expt = get_object_or_404( Experiment, id = expt_id )
     s1 = ExptAssemble()
     details = s1.get_peptide_info( expt )
-    context = { 'details' : details, 'expt' : expt }
+    alleles = s1.get_common_alleles( expt )
+    context = { 'details' : details, 'expt' : expt, 'alleles' : alleles }
     return render( request, 'pepsite/expt.html', context)
