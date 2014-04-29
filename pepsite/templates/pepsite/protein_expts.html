@@ -33,25 +33,46 @@
 </span>
 </div>
 
-{% if msg %}
-    {% for exp in msg %}
-    <a href="{% url 'pepsite:expt2' exp.id %}">{{ exp.title }}</a>
-    <br>
-    {% endfor %}
-{% endif %}
-
-
 
 <hr>
-
+    <table class="table table-striped" id="cssTable">
+    <tr><th>Experiment</th><th>Peptide</th><th>Modification</th><th>Delta Mass</th><th>Confidence</th><th>Charge State</th><th>Retention Time</th><th>Precursor Mass</th></tr>
 {% for peptide in protein.peptide_set.all %}
-    {% for ion in peptide.ion_set.all %}
-	{% for experiment in ion.experiments.all %}
-	    {{peptide.sequence}}  {{ ion.charge_state }}  {{ experiment.title }} <br>
+    {% for idestimate in peptide.idestimate_set.all %}
+	{% for experiment in idestimate.ion.experiments.all %}
+<tr>
+	<td>
+	<a href="{% url 'pepsite:expt2' experiment.id %}" class="link">{{experiment.title}}</a>
+	</td>
+	<td>
+	<a href="{% url 'pepsite:peptide_expts' peptide.id %}" class="link">{{peptide.sequence}}</a>
+	</td>
+	<td>
+	{{ idestimate.ptm.description }}
+	</td>
+	<td>
+	{{ idestimate.delta_mass }}
+	</td>
+	<td>
+	{{ idestimate.confidence }}
+	</td>
+	<td>
+	{{ idestimate.ion.charge_state }}
+	</td>
+	<td>
+	{{ idestimate.ion.retention_time }}
+	</td>
+	<td>
+	{{ idestimate.ion.precursor_mass }}
+	</td>
+        </tr>
+
+
+
         {% endfor %}
     {% endfor %}
 {% endfor %}
-
+</table>
 <hr>
 
 <form action="{% url 'pepsite:allele_search' %}">

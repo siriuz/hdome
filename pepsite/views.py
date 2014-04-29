@@ -2,6 +2,10 @@ from django.shortcuts import render, get_object_or_404
 from pepsite.pepsite_forms import *
 from pepsite.make_searches import *
 
+import os, tempfile, zipfile
+from django.core.servers.basehttp import FileWrapper
+from django.conf import settings
+import mimetypes
 
 
 def index( request ):
@@ -101,3 +105,15 @@ def expt2_alternate( request, expt_id ):
 
     return render( request, 'pepsite/new_expt2.html', {"proteins": proteins, 'entries' : entries, 'expt' : expt })
 
+
+def send_file(request):
+
+
+  filename     = "C:\ex2.csv" # Select your file here.
+  download_name ="example.csv"
+  wrapper      = FileWrapper(open(filename))
+  content_type = mimetypes.guess_type(filename)[0]
+  response     = HttpResponse(wrapper,content_type=content_type)
+  response['Content-Length']      = os.path.getsize(filename)    
+  response['Content-Disposition'] = "attachment; filename=%s"%download_name
+  return response

@@ -72,7 +72,7 @@ class ExptAssemble( BaseSearch ):
 	#return ([['howdy', 'pardner'],])
 	details = []
 	for b in ids:
-	    q1 = Q( peptide__ion__experiments = expt_obj )
+
 	    q2 = Q( peptide__idestimate = b )
 	    for prot in Protein.objects.filter( q1, q2  ):
    	        if b.ptm:

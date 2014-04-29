@@ -19,6 +19,18 @@
 		<script src="{% static "js/jquery-2.0.3.min.js" %}">
 		</script>
 
+<style>
+
+#explist
+
+{
+
+font-size:large;
+
+}
+
+</style>
+
 </head>
 
 <br>
@@ -33,13 +45,14 @@
 </span>
 </div>
 
+<div id = "explist">
 {% if msg %}
     {% for exp in msg %}
-    <a href="{% url 'pepsite:expt2' exp.id %}">{{ exp.title }}</a>
+    <a href="{% url 'pepsite:expt2' exp.id %}"><big>{{ exp.title }}</big></a>
     <br>
     {% endfor %}
 {% endif %}
-
+</div>
 
 <br>
 
