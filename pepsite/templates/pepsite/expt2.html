@@ -31,6 +31,9 @@
 }
 </style>
 
+
+{% load template_filter %}
+
 </head>
 
 <br>
@@ -44,13 +47,14 @@
 </span>
 </div>
 
+
     <h2>Peptides detected</h2>
 
     <table class="table table-striped" id="cssTable">
     <tr><th>Protein</th><th/><th>Peptide</th><th>Modification</th><th>Delta Mass</th><th>Confidence</th><th>Charge State</th><th>Retention Time</th><th>Precursor Mass</th></tr>
     {% for protein in proteins %}
-      {% for peptide in protein.peptide_set.all %}
-	{% for idestimate in peptide.idestimate_set.all %}
+{% query_idestimate ion__experiments=expt peptide__proteins=protein as myides %}
+	{% for idestimate in myides %}
         <tr>
 	<td>
 	<a href="{% url 'pepsite:protein_expts' protein.id %}" class="link">{{protein.name}}</a>
@@ -61,7 +65,7 @@
 	</form>
 	</td>
 	<td>
-	<a href="{% url 'pepsite:peptide_expts' peptide.id %}" class="link">{{peptide.sequence}}</a>
+	<a href="{% url 'pepsite:peptide_expts' idestimate.peptide.id %}" class="link">{{idestimate.peptide.sequence}}</a>
 	</td>
 	<td>
 	{{ idestimate.ptm.description }}
@@ -83,7 +87,6 @@
 	</td>
         </tr>
 	{% endfor %}
-      {% endfor %}
     {% endfor %}
     </table>
 
@@ -103,6 +106,12 @@
     </span>
 </div>
 
+
+<br>
+
+<form action="{% url 'pepsite:send_expt_csv' expt.id %}">
+<input class="btn btn-primary" type="submit" value="Download csv">
+</form>
 
 <br>
 

@@ -7,6 +7,11 @@ from django.core.servers.basehttp import FileWrapper
 from django.conf import settings
 import mimetypes
 
+import datetime
+from django.http import HttpResponse 
+import tempfile 
+
+import zipfile
 
 def index( request ):
 	return render( request, 'pepsite/index.html', {})
@@ -106,14 +111,28 @@ def expt2_alternate( request, expt_id ):
     return render( request, 'pepsite/new_expt2.html', {"proteins": proteins, 'entries' : entries, 'expt' : expt })
 
 
-def send_file(request):
+def send_expt_csv(request, expt_id ):
+	
+    expt = get_object_or_404( Experiment, id = expt_id )
+    filestump = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    download_name = filestump + "_HaploDome_download.csv"
+    proteins = list(set(Protein.objects.filter( peptide__ion__experiments = expt)))
+    
 
-
-  filename     = "C:\ex2.csv" # Select your file here.
-  download_name ="example.csv"
-  wrapper      = FileWrapper(open(filename))
-  content_type = mimetypes.guess_type(filename)[0]
-  response     = HttpResponse(wrapper,content_type=content_type)
-  response['Content-Length']      = os.path.getsize(filename)    
-  response['Content-Disposition'] = "attachment; filename=%s"%download_name
-  return response
+    with tempfile.NamedTemporaryFile() as f:
+	f.write( 'Protein,Peptide,Modification,Delta Mass,Confidence,Charge State,Retention Time,Precursor Mass,\n' )
+	for protein in proteins:
+	    for ide in IdEstimate.objects.filter( peptide__proteins = protein, ion__experiments = expt ):
+		if ide.ptm is not None:
+		    f.write( '%s,%s,%s,%f,%f,%d,%f,%f,\n' %( protein.prot_id, ide.peptide.sequence, ide.ptm.description, ide.delta_mass, ide.confidence,
+			ide.ion.charge_state, ide.ion.retention_time, ide.ion.precursor_mass ) )
+		else:
+		    f.write( '%s,%s,%s,%f,%f,%d,%f,%f,\n' %( protein.prot_id, ide.peptide.sequence, '', ide.delta_mass, ide.confidence,
+			ide.ion.charge_state, ide.ion.retention_time, ide.ion.precursor_mass ) )
+	f.seek(0)
+        wrapper      = FileWrapper( f )
+        content_type = 'text/csv'
+        response     = HttpResponse(wrapper,content_type=content_type)
+        response['Content-Length']      = f.tell()   
+        response['Content-Disposition'] = "attachment; filename=%s"%download_name
+        return response
