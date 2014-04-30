@@ -31,6 +31,18 @@ font-size:large;
 
 </style>
 
+
+<script>
+
+
+$(document).ready(function() {
+
+$('#footer').load( "{% url 'pepsite:footer' %}" );
+
+});
+
+</script>
+
 </head>
 
 <br>
@@ -73,6 +85,7 @@ font-size:large;
 </form>
 
 
+<div id="footer"></div>
 
 </div>
 </html>

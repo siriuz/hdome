@@ -13,6 +13,9 @@ import tempfile
 
 import zipfile
 
+from django.contrib.auth.decorators import login_required
+
+@login_required
 def index( request ):
 	return render( request, 'pepsite/index.html', {})
 
@@ -35,10 +38,12 @@ def allele_search( request ):
         context = { 'textform' : textform }
         return render( request, 'pepsite/allele_search.html', context)
 
+@login_required
 def allele_results( request ):
 	context = { 'msg' : 'goodbye' }
 	return render( request, 'pepsite/allele_results.html', context)
 
+@login_required
 def peptide_expts( request, peptide_id ):
     peptide = get_object_or_404( Peptide, id = peptide_id )
     s1 = PeptideSearch()
@@ -46,6 +51,7 @@ def peptide_expts( request, peptide_id ):
     context = { 'msg' : expts, 'peptide' : peptide }
     return render( request, 'pepsite/peptide_expts.html', context)
 
+@login_required
 def protein_expts( request, protein_id ):
     prot = get_object_or_404( Protein, id = protein_id )
     s1 = ProteinSearch()
@@ -53,6 +59,7 @@ def protein_expts( request, protein_id ):
     context = { 'msg' : expts, 'protein' : prot }
     return render( request, 'pepsite/protein_expts.html', context)
 
+@login_required
 def expt( request, expt_id ):
     expt = get_object_or_404( Experiment, id = expt_id )
     s1 = ExptAssemble()
@@ -62,6 +69,7 @@ def expt( request, expt_id ):
     return render( request, 'pepsite/expt.html', context)
 
 
+@login_required
 def expt3( request, expt_id ):
     proteins = set(Protein.objects.filter( peptide__ion__experiments__id = expt_id))
     
@@ -70,6 +78,7 @@ def expt3( request, expt_id ):
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
+@login_required
 def expt2( request, expt_id ):
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
@@ -86,6 +95,7 @@ def expt2( request, expt_id ):
         proteins = paginator.page(paginator.num_pages)
     return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt })
 
+@login_required
 def expt2_alternate( request, expt_id ):
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
@@ -111,6 +121,7 @@ def expt2_alternate( request, expt_id ):
     return render( request, 'pepsite/new_expt2.html', {"proteins": proteins, 'entries' : entries, 'expt' : expt })
 
 
+@login_required
 def send_expt_csv(request, expt_id ):
 	
     expt = get_object_or_404( Experiment, id = expt_id )
@@ -136,3 +147,7 @@ def send_expt_csv(request, expt_id ):
         response['Content-Length']      = f.tell()   
         response['Content-Disposition'] = "attachment; filename=%s"%download_name
         return response
+
+
+def footer( request ):
+    return render( request, 'pepsite/footer.html', {})

@@ -19,6 +19,18 @@
 		<script src="{% static "js/jquery-2.0.3.min.js" %}">
 		</script>
 
+
+<script>
+
+
+$(document).ready(function() {
+
+$('#footer').load( "{% url 'pepsite:footer' %}" );
+
+});
+
+</script>
+
 </head>
 
 <br>
@@ -46,6 +58,7 @@
 <br>
 
 
+<div id="footer"></div>
 
 </div>
 </html>

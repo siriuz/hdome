@@ -19,6 +19,18 @@
 		<script src="{% static "js/jquery-2.0.3.min.js" %}">
 		</script>
 
+<script>
+
+
+$(document).ready(function() {
+
+$('#footer').load( "{% url 'pepsite:footer' %}" );
+
+});
+
+</script>
+
+
 </head>
 
 <br>
@@ -27,7 +39,7 @@
 <div class="jumbotron">
 <span class="text-center">
 
-<h1>Experiments containing protein <span class="text-primary">{{protein.prot_id}}</span></h1>
+<h1>Peptides detected from protein <span class="text-primary">{{protein.prot_id}}</span></h1>
 <p class="text-info">Interactive results page</p>
 
 </span>
@@ -92,6 +104,7 @@
 </form>
 
 
+<div id="footer"></div>
 
 </div>
 </html>
