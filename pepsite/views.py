@@ -19,6 +19,7 @@ from django.contrib.auth.decorators import login_required
 def index( request ):
 	return render( request, 'pepsite/index.html', {})
 
+@login_required
 def allele_search( request ):
     if request.method == 'POST': # If the form has been submitted...
         form = TextOnlyForm(request.POST) # A form bound to the POST data
@@ -26,12 +27,12 @@ def allele_search( request ):
 	    text_input = form.cleaned_data['text_input']
 	    s1 = AlleleSearch()
 	    expts = s1.get_experiments_basic( text_input )
-	    context = { 'msg' : expts, 'text_input' : text_input }
-            return render( request, 'pepsite/allele_results.html', context ) # Redirect after POST
+	    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele' }
+            return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
 	else:
 	    text_input = request.POST['text_input']
 	    context = { 'msg' : text_input }
-            return render( request, 'pepsite/allele_results.html', context ) # Redirect after POST
+            return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
 
     else:
         textform = TextOnlyForm()
@@ -44,20 +45,65 @@ def allele_results( request ):
 	return render( request, 'pepsite/allele_results.html', context)
 
 @login_required
-def peptide_expts( request, peptide_id ):
-    peptide = get_object_or_404( Peptide, id = peptide_id )
-    s1 = PeptideSearch()
-    expts = s1.get_experiments_from_peptide( peptide )
-    context = { 'msg' : expts, 'peptide' : peptide }
-    return render( request, 'pepsite/peptide_expts.html', context)
+def cell_line_expts( request, cell_line_id ):
+	cl1 = CellLine.objects.get( id = cell_line_id )
+	text_input = cl1.name
+	expts = Experiment.objects.filter( cell_line = cl1 )	
+	context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Cell Line' }
+	return render( request, 'pepsite/searched_expts.html', context)
 
 @login_required
-def protein_expts( request, protein_id ):
+def entity_expts( request, entity_id ):
+	en1 = Entity.objects.get( id = entity_id )
+	text_input = en1.common_name
+	expts = Experiment.objects.filter( cell_line__individuals__entity = en1 )	
+	context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Entity' }
+	if en1.isOrganism:
+	    context['query_on'] = 'Organism'
+	return render( request, 'pepsite/searched_expts.html', context)
+
+
+@login_required
+def peptide_expts( request, peptide_id ):
+    peptide = get_object_or_404( Peptide, id = peptide_id )
+    text_input = peptide.sequence
+    expts = Experiment.objects.filter( ion__peptides = peptide )	
+    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Peptide' }
+    return render( request, 'pepsite/searched_expts.html', context)
+
+@login_required
+def antibody_expts( request, antibody_id ):
+    ab1 = get_object_or_404( Antibody, id = antibody_id )
+    text_input = ab1.name
+    expts = Experiment.objects.filter( antibody = ab1 )	
+    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Antibody' }
+    return render( request, 'pepsite/searched_expts.html', context)
+
+@login_required
+def ptm_expts( request, ptm_id ):
+    ptm1 = get_object_or_404( Ptm, id = ptm_id )
+    text_input = ptm1.description
+    expts = Experiment.objects.filter( ion__idestimate__ptm = ptm1 ).distinct()	
+    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Post-Translational Modification' }
+    return render( request, 'pepsite/searched_expts.html', context)
+
+@login_required
+def allele_expts( request, allele_id ):
+    al1 = get_object_or_404( Allele, id = allele_id )
+    text_input = al1.code
+    expts = Experiment.objects.filter( cell_line__alleles = al1, antibody__alleles = al1 )	
+    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele' }
+    if al1.isSer:
+	context['query_on'] = 'Serotype'
+    return render( request, 'pepsite/searched_expts.html', context)
+
+@login_required
+def protein_full_listing( request, protein_id ):
     prot = get_object_or_404( Protein, id = protein_id )
     s1 = ProteinSearch()
     expts = s1.get_experiments_from_protein( prot )
     context = { 'msg' : expts, 'protein' : prot }
-    return render( request, 'pepsite/protein_expts.html', context)
+    return render( request, 'pepsite/protein_full_listing.html', context)
 
 @login_required
 def expt( request, expt_id ):
@@ -80,6 +126,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 @login_required
 def expt2( request, expt_id ):
+  if not ( request.POST.has_key( 'full_list' ) and request.POST['full_list'] ):
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
     paginator = Paginator(proteins, 25 ) # Show 25 contacts per page
@@ -93,7 +140,13 @@ def expt2( request, expt_id ):
     except EmptyPage:
         # If page is out of range (e.g. 9999), deliver last page of results.
         proteins = paginator.page(paginator.num_pages)
-    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt })
+    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'paginate' : True })
+  else:
+    proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
+    expt = get_object_or_404( Experiment, id = expt_id )
+    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'paginate' : False })
+   
+
 
 @login_required
 def expt2_alternate( request, expt_id ):

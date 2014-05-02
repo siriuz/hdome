@@ -63,6 +63,8 @@ class CellLine(models.Model):
     def __str__(self):
 	return self.name
 
+    def get_organisms( self ):
+	return Entity.objects.filter( isOrganism = True, individual__cellline = self )
 
 class Experiment( models.Model ):
     title = models.CharField(max_length=200)
@@ -74,6 +76,8 @@ class Experiment( models.Model ):
     def __str__(self):
 	return self.title + '|' + str(self.date_time)
 
+    def get_common_alleles( self ):
+	return Allele.objects.filter( antibody__experiments = self, cellline__experiment = self )
 
 class Antibody(models.Model):
     name = models.CharField(max_length=200, unique = True )
