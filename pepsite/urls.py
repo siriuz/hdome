@@ -4,6 +4,7 @@ from pepsite import views
 
 urlpatterns = patterns('',
     url(r'^$', views.index, name='index'),
+    url(r'^model_info/(?P<model_type>\w+)/(?P<model_id>\d+)/$', views.model_info, name='model_info'),
     url(r'^allele_search$', views.allele_search, name='allele_search'),
     url(r'^allele_browse$', views.allele_browse, name='allele_browse'),
     url(r'^allele_results$', views.allele_results, name='allele_results'),

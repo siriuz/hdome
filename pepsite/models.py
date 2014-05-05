@@ -18,6 +18,9 @@ class Allele(models.Model):
     isSer = models.BooleanField( default = False )
     description = models.TextField( default = '' )
 
+    def get_class( self ):
+	return self.__class__
+
     def __str__(self):
 	return self.code
 

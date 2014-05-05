@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from pepsite.pepsite_forms import *
 from pepsite.make_searches import *
-
+import sys
 import os, tempfile, zipfile
 from django.core.servers.basehttp import FileWrapper
 from django.conf import settings
@@ -25,6 +25,16 @@ def allele_browse( request ):
 	context = { 'alleles' : alleles }
 	return render( request, 'pepsite/allele_browse.html', context)
 
+@login_required
+def model_info( request, model_type, model_id ):
+	module = 'pepsite.models'
+	model = getattr(sys.modules[ module ], model_type  )
+	instance = get_object_or_404( model, id = model_id )
+	def get_class2( obj ):
+	    return obj.__class__
+	instance.get_class2 = get_class2
+	context = { 'model_type' : instance, 'model_id' : model_id }
+	return render( request, 'pepsite/model_info.html', context)
 
 @login_required
 def allele_search( request ):
