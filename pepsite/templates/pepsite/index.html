@@ -45,17 +45,21 @@ $('#footer').load( "{% url 'pepsite:footer' %}" );
 </span>
 </div>
 
-<form action="{% url 'pepsite:allele_search' %}">
-<input class="btn btn-lg btn-success" type="submit" value="Search by allele">
-</form>
+<p>
 
-<br>
+<a href="{% url 'pepsite:allele_search' %}" class="btn btn-lg btn-success">Search by allele / serotype</a>
 
-<form action="{% url 'home' %}">
-<input class="btn btn-danger" type="submit" value="Return to Haplodome home">
-</form>
 
-<br>
+<a href="{% url 'pepsite:allele_browse' %}" class="btn btn-lg btn-primary">"Browse alleles / serotypes"</a>
+
+
+</p>
+
+<p>
+
+<a href="{% url 'home' %}" class="btn btn-danger">Return to Haplodome home</a>
+
+</p>
 
 
 <div id="footer"></div>

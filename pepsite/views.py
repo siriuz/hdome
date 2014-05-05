@@ -20,6 +20,13 @@ def index( request ):
 	return render( request, 'pepsite/index.html', {})
 
 @login_required
+def allele_browse( request ):
+	alleles = Allele.objects.all().distinct() 
+	context = { 'alleles' : alleles }
+	return render( request, 'pepsite/allele_browse.html', context)
+
+
+@login_required
 def allele_search( request ):
     if request.method == 'POST': # If the form has been submitted...
         form = TextOnlyForm(request.POST) # A form bound to the POST data
@@ -27,7 +34,7 @@ def allele_search( request ):
 	    text_input = form.cleaned_data['text_input']
 	    s1 = AlleleSearch()
 	    expts = s1.get_experiments_basic( text_input )
-	    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele' }
+	    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele', 'search' : True }
             return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
 	else:
 	    text_input = request.POST['text_input']
@@ -43,6 +50,11 @@ def allele_search( request ):
 def allele_results( request ):
 	context = { 'msg' : 'goodbye' }
 	return render( request, 'pepsite/allele_results.html', context)
+
+@login_required
+def trial_table( request ):
+	context = { 'msg' : 'goodbye' }
+	return render( request, 'pepsite/eg_tablesort.html', context)
 
 @login_required
 def cell_line_expts( request, cell_line_id ):

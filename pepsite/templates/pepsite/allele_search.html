@@ -15,6 +15,7 @@
 
     <!-- Bootstrap core CSS -->
     <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/tablesorter_style.css" %}" rel="stylesheet">
 
 		<script src="{% static "js/jquery-2.0.3.min.js" %}">
 		</script>
@@ -39,8 +40,8 @@ $('#footer').load( "{% url 'pepsite:footer' %}" );
 <div class="jumbotron">
 <span class="text-center">
 
-<h1>Search by <span class="text-primary">allele</span></h1>
-<p class="text-info">Search by allele</p>
+<h1>Search by <span class="text-primary">allele / serotype</span></h1>
+<p class="text-info">Search by allele / serotype</p>
 
 </span>
 </div>
@@ -53,7 +54,7 @@ $('#footer').load( "{% url 'pepsite:footer' %}" );
 
     <div class="fieldWrapper">
         {{ textform.subject.errors }}
-        <label for="id_subject">Enter allele name:</label>
+        <label for="id_subject">Enter allele / serotype name:</label>
         {{ textform.text_input }}
     </div>
 <input class="btn btn-lg btn-success" type="submit" value="Search"></input>

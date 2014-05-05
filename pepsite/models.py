@@ -20,8 +20,12 @@ class Allele(models.Model):
 
     def __str__(self):
 	return self.code
+
     class Meta:
     	unique_together = ( ('gene', 'code'), )
+   
+    def get_experiments( self ):
+	return Experiment.objects.filter( cell_line__alleles = self, antibody__alleles = self  ).distinct()
 
 
 
