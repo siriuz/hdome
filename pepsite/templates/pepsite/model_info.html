@@ -88,7 +88,7 @@ cursor:pointer;
 <span class="text-center">
 
 
-<h1>Model type <span class="text-primary">{{ query_on }}</span> = <span class="text-info">{{model_type}}</span>, Mode id = {{model_id}}</h1>
+<h1>Model type <span class="text-primary">{{ query_on }}</span> = <span class="text-info">{{model_type}}</span>, Model id = {{model_id}}</h1>
 <p class="text-info">Interactive results page</p>
 
 
@@ -96,70 +96,100 @@ cursor:pointer;
 </span>
 </div>
 
-{{ model_type.get_experiments  }}
-{{ model_type.get_class  }}
 
-{% if model_type.get_class == pepsite.models.Allele %}
+{% if model_type == "Allele" %}
 
-<hr>
+    <hr>
 
-{{ model_type.get_class  }
-
-<hr>
-{% endif %}
-
-{% if msg %}
-    <h3>Expermiments found for query <span class="text-primary">{{text_input}}</span>:</h3>
+    <h3>Details for <span class="text-primary">{{model_type}}</span> = <span class="text-info">{{instance.code}}</span>:</h3>
     </br>
 
-    <table class="table table-striped tablesorter" id="cssTable">
+    <table class="table" id="cssTable">
     <thead>
     <tr>
-    <th>Experiment</th><th>Cell Line</th><th>Organism(s)</th><th>Antibody(ies)</th><th>Alleles</th><th>Serotypes</th>
+    <th>Gene</th><th>Cell Lines</th><th>Antibodies</th>
     </tr>
     </thead>
     <tbody>
-    {% for exp in msg %}
-        <tr>
-	<td><a href="{% url 'pepsite:expt2' exp.id %}">{{ exp.title }}</a></td>
-	<td>
-	    <a href="{% url 'pepsite:cell_line_expts' exp.cell_line.id %}">{{exp.cell_line.name}}</a> 
-	    {{exp.cell_line.description}}
-	</td>
-	<td>
-	
-	{% for org in exp.cell_line.get_organisms %}
-		<a href="{% url 'pepsite:entity_expts' org.id %}">{{ org.common_name }}</a>
-	{% endfor %}
-	
-	</td>
-	<td>
-	{% for ab in exp.antibody_set.all %}
-		<a href="{% url 'pepsite:antibody_expts' ab.id %}">{{ ab.name }}</a>
-	{% endfor %}
-	
-	</td>
-	<td>
-	{% for al in exp.get_common_alleles %}
-	  {% if not al.isSer %}
-		<a href="{% url 'pepsite:allele_expts' al.id %}">{{ al.code }}</a>
-	  {% endif %}
-	{% endfor %}
-	</td>
-	<td>
-	{% for al in exp.get_common_alleles %}
-	  {% if al.isSer %}
-		<a href="{% url 'pepsite:allele_expts' al.id %}">{{ al.code }}</a>
-	  {% endif %}
-	{% endfor %}
-	</td>
-        </tr>
+    <tr>
+    <td>
+    <a href="{% url 'pepsite:gene_expts' instance.gene.id %}">{{ instance.gene.name }}</a>
+    </td>
+    <td>
+    {% for cl in  instance.cellline_set.all  %}
+	<a href="{% url 'pepsite:cell_line_expts' cl.id %}">{{ cl.name }}</a>
     {% endfor %}
-    </tbody>
+    </td>
+    <td>
+    {% for ab in  instance.antibody_set.all  %}
+	<a href="{% url 'pepsite:antibody_expts' ab.id %}">{{ ab.name }}</a>
+    {% endfor %}
+    </td>
+    </tr>
     </table>
-{% else %}
-  <h3 class="text-danger">No Expermiments found for query <span class="text-primary">{{text_input}}</span></h3>
-  <br> 
+    <hr>
+
+{% elif model_type == "Protein" %}
+
+
+    <hr>
+
+    <h3>Details for <span class="text-primary">{{model_type}}</span> = <span class="text-info">{{instance.name}}</span>:</h3>
+    </br>
+
+    <table class="table" id="cssTable">
+    <thead>
+    <tr>
+    <th>Description</th><th>Uniprot ID</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>
+    <a href="{% url 'pepsite:protein_full_listing' instance.id %}">{{ instance.description }}</a>
+    </td>
+    <td>
+	<a href="http://www.uniprot.org/uniprot/{{instance.prot_id}}" target="_blank">{{instance.prot_id}}</a>
+    </td>
+    </tr>
+    </table>
+    <hr>
+
+{% elif model_type == "Peptide" %}
+
+
+    <hr>
+
+    <h3>Details for <span class="text-primary">{{model_type}}</span> = <span class="text-info">{{instance.sequence}}</span>:</h3>
+    </br>
+
+    <table class="table" id="cssTable">
+    <thead>
+    <tr>
+    <th>Sequence</th><th>length</th><th>Mass</th><th>PTMs observed</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>
+    <a href="{% url 'pepsite:peptide_expts' instance.id %}">{{ instance.sequence }}</a>
+    </td>
+    <td>
+    {{ instance.sequence | length }}
+    </td>
+    <td>
+    {{instance.mass}}
+    </td>
+    <td>
+    {% for ide in instance.idestimate_set.all %}
+	{{ ide.ptm.description }}
+    {% endfor %}
+    </td>
+    </tr>
+    </table>
+    <hr>
+
+
 {% endif %}
 
 

@@ -1,9 +1,7 @@
-HDOME
-=====
 
+# HDOME
 
-## A Django-powered engine for interrogation of immunoproteomic data
-
+A Django-powered engine for interrogation of immunoproteomic data
 
 Dependencies:
 

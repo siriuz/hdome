@@ -33,7 +33,7 @@ def model_info( request, model_type, model_id ):
 	def get_class2( obj ):
 	    return obj.__class__
 	instance.get_class2 = get_class2
-	context = { 'model_type' : instance, 'model_id' : model_id }
+	context = { 'model_type' : model_type, 'instance' : instance, 'model_id' : model_id }
 	return render( request, 'pepsite/model_info.html', context)
 
 @login_required
@@ -72,6 +72,14 @@ def cell_line_expts( request, cell_line_id ):
 	text_input = cl1.name
 	expts = Experiment.objects.filter( cell_line = cl1 )	
 	context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Cell Line' }
+	return render( request, 'pepsite/searched_expts.html', context)
+
+@login_required
+def gene_expts( request, gene_id ):
+	g1 = Gene.objects.get( id = gene_id )
+	text_input = g1.name
+	expts = Experiment.objects.filter( cell_line__alleles__gene = g1, antibody__alleles__gene = g1 ).distinct()	
+	context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Gene' }
 	return render( request, 'pepsite/searched_expts.html', context)
 
 @login_required
