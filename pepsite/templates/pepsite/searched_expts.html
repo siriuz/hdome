@@ -27,7 +27,30 @@
 
 $(document).ready(function() {
 
-$('#footer').load( "{% url 'pepsite:footer' %}" );
+$('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+
+
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+var search = "{{search}}";
+
+if ( search === "True" ) {
+    search = true;
+}
+
+var query_on = "{{query_on}}";
+
+
+var queryobjid = "1";
+
+
+if !( search ) {
+//query_obj_id = "{{query_obj.id}}";
+$('#summary').load( "{% url 'pepsite:model_info' query_on '1'  %}" );
+}
+
+//$("#summary").html(queryobjid);
+
 $("#cssTable").tablesorter({
     //stringTo : 'max',
 
@@ -95,13 +118,22 @@ cursor:pointer;
 
 {% else %}
 
-<h1>Experiments found with <span class="text-primary">{{ query_on }}</span> = <span class="text-info">{{text_input}}</span></h1>
+<h1><span class="text-primary">{{ query_on }}</span> = <span class="text-info">{{text_input}}</span></h1>
 <p class="text-info">Interactive results page</p>
 
 
 {% endif %}
 
 </span>
+</div>
+
+
+<div id="summary">
+    
+</div>
+
+<div id="header">
+    
 </div>
 
 {% if msg %}
@@ -158,24 +190,6 @@ cursor:pointer;
   <br> 
 {% endif %}
 
-
-<br>
-
-<form action="{% url 'pepsite:allele_search' %}">
-<input class="btn btn-warning" type="submit" value="Make another allele search">
-</form>
-
-<br>
-
-<form action="{% url 'pepsite:index' %}">
-<input class="btn btn-danger" type="submit" value="Return to Haplodome search index">
-</form>
-
-<br>
-
-<form action="{% url 'home' %}">
-<input class="btn btn-danger" type="submit" value="Return to Haplodome home">
-</form>
 
 
 <div id="footer"></div>

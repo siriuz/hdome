@@ -71,7 +71,7 @@ def cell_line_expts( request, cell_line_id ):
 	cl1 = CellLine.objects.get( id = cell_line_id )
 	text_input = cl1.name
 	expts = Experiment.objects.filter( cell_line = cl1 )
-	context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Cell Line' }
+        context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'query_obj' : cl1  }
 	return render( request, 'pepsite/searched_expts.html', context)
 
 @login_required
@@ -79,7 +79,7 @@ def gene_expts( request, gene_id ):
 	g1 = Gene.objects.get( id = gene_id )
 	text_input = g1.name
 	expts = Experiment.objects.filter( cell_line__alleles__gene = g1, antibody__alleles__gene = g1 ).distinct()
-	context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Gene' }
+        context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Gene', 'query_obj' : g1  }
 	return render( request, 'pepsite/searched_expts.html', context)
 
 @login_required
@@ -87,7 +87,7 @@ def entity_expts( request, entity_id ):
 	en1 = Entity.objects.get( id = entity_id )
 	text_input = en1.common_name
 	expts = Experiment.objects.filter( cell_line__individuals__entity = en1 )
-	context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Entity' }
+        context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Entity', 'query_obj' : en1  }
 	if en1.isOrganism:
 	    context['query_on'] = 'Organism'
 	return render( request, 'pepsite/searched_expts.html', context)
@@ -98,7 +98,7 @@ def peptide_expts( request, peptide_id ):
     peptide = get_object_or_404( Peptide, id = peptide_id )
     text_input = peptide.sequence
     expts = Experiment.objects.filter( ion__peptides = peptide )
-    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Peptide' }
+    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Peptide', 'query_obj' : peptide  }
     return render( request, 'pepsite/searched_expts.html', context)
 
 @login_required
@@ -106,7 +106,7 @@ def antibody_expts( request, antibody_id ):
     ab1 = get_object_or_404( Antibody, id = antibody_id )
     text_input = ab1.name
     expts = Experiment.objects.filter( antibody = ab1 )
-    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Antibody' }
+    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Antibody', 'query_obj' : ab1  }
     return render( request, 'pepsite/searched_expts.html', context)
 
 @login_required
@@ -114,7 +114,7 @@ def ptm_expts( request, ptm_id ):
     ptm1 = get_object_or_404( Ptm, id = ptm_id )
     text_input = ptm1.description
     expts = Experiment.objects.filter( ion__idestimate__ptm = ptm1 ).distinct()
-    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Post-Translational Modification' }
+    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Ptm', 'query_obj' : ptm1 }
     return render( request, 'pepsite/searched_expts.html', context)
 
 @login_required
@@ -122,7 +122,7 @@ def allele_expts( request, allele_id ):
     al1 = get_object_or_404( Allele, id = allele_id )
     text_input = al1.code
     expts = Experiment.objects.filter( cell_line__alleles = al1, antibody__alleles = al1 )
-    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele' }
+    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele', 'query_obj' : al1 }
     if al1.isSer:
 	context['query_on'] = 'Serotype'
     return render( request, 'pepsite/searched_expts.html', context)
@@ -232,5 +232,14 @@ def send_expt_csv(request, expt_id ):
         return response
 
 
+@login_required
 def footer( request ):
     return render( request, 'pepsite/footer.html', {})
+
+@login_required
+def nav_buttons_allele( request ):
+    return render( request, 'pepsite/nav_buttons_allele.html', {})
+
+@login_required
+def nav_buttons( request  ):
+    return render( request, 'pepsite/nav_buttons.html', {})

@@ -28,7 +28,8 @@ $(document).ready(function() {
 
     $('#summary').load( "{% url 'pepsite:model_info' 'Protein' protein.id %}" ); 
 
-$('#footer').load( "{% url 'pepsite:footer' %}" );
+$('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
     $("#cssTable").tablesorter(); 
 
 });
@@ -68,18 +69,26 @@ cursor:pointer;
 <div class="jumbotron">
 <span class="text-center">
 
-<h1>Peptides detected from protein <span class="text-primary">{{protein.prot_id}}</span></h1>
+<h1>Protein = <span class="text-primary">{{protein.name}}</span></h1>
 <p class="text-info">Interactive results page</p>
 
 </span>
 </div>
 
-<<div id="summary">
+<div id="summary">
     
 </div>
 
+<div id="header">
+    
+</div>
 
 <hr>
+
+<br>
+
+    <h3>Detected Peptides for <span class="text-primary">Protein</span> = <span class="text-info">{{protein.name}}</span>:</h3>
+    </br>
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
     <tr><th>Experiment</th><th>Peptide</th><th>Modification</th><th>Delta Mass</th><th>Confidence</th><th>Charge State</th><th>Retention Time</th><th>Precursor Mass</th></tr>
@@ -123,23 +132,6 @@ cursor:pointer;
 </tbody>
 </table>
 <hr>
-
-<form action="{% url 'pepsite:allele_search' %}">
-<input class="btn btn-warning" type="submit" value="Make another allele search">
-</form>
-
-<br>
-
-<form action="{% url 'pepsite:index' %}">
-<input class="btn btn-danger" type="submit" value="Return to Haplodome search index">
-</form>
-
-<br>
-
-<form action="{% url 'home' %}">
-<input class="btn btn-danger" type="submit" value="Return to Haplodome home">
-</form>
-
 
 <div id="footer"></div>
 
