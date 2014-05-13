@@ -26,6 +26,8 @@
 
 $(document).ready(function() {
 
+    $('#summary').load( "{% url 'pepsite:model_info' 'Protein' protein.id %}" ); 
+
 $('#footer').load( "{% url 'pepsite:footer' %}" );
     $("#cssTable").tablesorter(); 
 
@@ -70,6 +72,10 @@ cursor:pointer;
 <p class="text-info">Interactive results page</p>
 
 </span>
+</div>
+
+<<div id="summary">
+    
 </div>
 
 

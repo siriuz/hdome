@@ -1,14 +1,24 @@
 from pepsite.models import *
 from django.db.models import Q
 
+def rek(lok):
+    a = abs( lok)
+    for x in j:
+        pass
+
+
+
 class BaseSearch( object ):
-    """
+    """This is a space-saving docstring
 
 
 
     """
+    def fname(self):
+        """docstring for fname"""
+        pass
     def get_model_object( self, obj_type, **conditions ):
-	
+
 	if not len( obj_type.objects.filter( **conditions ) ):
 	    return obj_type( **conditions )
 	    raise ClassNotFoundError( )
@@ -50,8 +60,8 @@ class PeptideSearch( BaseSearch ):
     def get_experiments_from_peptide( self, peptide_obj ):
 	expts = set(Experiment.objects.filter( ion__peptides = peptide_obj ))
 	return expts
-    
-    
+
+
 
 class ProteinSearch( BaseSearch ):
     """
@@ -93,7 +103,7 @@ class ExptAssemble( BaseSearch ):
 
     def extract_uniprot_id( self, crude_id ):
 	return crude_id.split('|')[1]
-    
+
     def get_common_alleles( self, expt_obj ):
 	return Allele.objects.filter( cellline__experiment = expt_obj, antibody__experiments = expt_obj )
-	 
+

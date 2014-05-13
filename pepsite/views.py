@@ -8,8 +8,8 @@ from django.conf import settings
 import mimetypes
 
 import datetime
-from django.http import HttpResponse 
-import tempfile 
+from django.http import HttpResponse
+import tempfile
 
 import zipfile
 
@@ -21,7 +21,7 @@ def index( request ):
 
 @login_required
 def allele_browse( request ):
-	alleles = Allele.objects.all().distinct() 
+	alleles = Allele.objects.all().distinct()
 	context = { 'alleles' : alleles }
 	return render( request, 'pepsite/allele_browse.html', context)
 
@@ -70,7 +70,7 @@ def trial_table( request ):
 def cell_line_expts( request, cell_line_id ):
 	cl1 = CellLine.objects.get( id = cell_line_id )
 	text_input = cl1.name
-	expts = Experiment.objects.filter( cell_line = cl1 )	
+	expts = Experiment.objects.filter( cell_line = cl1 )
 	context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Cell Line' }
 	return render( request, 'pepsite/searched_expts.html', context)
 
@@ -78,7 +78,7 @@ def cell_line_expts( request, cell_line_id ):
 def gene_expts( request, gene_id ):
 	g1 = Gene.objects.get( id = gene_id )
 	text_input = g1.name
-	expts = Experiment.objects.filter( cell_line__alleles__gene = g1, antibody__alleles__gene = g1 ).distinct()	
+	expts = Experiment.objects.filter( cell_line__alleles__gene = g1, antibody__alleles__gene = g1 ).distinct()
 	context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Gene' }
 	return render( request, 'pepsite/searched_expts.html', context)
 
@@ -86,7 +86,7 @@ def gene_expts( request, gene_id ):
 def entity_expts( request, entity_id ):
 	en1 = Entity.objects.get( id = entity_id )
 	text_input = en1.common_name
-	expts = Experiment.objects.filter( cell_line__individuals__entity = en1 )	
+	expts = Experiment.objects.filter( cell_line__individuals__entity = en1 )
 	context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Entity' }
 	if en1.isOrganism:
 	    context['query_on'] = 'Organism'
@@ -97,7 +97,7 @@ def entity_expts( request, entity_id ):
 def peptide_expts( request, peptide_id ):
     peptide = get_object_or_404( Peptide, id = peptide_id )
     text_input = peptide.sequence
-    expts = Experiment.objects.filter( ion__peptides = peptide )	
+    expts = Experiment.objects.filter( ion__peptides = peptide )
     context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Peptide' }
     return render( request, 'pepsite/searched_expts.html', context)
 
@@ -105,7 +105,7 @@ def peptide_expts( request, peptide_id ):
 def antibody_expts( request, antibody_id ):
     ab1 = get_object_or_404( Antibody, id = antibody_id )
     text_input = ab1.name
-    expts = Experiment.objects.filter( antibody = ab1 )	
+    expts = Experiment.objects.filter( antibody = ab1 )
     context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Antibody' }
     return render( request, 'pepsite/searched_expts.html', context)
 
@@ -113,7 +113,7 @@ def antibody_expts( request, antibody_id ):
 def ptm_expts( request, ptm_id ):
     ptm1 = get_object_or_404( Ptm, id = ptm_id )
     text_input = ptm1.description
-    expts = Experiment.objects.filter( ion__idestimate__ptm = ptm1 ).distinct()	
+    expts = Experiment.objects.filter( ion__idestimate__ptm = ptm1 ).distinct()
     context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Post-Translational Modification' }
     return render( request, 'pepsite/searched_expts.html', context)
 
@@ -121,7 +121,7 @@ def ptm_expts( request, ptm_id ):
 def allele_expts( request, allele_id ):
     al1 = get_object_or_404( Allele, id = allele_id )
     text_input = al1.code
-    expts = Experiment.objects.filter( cell_line__alleles = al1, antibody__alleles = al1 )	
+    expts = Experiment.objects.filter( cell_line__alleles = al1, antibody__alleles = al1 )
     context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele' }
     if al1.isSer:
 	context['query_on'] = 'Serotype'
@@ -148,7 +148,7 @@ def expt( request, expt_id ):
 @login_required
 def expt3( request, expt_id ):
     proteins = set(Protein.objects.filter( peptide__ion__experiments__id = expt_id))
-    
+
     context = { 'proteins' : proteins,  }
     return render( request, 'pepsite/expt2.html', context)
 
@@ -175,7 +175,7 @@ def expt2( request, expt_id ):
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
     return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'paginate' : False })
-   
+
 
 
 @login_required
@@ -206,12 +206,12 @@ def expt2_alternate( request, expt_id ):
 
 @login_required
 def send_expt_csv(request, expt_id ):
-	
+
     expt = get_object_or_404( Experiment, id = expt_id )
     filestump = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
     download_name = filestump + "_HaploDome_download.csv"
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments = expt)))
-    
+
 
     with tempfile.NamedTemporaryFile() as f:
 	f.write( 'Protein,Peptide,Modification,Delta Mass,Confidence,Charge State,Retention Time,Precursor Mass,\n' )
@@ -227,7 +227,7 @@ def send_expt_csv(request, expt_id ):
         wrapper      = FileWrapper( f )
         content_type = 'text/csv'
         response     = HttpResponse(wrapper,content_type=content_type)
-        response['Content-Length']      = f.tell()   
+        response['Content-Length']      = f.tell()
         response['Content-Disposition'] = "attachment; filename=%s"%download_name
         return response
 

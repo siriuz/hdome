@@ -1,6 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+def fname():
+    """docstring for fname"""
+    pass
+
+def yello():
+	"""docstring for yello"""
+	pass
 
 class Gene(models.Model):
     name = models.CharField(max_length=200)
@@ -29,7 +36,7 @@ class Allele(models.Model):
 
     class Meta:
     	unique_together = ( ('gene', 'code'), )
-   
+
     def get_experiments( self ):
 	return Experiment.objects.filter( cell_line__alleles = self, antibody__alleles = self  ).distinct()
 
@@ -44,6 +51,9 @@ class Entity(models.Model):
     def __str__(self):
 	return self.sci_name
 
+    def find_cell_lines( self ):
+	return CellLine.objects.filter( individuals__entity = self ).distinct()
+
 
 class Individual(models.Model):
     identifier = models.CharField(max_length=200, unique = True )
@@ -55,7 +65,7 @@ class Individual(models.Model):
     web_ref = models.CharField(max_length=200, unique = True )
 
 
-    
+
 
     def __str__(self):
 	return self.identifier
@@ -73,12 +83,15 @@ class CellLine(models.Model):
     def __str__(self):
 	return self.name
 
+    def get_antibodies_targeting( self ):
+	return Antibody.objects.filter( alleles__cellline = self, experiments__cell_line = self ).distinct()
+
     def get_organisms( self ):
 	return Entity.objects.filter( isOrganism = True, individual__cellline = self )
 
 class Experiment( models.Model ):
     title = models.CharField(max_length=200)
-    description = models.TextField( default = '' )    
+    description = models.TextField( default = '' )
     date_time = models.DateTimeField('date run')
     data = models.FileField()
     cell_line = models.ForeignKey( CellLine )
@@ -98,11 +111,17 @@ class Antibody(models.Model):
     def __str__(self):
 	return self.name
 
+    def get_cell_lines_targeted( self ):
+	return CellLine.objects.filter( alleles__antibody = self, experiment__antibody = self ).distinct()
 
 class Ptm(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField( default = '' )
     mass_change = models.FloatField()
+
+    def fname(self):
+        """docstring for fname"""
+        pass
 
     def __str__(self):
 	return self.description + '|' + str( self.mass_change )
@@ -147,8 +166,17 @@ class IdEstimate(models.Model):
     delta_mass = models.FloatField()
     confidence = models.FloatField()
 
+    def check_ptm(self):
+        """docstring for check_ptm"""
+        if not self.ptm or self.ptm.description in ( '', ' ',
+                '[undefined]', '[undefined] ' ):
+            return False
+        else:
+            return True
+
     def __str__(self):
 	return str(self.delta_mass) + '|' + str(self.confidence)
+
 
 
 
