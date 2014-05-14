@@ -1,5 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
+import datetime
+from django.utils.timezone import utc
+
+
+NOW = models.DateTimeField( default = datetime.datetime.utcnow().replace(tzinfo=utc) )
+
 
 def fname():
     """docstring for fname"""
@@ -92,12 +98,12 @@ class CellLine(models.Model):
 class Experiment( models.Model ):
     title = models.CharField(max_length=200)
     description = models.TextField( default = '' )
-    date_time = models.DateTimeField('date run')
-    data = models.FileField()
+    #date_time = models.DateTimeField('date run')
+    #data = models.FileField()
     cell_line = models.ForeignKey( CellLine )
 
     def __str__(self):
-	return self.title + '|' + str(self.date_time)
+	return self.title
 
     def get_common_alleles( self ):
 	return Allele.objects.filter( antibody__experiments = self, cellline__experiment = self )
@@ -138,11 +144,32 @@ class Protein(models.Model):
 class Peptide(models.Model):
     sequence = models.CharField(max_length=200)
     mass = models.FloatField()
-    proteins = models.ManyToManyField( Protein )
+    proteins = models.ManyToManyField( Protein, through='PepToProt' )
     #ptms = models.ManyToManyField( Ptm )
 
     def __str__(self):
 	return self.sequence
+
+
+class Position(models.Model):
+    """docstring for Position"""
+    initial_res = models.IntegerField()
+    final_res = models.IntegerField()
+
+    def __str__(self):
+        """docstring for __str__"""
+        return "%d-%d" %( self.initial_res, self.final_res )
+        
+
+class PepToProt(models.Model):
+    """docstring for PepToProt"""
+    peptide = models.ForeignKey(Peptide)
+    protein = models.ForeignKey(Protein)
+    positions = models.ManyToManyField(Position)
+
+    def __str__(self):
+        """docstring for __str__"""
+        return self.peptide.sequence + '--' + self.protein.name
 
 
 class Ion(models.Model):
@@ -177,6 +204,87 @@ class IdEstimate(models.Model):
     def __str__(self):
 	return str(self.delta_mass) + '|' + str(self.confidence)
 
+
+class Lodgement(models.Model):
+    """docstring for Lodgement"""
+    datetime = models.DateTimeField( )
+    user = models.ForeignKey(User)
+
+    def __str__(self):
+        return self.user + '|' + self.datetime
+
+class Manufacturer(models.Model):
+    """docstring for Manufacturer"""
+    name = models.CharField(max_length=200)
+
+    def __str__(self):
+        """docstring for __str__"""
+        return self.name
+        
+
+class Instrument(models.Model):
+    """docstring for Instrument"""
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    manufacturer = models.ForeignKey(Manufacturer)
+
+    def __str__(self):
+        """docstring for __str__"""
+        return self.name
+        
+
+class Dataset(models.Model):
+    """docstring for Dataset"""
+    title = models.CharField(max_length=300)
+    datetime = models.DateTimeField( )
+    data = models.FileField()
+    gradient_min = models.FloatField()
+    gradient_max = models.FloatField()
+    gradient_duration = models.FloatField()
+    instrument = models.ForeignKey(Instrument)
+    lodgement = models.ForeignKey(Lodgement)
+
+    def __str__(self):
+        """docstring for __str__"""
+        return self.title 
+
+        
+
+class ExternalDb(models.Model):
+    """docstring for ExternalDb"""
+    db_name = models.CharField(max_length=200)
+    url_stump = models.CharField(max_length=400)
+
+    def __str__(self):
+        """docstring for __str__"""
+        return self.db_name + '|' + self.url_stump
+        
+
+class LookupCode(models.Model):
+    """docstring for Code"""
+    code = models.CharField(max_length=200)
+    externaldb = models.ForeignKey( ExternalDb )
+    protein = models.ForeignKey( Protein, null=True )
+    cell_lines = models.ManyToManyField( CellLine )
+
+    def __str__(self):
+        """docstring for __str__"""
+        return self.code
+
+
+class Publication(models.Model):
+    """docstring for Publication"""
+    title = models.TextField()
+    journal = models.TextField()
+    lodgements = models.ManyToManyField( Lodgement )
+    cell_lines = models.ManyToManyField( CellLine )
+    lookupcode = models.OneToOneField( LookupCode )
+
+    def __str__(self):
+        """docstring for _"""
+        return self.title + '|' + self.journal
+
+        
 
 
 

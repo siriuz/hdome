@@ -212,7 +212,7 @@ class SfTools( object ):
 	    ab_list, cl_name = full_options[1], full_options[2]
 	    cl1 = self.get_model_object( CellLine, name = cl_name) #, date_time = dt1, cell_line = cl1 )
 	    cl1.save()
-	    expt_new = self.get_model_object( Experiment, title = full_options[3], date_time = dt1, cell_line = cl1 )
+	    expt_new = self.get_model_object( Experiment, title = full_options[3], cell_line = cl1 )
 	    expt_new.save()
 	    for ab in ab_list:
 		ab_obj = self.get_model_object( Antibody, name = ab )
@@ -232,7 +232,9 @@ class SfTools( object ):
 	pep1 = self.get_model_object( Peptide, sequence = row[0], mass = 999.99 ) #, protein = prot1 )
         pep1.save()
 	#pep1.proteins.add( prot1 )
-	self.add_if_not_already( prot1, pep1, pep1.proteins )
+        p2p1 = self.get_model_object(PepToProt, peptide = pep1, protein = prot1)
+        p2p1.save()
+	#self.add_if_not_already( prot1, pep1, pep1.proteins )
 	#self.add_if_not_already( ptm, pep1, pep1.ptms )
 	ion1 = self.get_model_object(Ion, charge_state = int(row[6]), precursor_mass = row[7], retention_time = 999.99 )
 	ion1.save()
