@@ -25,56 +25,36 @@
 <script>
 
 
-$(document).ready(function() {
+    $(document).ready(function() {
+        $('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+        $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+        var search = "{{search}}";
 
-$('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+        if ( search === "True" ) {
+            search = true;
+            } else {
+            search = false;
+        }
 
+        var query_on = "{{query_on}}";
+        var queryObjId = "1";
 
-$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+        if ( !search ) {
+            var queryObjId = "{{query_obj.id}}";
+            var a = "1";
+            var url1 = "{% url 'pepsite:model_info' query_on "1"  %}";
+            var url2 = url1.replace( "1", queryObjId );
 
-var search = "{{search}}";
-
-if ( search === "True" ) {
-    search = true;
-}
-
-var query_on = "{{query_on}}";
-
-
-var queryobjid = "1";
-
-
-if !( search ) {
-//query_obj_id = "{{query_obj.id}}";
-$('#summary').load( "{% url 'pepsite:model_info' query_on '1'  %}" );
-}
-
-//$("#summary").html(queryobjid);
-
-$("#cssTable").tablesorter({
-    //stringTo : 'max',
-
-    textExtraction : 'complex',
-
-	sortMultiSortKey: 'none'
-
-    //headers: {
-    //        2: { sorter: "string" },
-    //        3: { sorter: "string" },
-    //        4: { sorter: "string" }
-    //    }, 
-
-    //textExtraction: {
-    //  0: 'complex', // function(node, table, cellIndex){ return $(node).find("a").text(); },
-    //  1: 'complex', //function(node, table, cellIndex){ return $(node).find("a").text(); },
-    //  2: 'complex',//function(node, table, cellIndex){ return $(node).find("a").text(); },
-    //  3: 'complex',//function(node, table, cellIndex){ return $(node).find("a").text(); },
-    //  4: 'complex',//function(node, table, cellIndex){ return $(node).find("a").text(); },
-    //  5: 'complex'//function(node, table, cellIndex){ return $(node).find("a").text(); }
-    //	}
+            //$('#summary').load( "{% url 'pepsite:model_info' query_on "1"  %}" );
+            $('#summary').load( url2 );
+            //$("#summary").html( "{{query_obj.id}}" );
+            }
+            
+        $("#cssTable").tablesorter({
+            textExtraction : 'complex',
+            sortMultiSortKey: 'none'
+        });
     });
-
-});
 
 </script>
 
