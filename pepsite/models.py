@@ -95,12 +95,24 @@ class CellLine(models.Model):
     def get_organisms( self ):
 	return Entity.objects.filter( isOrganism = True, individual__cellline = self )
 
+
+class Lodgement(models.Model):
+    """docstring for Lodgement"""
+    datetime = models.DateTimeField( )
+    title = models.CharField( max_length = 300 )
+    user = models.ForeignKey(User)
+    isFree = models.BooleanField( default = False )
+
+    def __str__(self):
+        return self.datetime.strftime("%Y-%m-%d %H:%M:%S")
+
 class Experiment( models.Model ):
     title = models.CharField(max_length=200)
     description = models.TextField( default = '' )
     #date_time = models.DateTimeField('date run')
     #data = models.FileField()
     cell_line = models.ForeignKey( CellLine )
+    #lodgement = models.ForeignKey( Lodgement )
 
     def __str__(self):
 	return self.title
@@ -204,15 +216,6 @@ class IdEstimate(models.Model):
     def __str__(self):
 	return str(self.delta_mass) + '|' + str(self.confidence)
 
-
-class Lodgement(models.Model):
-    """docstring for Lodgement"""
-    datetime = models.DateTimeField( )
-    user = models.ForeignKey(User)
-
-    def __str__(self):
-        return self.user + '|' + self.datetime
-
 class Manufacturer(models.Model):
     """docstring for Manufacturer"""
     name = models.CharField(max_length=200)
@@ -243,6 +246,7 @@ class Dataset(models.Model):
     gradient_duration = models.FloatField()
     instrument = models.ForeignKey(Instrument)
     lodgement = models.ForeignKey(Lodgement)
+    ions = models.ManyToManyField( Ion )
 
     def __str__(self):
         """docstring for __str__"""
@@ -276,6 +280,7 @@ class Publication(models.Model):
     """docstring for Publication"""
     title = models.TextField()
     journal = models.TextField()
+    display = models.TextField()
     lodgements = models.ManyToManyField( Lodgement )
     cell_lines = models.ManyToManyField( CellLine )
     lookupcode = models.OneToOneField( LookupCode )

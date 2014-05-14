@@ -212,7 +212,9 @@ class SfTools( object ):
 	    ab_list, cl_name = full_options[1], full_options[2]
 	    cl1 = self.get_model_object( CellLine, name = cl_name) #, date_time = dt1, cell_line = cl1 )
 	    cl1.save()
-	    expt_new = self.get_model_object( Experiment, title = full_options[3], cell_line = cl1 )
+            lodgement_new = self.get_model_object( Lodgement, isFree = False, datetime = dt1 )
+            lodgement_new.save()
+	    expt_new = self.get_model_object( Experiment, title = full_options[3], cell_line = cl1, lodgement = lodgement_new )
 	    expt_new.save()
 	    for ab in ab_list:
 		ab_obj = self.get_model_object( Antibody, name = ab )
@@ -221,10 +223,10 @@ class SfTools( object ):
 	        #expt_new.antibody_set.add( ab_obj ) 
 	    for i in range(len(spreadsheet)):
 	        print csv_ss + ',' + str(expt_new) + ',' + str( i ) +',',
-	        self.process_row( spreadsheet[i], expt_new )
+	        self.process_row( spreadsheet[i], expt_new, lodgement_new )
 	
 
-    def process_row(self, rowstring, expt_obj, delim = ',' ):
+    def process_row(self, rowstring, expt_obj, lodg_obj, delim = ',' ):
 	row = rowstring.strip().split( delim )
 	prot1 = self.get_model_object( Protein, prot_id = row[2])#, description = row[3] )
 	prot1.description = row[3]
@@ -249,6 +251,7 @@ class SfTools( object ):
 	    id1 = self.get_model_object(IdEstimate, peptide = pep1, ion = ion1, delta_mass = float(row[5]), confidence = row[4] )
 	    id1.save()
 	    print ',BLANK,',
+	self.add_if_not_already( expt_obj, ion1, ion1.experiments )
 	self.add_if_not_already( expt_obj, ion1, ion1.experiments )
 	#id1 = self.get_model_object(IdEstimate, peptide = pep1, ion = ion1, delta_mass = float(row[5]), confidence = row[4] )
 	#id1.save()
