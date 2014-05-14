@@ -28,6 +28,10 @@ def allele_browse( request ):
 @login_required
 def model_info( request, model_type, model_id ):
 	module = 'pepsite.models'
+        if model_type == 'Serotype':
+            model_type = 'Allele'
+        if model_type == 'Organism':
+            model_type = 'Entity'
 	model = getattr(sys.modules[ module ], model_type  )
 	instance = get_object_or_404( model, id = model_id )
 	def get_class2( obj ):
