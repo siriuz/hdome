@@ -111,7 +111,16 @@ with open( os.path.join( CURDIR, '../../background/compact_alleles.csv' ), 'r' )
     ALLELES = [ b.strip().split(',') for b in f ] 
 ALLELES = [ [b[0], b[1], bool(int(b[2])), int(b[3]), b[4] ] for b in ALLELES ]
 
+MAN1 = Manufacturer( name = 'MZTech' )
+MAN1.save()
 
+INST1 = Instrument( name = 'HiLine-Pro', description = 'MS/MS Spectrometer', manufacturer = MAN1 )
+INST1.save()
+
+UNIPROT = ExternalDb( dbname = 'UniProt', url_stump = 'http://www.uniprot.org/uniprot/')
+UNIPROT.save()
+
+USER1 = User.objects.get( id = 1 )
 
 class Error(Exception):
     """Base class for exceptions in this module."""
@@ -145,6 +154,7 @@ class SfTools( object ):
 	Individual.objects.all().delete()
 	CellLine.objects.all().delete()
 	IdEstimate.objects.all().delete()
+
 
 
     def create_gene_allele_antibody( self, genes_fields, cell_lines_fields, entities_fields, individuals_fields, alleles_fields, antibodies_fields  ):
@@ -212,10 +222,12 @@ class SfTools( object ):
 	    ab_list, cl_name = full_options[1], full_options[2]
 	    cl1 = self.get_model_object( CellLine, name = cl_name) #, date_time = dt1, cell_line = cl1 )
 	    cl1.save()
-            lodgement_new = self.get_model_object( Lodgement, isFree = False, datetime = dt1 )
+            lodgement_new = self.get_model_object( Lodgement, title = 'Lodgement for: ' + full_options[3], isFree = False, datetime = dt1, user = USER1 )
             lodgement_new.save()
-	    expt_new = self.get_model_object( Experiment, title = full_options[3], cell_line = cl1, lodgement = lodgement_new )
+	    expt_new = self.get_model_object( Experiment, title = full_options[3], cell_line = cl1 )
 	    expt_new.save()
+            ds1 = self.get_model_object(Dataset, lodgement = lodgement_new, instrument = INST1, datetime = dt1, gradient_duration = 80., gradient_max = 95., gradient_min = 10. )
+            ds1.save()
 	    for ab in ab_list:
 		ab_obj = self.get_model_object( Antibody, name = ab )
 		ab_obj.save()
@@ -223,14 +235,16 @@ class SfTools( object ):
 	        #expt_new.antibody_set.add( ab_obj ) 
 	    for i in range(len(spreadsheet)):
 	        print csv_ss + ',' + str(expt_new) + ',' + str( i ) +',',
-	        self.process_row( spreadsheet[i], expt_new, lodgement_new )
+	        self.process_row( spreadsheet[i], expt_new, ds1 )
 	
 
-    def process_row(self, rowstring, expt_obj, lodg_obj, delim = ',' ):
+    def process_row(self, rowstring, expt_obj, dataset_obj, delim = ',' ):
 	row = rowstring.strip().split( delim )
-	prot1 = self.get_model_object( Protein, prot_id = row[2])#, description = row[3] )
-	prot1.description = row[3]
+	prot1 = self.get_model_object( Protein, description = row[3])#, description = row[3] )
+	#prot1.description = row[3]
 	prot1.save()
+        code1 = self.get_model_object( LookupCode, code = row[2], protein = prot1, externaldb = UNIPROT )
+        code1.save()
 	pep1 = self.get_model_object( Peptide, sequence = row[0], mass = 999.99 ) #, protein = prot1 )
         pep1.save()
 	#pep1.proteins.add( prot1 )
@@ -252,7 +266,7 @@ class SfTools( object ):
 	    id1.save()
 	    print ',BLANK,',
 	self.add_if_not_already( expt_obj, ion1, ion1.experiments )
-	self.add_if_not_already( expt_obj, ion1, ion1.experiments )
+	self.add_if_not_already( dataset_obj, ion1, ion1.dataset_set )
 	#id1 = self.get_model_object(IdEstimate, peptide = pep1, ion = ion1, delta_mass = float(row[5]), confidence = row[4] )
 	#id1.save()
 	print ',' + prot1.prot_id + ',' + pep1.sequence + ',' + str( ion1.charge_state ) + ','
@@ -306,6 +320,6 @@ if __name__ == "__main__":
     a1 = SfTools()
     a1.clear_all()
     a1.create_gene_allele_antibody( GENES, CELL_LINES, ENTITIES, INDIVIDUALS, ALLELES, ANBS )
-    a1.process_ss_list( SHEET_LIST )
+    a1.process_ss_list( SHEET_LIST[:2] )
     #a1.trial_queries()
 

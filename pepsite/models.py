@@ -146,9 +146,10 @@ class Ptm(models.Model):
 
 
 class Protein(models.Model):
-    prot_id = models.CharField(max_length=200)
+    #prot_id = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
     description = models.TextField( default = '' )
+    sequence = models.TextField( default = '' )
 
     def __str__(self):
 	return self.prot_id + '|' + self.name
@@ -258,6 +259,7 @@ class ExternalDb(models.Model):
     """docstring for ExternalDb"""
     db_name = models.CharField(max_length=200)
     url_stump = models.CharField(max_length=400)
+    url_suffix = models.CharField(max_length=400)
 
     def __str__(self):
         """docstring for __str__"""
