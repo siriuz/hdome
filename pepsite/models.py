@@ -50,12 +50,12 @@ class Allele(models.Model):
 
 class Entity(models.Model):
     common_name = models.CharField(max_length=200)
-    sci_name = models.CharField(max_length=200, unique = True )
+    sci_name = models.CharField(max_length=200 )
     description = models.TextField( default = '' )
     isOrganism = models.BooleanField( default = False )
 
     def __str__(self):
-	return self.sci_name
+	return self.common_name
 
     def find_cell_lines( self ):
 	return CellLine.objects.filter( individuals__entity = self ).distinct()
@@ -68,7 +68,7 @@ class Individual(models.Model):
     entity = models.ForeignKey( Entity, blank=True, null=True )
     isHost = models.BooleanField( default = False )
     isAnonymous = models.BooleanField( default = True )
-    web_ref = models.CharField(max_length=200, unique = True )
+    web_ref = models.CharField(max_length=200 )
 
 
 
@@ -79,12 +79,18 @@ class Individual(models.Model):
 class CellLine(models.Model):
     name = models.CharField(max_length=200)
     tissue_type = models.CharField(max_length=200)
+    isTissue = models.BooleanField(default=False)
     description = models.TextField( default = '' )
     #host = models.ForeignKey( Organism, related_name = 'HostCell' )
     #infecteds = models.ManyToManyField( Organism, related_name = 'Infections' )
     individuals = models.ManyToManyField( Individual )
-    alleles = models.ManyToManyField( Allele )
+    alleles = models.ManyToManyField( Allele, through='Expression' )
     #antibodies = models.ManyToManyField( Antibody )
+
+    class Meta:
+        """docstring for Meta"""
+        unique_together = ('name', 'description')
+            
 
     def __str__(self):
 	return self.name
@@ -95,6 +101,18 @@ class CellLine(models.Model):
     def get_organisms( self ):
 	return Entity.objects.filter( isOrganism = True, individual__cellline = self )
 
+
+class Expression(models.Model):
+    """docstring for Expression"""
+    cell_line = models.ForeignKey( CellLine )
+    allele = models.ForeignKey( Allele )
+    isSilenced = models.BooleanField( default = False )
+    expression_level = models.FloatField( default = 100.0 )
+
+    def __str__(self):
+        """docstring for __str__"""
+        return self.cell_line.name + '|' + self.allele.code
+        
 
 class Lodgement(models.Model):
     """docstring for Lodgement"""
