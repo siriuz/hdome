@@ -17,14 +17,14 @@ def yello():
 
 class Gene(models.Model):
     name = models.CharField(max_length=200)
-    gene_class = models.IntegerField()
+    gene_class = models.IntegerField( null = True )
     description = models.TextField( default = '' )
 
     def __str__(self):
 	return self.name + '|Class-' + str(self.gene_class)
 
 class Allele(models.Model):
-    gene = models.ForeignKey( Gene )
+    gene = models.ForeignKey( Gene, null = True )
     code = models.CharField(max_length=200)
     #dna_type = models.CharField(max_length=200)
     #ser_type = models.CharField(max_length=200)
@@ -170,7 +170,7 @@ class Protein(models.Model):
     sequence = models.TextField( default = '' )
 
     def __str__(self):
-	return self.prot_id + '|' + self.name
+	return self.description
 
 class Peptide(models.Model):
     sequence = models.CharField(max_length=200)
