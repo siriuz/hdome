@@ -74,19 +74,6 @@ SHEETS = (
 
 #print SF[0][:]
 
-
-USER1 = User.objects.get( id = 1 )
-
-
-MAN1 = Manufacturer( name = 'MZTech' )
-MAN1.save()
-
-INST1 = Instrument( name = 'HiLine-Pro', description = 'MS/MS Spectrometer', manufacturer = MAN1 )
-INST1.save()
-
-UNIPROT = ExternalDb( db_name = 'UniProt', url_stump = 'http://www.uniprot.org/uniprot/')
-UNIPROT.save()
-
 ROW = 'VADVVKDAY,,sp|Q15120|PDK3_HUMAN,[Pyruvate dehydrogenase [lipoamide]] kinase isozyme 3; mitochondrial ,99,0.0064,2,978.5087'
 
 
@@ -267,6 +254,18 @@ class BackgroundImports(dbtools.DBTools):
 
     #########################################################################################
 
+    def dummy_boilerplate(self):
+        """docstring for dummy_boilerplate"""
+        sefl.user1 = User.objects.get( id = 1 )
+        self.man1 = self.get_model_object( Manufacturer, name = 'MZTech' )
+        self.man1.save()
+        self.inst1 = self.get_model_object( Instrument, name = 'HiLine-Pro', description = 'MS/MS Spectrometer', manufacturer = MAN1 )
+        self.inst1.save()
+        self.uniprot = self.get_model_object( ExternalDb, db_name = 'UniProt', url_stump = 'http://www.uniprot.org/uniprot/')
+        self.uniprot.save()
+
+
+
     def import_ss(self):
         """docstring for import_ss"""
         pass
@@ -283,11 +282,11 @@ class BackgroundImports(dbtools.DBTools):
 	    ab_list, cl_name = full_options['Abs'], full_options['cell_line']
 	    cl1 = self.get_model_object( CellLine, name = cl_name)
 	    cl1.save()
-            lodgement_new = self.get_model_object( Lodgement, title = full_options['lodgement'], isFree = False, datetime = dt1, user = USER1 )
+            lodgement_new = self.get_model_object( Lodgement, title = full_options['lodgement'], isFree = False, datetime = dt1, user = self.user1 )
             lodgement_new.save()
 	    expt_new = self.get_model_object( Experiment, title = full_options['expt'], cell_line = cl1 )
 	    expt_new.save()
-            ds1 = self.get_model_object(Dataset, lodgement = lodgement_new, instrument = INST1, datetime = dt1, gradient_duration = 80., gradient_max = 95., gradient_min = 10., title = full_options['dataset'] )
+            ds1 = self.get_model_object(Dataset, lodgement = lodgement_new, instrument = self.inst1, datetime = dt1, gradient_duration = 80., gradient_max = 95., gradient_min = 10., title = full_options['dataset'] )
             ds1.save()
 	    for ab in ab_list:
 		ab_obj = self.get_model_object( Antibody, name = ab )
@@ -304,7 +303,7 @@ class BackgroundImports(dbtools.DBTools):
 	prot1 = self.get_model_object( Protein, description = row[3])#, description = row[3] )
 	#prot1.description = row[3]
 	prot1.save()
-        code1 = self.get_model_object( LookupCode, code = row[2], protein = prot1, externaldb = UNIPROT )
+        code1 = self.get_model_object( LookupCode, code = row[2], protein = prot1, externaldb = self.uniprot )
         code1.save()
 	pep1 = self.get_model_object( Peptide, sequence = row[0], mass = 999.99 ) #, protein = prot1 )
         pep1.save()

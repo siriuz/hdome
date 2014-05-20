@@ -150,11 +150,11 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 	{% for idestimate in myides %}
         <tr>
 	<td>
-	<a href="{% url 'pepsite:protein_full_listing' protein.id %}" class="link">{{protein.name}}</a>
+	<a href="{% url 'pepsite:protein_full_listing' protein.id %}" class="link">{{protein.description}}</a>
 	</td>
 	<td>
-	<form action="http://www.uniprot.org/uniprot/{{protein.prot_id}}" target="_blank">
-        <input class="btn btn-primary" type="submit" value="UniProt entry for {{protein.name}}">
+            <form action="{{ protein.get_uniprot_link }}" target="_blank">
+        <input class="btn btn-primary" type="submit" value="UniProt entry for {{protein.description}}">
 	</form>
 	</td>
 	<td>

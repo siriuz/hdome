@@ -169,6 +169,11 @@ class Protein(models.Model):
     description = models.TextField( default = '' )
     sequence = models.TextField( default = '' )
 
+    def get_uniprot_link(self):
+        """docstring for get_uniprot_code"""
+        lu = LookupCode.objects.get( protein = self, externaldb__db_name = 'UniProt' )
+        return lu.externaldb.url_stump + lu.code + lu.externaldb.url_suffix
+
     def __str__(self):
 	return self.description
 
