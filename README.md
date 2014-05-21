@@ -8,6 +8,8 @@ Dependencies:
 	- django-1.7b1
 	- psycopg2
 	- django_extensions
+        - django-guardian
+        - db_ops
 
 
 Note to self, to plot db map:

@@ -117,12 +117,18 @@ class Expression(models.Model):
 class Lodgement(models.Model):
     """docstring for Lodgement"""
     datetime = models.DateTimeField( )
-    title = models.CharField( max_length = 300 )
+    title = models.CharField( max_length = 300, unique = True )
     user = models.ForeignKey(User)
     isFree = models.BooleanField( default = False )
 
     def __str__(self):
         return self.datetime.strftime("%Y-%m-%d %H:%M:%S")
+
+    class Meta:
+        permissions = (
+                ( 'view_lodgement', 'can view lodgement' ),
+                )
+
 
 class Experiment( models.Model ):
     title = models.CharField(max_length=200)
@@ -240,6 +246,14 @@ class IdEstimate(models.Model):
     def __str__(self):
 	return str(self.delta_mass) + '|' + str(self.confidence)
 
+    def get_lodgement(self):
+        """docstring for get_lodgement"""
+        return Lodgement.objects.get( dataset__ions__idestimate = self )
+
+    def get_dataset(self):
+        """docstring for get_lodgement"""
+        return Dataset.objects.get( ions__idestimate = self )
+
 class Manufacturer(models.Model):
     """docstring for Manufacturer"""
     name = models.CharField(max_length=200)
@@ -262,7 +276,7 @@ class Instrument(models.Model):
 
 class Dataset(models.Model):
     """docstring for Dataset"""
-    title = models.CharField(max_length=300)
+    title = models.CharField(max_length=300, unique=True )
     datetime = models.DateTimeField( )
     data = models.FileField()
     gradient_min = models.FloatField()
@@ -271,6 +285,12 @@ class Dataset(models.Model):
     instrument = models.ForeignKey(Instrument)
     lodgement = models.ForeignKey(Lodgement)
     ions = models.ManyToManyField( Ion )
+
+    class Meta:
+        permissions = (
+                ( 'view_dataset', 'can view dataset' ),
+                )
+
 
     def __str__(self):
         """docstring for __str__"""

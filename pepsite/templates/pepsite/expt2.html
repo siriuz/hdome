@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
 
-    {% load staticfiles %}
+      {% load staticfiles %}
+      {% load guardian_tags %}
 
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -103,7 +104,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 </div>
 
 
-    <h2 class="text-primary">Peptides detected</h2>
+<h2 class="text-primary">Peptides detected{% if perms.pepsite.view_dataset %} hello {% else %} noperms {% endif %} </h2>
 
 {% if paginate %}
 
@@ -148,6 +149,8 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
     {% for protein in proteins %}
 {% query_idestimate ion__experiments=expt peptide__proteins=protein as myides %}
 	{% for idestimate in myides %}
+        {% get_obj_perms user for idestimate.get_lodgement as "lodgement_perms" %}
+        {% if "view_lodgement" in lodgement_perms %}
         <tr>
 	<td>
 	<a href="{% url 'pepsite:protein_full_listing' protein.id %}" class="link">{{protein.description}}</a>
@@ -184,6 +187,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 	{{ idestimate.ion.precursor_mass }}
 	</td>
         </tr>
+        {% endif %}
 	{% endfor %}
     {% endfor %}
     </tbody>

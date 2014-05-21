@@ -41,7 +41,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'pepsite',
-	'django_extensions',
+    'django_extensions',
+    'guardian',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -52,6 +53,13 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend', # default
+    'guardian.backends.ObjectPermissionBackend',
+)
+
+ANONYMOUS_USER_ID = -1
 
 ROOT_URLCONF = 'hdome.urls'
 
@@ -96,3 +104,12 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
     #'/var/www/static/',
 )
+
+SHELL_PLUS_PRE_IMPORTS = (
+    ( 'db_ops.dbtools', 'DBTools' ),    
+    #('module.submodule1', ('class1', 'function2')),
+    #('module.submodule2', 'function3'),
+    #('module.submodule3', '*'),
+    #'module.submodule4'
+    )
+

@@ -256,10 +256,10 @@ class BackgroundImports(dbtools.DBTools):
 
     def dummy_boilerplate(self):
         """docstring for dummy_boilerplate"""
-        sefl.user1 = User.objects.get( id = 1 )
+        self.user1 = User.objects.get( id = 1 )
         self.man1 = self.get_model_object( Manufacturer, name = 'MZTech' )
         self.man1.save()
-        self.inst1 = self.get_model_object( Instrument, name = 'HiLine-Pro', description = 'MS/MS Spectrometer', manufacturer = MAN1 )
+        self.inst1 = self.get_model_object( Instrument, name = 'HiLine-Pro', description = 'MS/MS Spectrometer', manufacturer = self.man1 )
         self.inst1.save()
         self.uniprot = self.get_model_object( ExternalDb, db_name = 'UniProt', url_stump = 'http://www.uniprot.org/uniprot/')
         self.uniprot.save()
@@ -282,7 +282,9 @@ class BackgroundImports(dbtools.DBTools):
 	    ab_list, cl_name = full_options['Abs'], full_options['cell_line']
 	    cl1 = self.get_model_object( CellLine, name = cl_name)
 	    cl1.save()
-            lodgement_new = self.get_model_object( Lodgement, title = full_options['lodgement'], isFree = False, datetime = dt1, user = self.user1 )
+            lodgement_new = self.get_model_object( Lodgement, title = full_options['lodgement'], isFree = False)
+            lodgement_new.datetime = dt1
+            lodgement_new.user = self.user1
             lodgement_new.save()
 	    expt_new = self.get_model_object( Experiment, title = full_options['expt'], cell_line = cl1 )
 	    expt_new.save()
@@ -356,6 +358,7 @@ if __name__ == '__main__':
         print ab.id, ab.name, ab.alleles.all()
     for expt in Experiment.objects.all():
         print expt.id, expt.title, expt.cell_line, expt.antibody_set.all()
+    bi1.dummy_boilerplate()
     bi1.process_ss_list( SHEETS )
 
 
