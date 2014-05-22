@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from pepsite.pepsite_forms import *
 from pepsite.make_searches import *
+from pepsite.models import *
 import sys
 import os, tempfile, zipfile
 from django.core.servers.basehttp import FileWrapper
@@ -25,6 +26,19 @@ def allele_browse( request ):
 	context = { 'alleles' : alleles }
 	return render( request, 'pepsite/allele_browse.html', context)
 
+
+@login_required
+def cell_line_browse( request ):
+	cell_lines = CellLine.objects.all().distinct()
+	context = { 'cell_lines' : cell_lines }
+	return render( request, 'pepsite/cell_line_browse.html', context)
+
+@login_required
+def cell_line_tissue_browse( request ):
+	cell_lines = CellLine.objects.all(  ).distinct().order_by( 'tissue_type' )
+	context = { 'cell_lines' : cell_lines }
+	return render( request, 'pepsite/cell_line_tissue_browse.html', context)
+
 @login_required
 def model_info( request, model_type, model_id ):
 	module = 'pepsite.models'
@@ -39,6 +53,66 @@ def model_info( request, model_type, model_id ):
 	instance.get_class2 = get_class2
 	context = { 'model_type' : model_type, 'instance' : instance, 'model_id' : model_id }
 	return render( request, 'pepsite/model_info.html', context)
+
+@login_required
+def cell_line_search( request ):
+    if request.method == 'POST': # If the form has been submitted...
+        form = TextOnlyForm(request.POST) # A form bound to the POST data
+        if form.is_valid(): # All validation rules pass
+	    text_input = form.cleaned_data['text_input']
+	    s1 = CellLineSearch()
+	    expts = s1.get_experiments_basic( text_input )
+	    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True }
+            return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
+	else:
+	    text_input = request.POST['text_input']
+	    context = { 'msg' : text_input }
+            return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
+
+    else:
+        textform = TextOnlyForm()
+        context = { 'textform' : textform }
+        return render( request, 'pepsite/cell_line_search.html', context)
+
+@login_required
+def protein_search( request ):
+    if request.method == 'POST': # If the form has been submitted...
+        form = TextOnlyForm(request.POST) # A form bound to the POST data
+        if form.is_valid(): # All validation rules pass
+	    text_input = form.cleaned_data['text_input']
+	    s1 = CellLineSearch()
+	    expts = s1.get_experiments_basic( text_input )
+	    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True }
+            return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
+	else:
+	    text_input = request.POST['text_input']
+	    context = { 'msg' : text_input }
+            return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
+
+    else:
+        textform = TextOnlyForm()
+        context = { 'textform' : textform }
+        return render( request, 'pepsite/cell_line_search.html', context)
+
+@login_required
+def cell_line_tissue_search( request ):
+    if request.method == 'POST': # If the form has been submitted...
+        form = TextOnlyForm(request.POST) # A form bound to the POST data
+        if form.is_valid(): # All validation rules pass
+	    text_input = form.cleaned_data['text_input']
+	    s1 = CellLineTissueSearch()
+	    expts = s1.get_experiments_basic( text_input )
+	    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True }
+            return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
+	else:
+	    text_input = request.POST['text_input']
+	    context = { 'msg' : text_input }
+            return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
+
+    else:
+        textform = TextOnlyForm()
+        context = { 'textform' : textform }
+        return render( request, 'pepsite/cell_line_tissue_search.html', context)
 
 @login_required
 def allele_search( request ):

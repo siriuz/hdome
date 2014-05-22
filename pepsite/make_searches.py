@@ -29,6 +29,52 @@ class BaseSearch( object ):
 
 
 
+class CellLineSearch( BaseSearch ):
+    """
+
+
+    """
+    def get_experiments_basic( self, cl_term ):
+	expts = set( Experiment.objects.filter( cell_line__name__iexact = cl_term ) )
+	if len( expts ):
+	    return expts
+        else:
+	    return self.get_experiments_startswith( cl_term )
+
+    def get_experiments_startswith( self, cl_term ):
+	expts = set( Experiment.objects.filter( cell_line__name__istartswith = cl_term ) )
+	if len( expts ):
+	    return expts
+        else:
+	    return self.get_experiments_contains( cl_term )
+
+    def get_experiments_contains( self, cl_term ):
+	expts = set( Experiment.objects.filter( cell_line__name__icontains = cl_term ) )
+	return expts
+
+class CellLineTissueSearch( BaseSearch ):
+    """
+
+
+    """
+    def get_experiments_basic( self, cl_term ):
+	expts = set( Experiment.objects.filter( cell_line__tissue_type__iexact = cl_term ) )
+	if len( expts ):
+	    return expts
+        else:
+	    return self.get_experiments_startswith( cl_term )
+
+    def get_experiments_startswith( self, cl_term ):
+	expts = set( Experiment.objects.filter( cell_line__tissue_type__istartswith = cl_term ) )
+	if len( expts ):
+	    return expts
+        else:
+	    return self.get_experiments_contains( cl_term )
+
+    def get_experiments_contains( self, cl_term ):
+	expts = set( Experiment.objects.filter( cell_line__tissue_type__icontains = cl_term ) )
+	return expts
+
 class AlleleSearch( BaseSearch ):
     """
 

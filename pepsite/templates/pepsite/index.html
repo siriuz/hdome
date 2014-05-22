@@ -55,6 +55,28 @@ $('#footer').load( "{% url 'pepsite:footer' %}" );
 
 </p>
 
+
+<p>
+
+<a href="{% url 'pepsite:cell_line_search' %}" class="btn btn-lg btn-primary">Search by Cell Line</a>
+
+
+<a href="{% url 'pepsite:cell_line_browse' %}" class="btn btn-lg btn-info">Browse Cell Lines</a>
+
+
+</p>
+
+<p>
+
+<a href="{% url 'pepsite:cell_line_tissue_search' %}" class="btn btn-lg btn-primary">Search by Tissue type</a>
+
+
+<a href="{% url 'pepsite:cell_line_tissue_browse' %}" class="btn btn-lg btn-info">Browse Tissue types</a>
+
+
+</p>
+
+
 <p>
 
 <a href="{% url 'home' %}" class="btn btn-danger">Return to Haplodome home</a>

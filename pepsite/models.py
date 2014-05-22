@@ -98,6 +98,12 @@ class CellLine(models.Model):
     def get_antibodies_targeting( self ):
 	return Antibody.objects.filter( alleles__cellline = self, experiments__cell_line = self ).distinct()
 
+    def get_antibodies( self ):
+	return Antibody.objects.filter( experiments__cell_line = self ).distinct()
+
+    def get_experiments( self ):
+	return Experiment.objects.filter( cell_line = self ).distinct()
+
     def get_organisms( self ):
 	return Entity.objects.filter( isOrganism = True, individual__cellline = self )
 
