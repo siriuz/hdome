@@ -81,40 +81,29 @@ cursor:pointer;
 </span>
 </div>
 
-{% if cell_lines %}
-    <h3><span class="text-primary">Tissue</span> types available:</h3>
+{% if proteins %}
+    <h3><span class="text-primary">Proteins</span> available:</h3>
     </br>
 
     <table class="table table-striped tablesorter" id="cssTable1">
     <thead>
     <tr>
-        <th>Tissue / Description</th><th>Cell Line</th><th>Antibodies</th><th>Experiments</th>
+        <th>Protein</th><th>Peptides<th>Experiments</th>
     </tr>
     </thead>
     <tbody>
-        {% for cell_line in cell_lines %}
-        <tr>
-        {% if cell_line.tissue_type != '' %}    
+        {% for protein in proteins %}
         <td>
-            {{cell_line.tissue_type}}
+	    <a href="{% url 'pepsite:protein_full_listing' protein.id %}">{{protein.description}}</a> 
         </td>
-        {% else %}
         <td>
-            {{cell_line.description}}
-        </td>
-        {% endif %}
-            <td>
-	    <a href="{% url 'pepsite:cell_line_expts' cell_line.id %}">{{cell_line.name}}</a> 
+            {% for peptide in protein.peptide_set.all %}
+            <a href="{% url 'pepsite:peptide_expts' peptide.id %}">{{peptide.sequence}}</a>
+            {% endfor %} 
 	</td>
 	<td>
 	
-	{% for ab in cell_line.get_antibodies %}
-		<a href="{% url 'pepsite:antibody_expts' ab.id %}">{{ ab.name }}</a>
-	{% endfor %}
-	
-	</td>
-	<td>
-	{% for expt in cell_line.get_experiments %}
+	{% for expt in protein.get_experiments %}
 		<a href="{% url 'pepsite:expt2' expt.id %}">{{ expt.title }}</a>
 	{% endfor %}
 	
@@ -127,7 +116,7 @@ cursor:pointer;
 
     <br><hr><br>
 {% else %}
-  <h3 class="text-danger">No Cell Lines found</h3>
+  <h3 class="text-danger">No Proteins found</h3>
   <br> 
 {% endif %}
 

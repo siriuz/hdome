@@ -26,6 +26,11 @@ def allele_browse( request ):
 	context = { 'alleles' : alleles }
 	return render( request, 'pepsite/allele_browse.html', context)
 
+@login_required
+def protein_browse( request ):
+	proteins = Protein.objects.all().distinct()
+	context = { 'proteins' : proteins }
+	return render( request, 'pepsite/protein_browse.html', context)
 
 @login_required
 def cell_line_browse( request ):
@@ -62,7 +67,7 @@ def cell_line_search( request ):
 	    text_input = form.cleaned_data['text_input']
 	    s1 = CellLineSearch()
 	    expts = s1.get_experiments_basic( text_input )
-	    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True }
+            context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Cell Line'  }
             return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
 	else:
 	    text_input = request.POST['text_input']
@@ -80,19 +85,19 @@ def protein_search( request ):
         form = TextOnlyForm(request.POST) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
 	    text_input = form.cleaned_data['text_input']
-	    s1 = CellLineSearch()
-	    expts = s1.get_experiments_basic( text_input )
-	    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True }
-            return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
+	    s1 = ProteinsSearch()
+	    expts, proteins = s1.get_experiments_basic( text_input )
+            context = { 'msg' : expts, 'text_input' : text_input, 'proteins' : proteins, 'query_on' : 'Protein', 'search' : True }
+            return render( request, 'pepsite/protein_searched_expts.html', context ) # Redirect after POST
 	else:
 	    text_input = request.POST['text_input']
 	    context = { 'msg' : text_input }
-            return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
+            return render( request, 'pepsite/protein_searched_expts.html', context ) # Redirect after POST
 
     else:
         textform = TextOnlyForm()
         context = { 'textform' : textform }
-        return render( request, 'pepsite/cell_line_search.html', context)
+        return render( request, 'pepsite/protein_search.html', context)
 
 @login_required
 def cell_line_tissue_search( request ):
@@ -102,7 +107,7 @@ def cell_line_tissue_search( request ):
 	    text_input = form.cleaned_data['text_input']
 	    s1 = CellLineTissueSearch()
 	    expts = s1.get_experiments_basic( text_input )
-	    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True }
+            context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Tissue type' }
             return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
 	else:
 	    text_input = request.POST['text_input']

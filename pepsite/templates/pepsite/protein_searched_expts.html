@@ -132,13 +132,23 @@ cursor:pointer;
     <thead>
     <tr>
         <th>Experiment</th>
+        <th>Proteins matching search term</th>
         <th>Cell Line</th><th>Organism(s)</th><th>Antibody(ies)</th><th>Alleles</th><th>Serotypes</th>
     </tr>
     </thead>
     <tbody>
     {% for exp in msg %}
         <tr>
-	<td><a href="{% url 'pepsite:expt2' exp.id %}">{{ exp.title }}</a></td>
+            <td><a href="{% url 'pepsite:expt2' exp.id %}">{{ exp.title }}</a></td>
+
+            <td>
+                {% for protein in proteins %}
+                {% if protein in exp.get_proteins %}
+                <a href="{% url 'pepsite:protein_full_listing' protein.id %}">{{ protein.description }}</a>
+                {% endif %}
+                {% endfor %}
+            </td>
+
 
         <td>
 	    <a href="{% url 'pepsite:cell_line_expts' exp.cell_line.id %}">{{exp.cell_line.name}}</a> 

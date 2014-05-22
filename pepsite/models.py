@@ -150,6 +150,10 @@ class Experiment( models.Model ):
     def get_common_alleles( self ):
 	return Allele.objects.filter( antibody__experiments = self, cellline__experiment = self )
 
+    def get_proteins(self):
+        """docstring for get_proteins"""
+        return Protein.objects.filter( peptide__ion__experiments = self )
+
 class Antibody(models.Model):
     name = models.CharField(max_length=200, unique = True )
     description = models.TextField( default = '' )
@@ -188,6 +192,10 @@ class Protein(models.Model):
 
     def __str__(self):
 	return self.description
+    
+    def get_experiments( self ):
+	return Experiment.objects.filter( ion__peptides__proteins = self ).distinct()
+
 
 class Peptide(models.Model):
     sequence = models.CharField(max_length=200)

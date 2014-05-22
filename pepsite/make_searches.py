@@ -29,6 +29,32 @@ class BaseSearch( object ):
 
 
 
+class ProteinsSearch( BaseSearch ):
+    """
+
+
+    """
+    def get_experiments_basic( self, pr_term ):
+	expts = set( Experiment.objects.filter( ion__peptides__proteins__description__iexact = pr_term ) )
+	proteins = set( Protein.objects.filter( description__iexact = pr_term ) )
+	if len( expts ):
+	    return ( expts, proteins )
+        else:
+	    return self.get_experiments_startswith( pr_term )
+
+    def get_experiments_startswith( self, pr_term ):
+	expts = set( Experiment.objects.filter( ion__peptides__proteins__description__istartswith = pr_term ) )
+	proteins = set( Protein.objects.filter( description__istartswith = pr_term ) )
+	if len( expts ):
+	    return ( expts, proteins )
+        else:
+	    return self.get_experiments_contains( pr_term )
+
+    def get_experiments_contains( self, pr_term ):
+	expts = set( Experiment.objects.filter( ion__peptides__proteins__description__icontains = pr_term ) )
+	proteins = set( Protein.objects.filter( description__icontains = pr_term ) )
+	return ( expts, proteins )
+
 class CellLineSearch( BaseSearch ):
     """
 
@@ -72,7 +98,7 @@ class CellLineTissueSearch( BaseSearch ):
 	    return self.get_experiments_contains( cl_term )
 
     def get_experiments_contains( self, cl_term ):
-	expts = set( Experiment.objects.filter( cell_line__tissue_type__icontains = cl_term ) )
+	expts = set( Experiment.objects.filter( cell_line__name__icontains = cl_term ) )
 	return expts
 
 class AlleleSearch( BaseSearch ):
