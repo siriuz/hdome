@@ -17,10 +17,16 @@
     <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
     <link href="{% static "css/tablesorter_style.css" %}" rel="stylesheet">
 
-		<script src="{% static "js/jquery-2.0.3.min.js" %}">
-                </script>
+		<script src="{% static "js/jquery-2.0.3.min.js" %}"></script>
                 <script src="{% static "js/composite_search.js" %}"></script>
 
+
+                <style>
+
+                    #yourform {
+                        border : none;
+  }
+</style>
 
 <script>
 
@@ -40,38 +46,72 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
         var intId = $("#buildyourform div").length + 1;
         var fieldWrapper = $("<div class=\"fieldwrapper\" id=\"field" + intId + "\"/>");
         var fName = $("<input type=\"text\" class=\"fieldname\" />");
-        var fType = $("<select class=\"fieldtype\"><option value=\"checkbox\">Checked</option><option value=\"textbox\">Text</option><option value=\"textarea\">Paragraph</option></select>");
-        var removeButton = $("<input type=\"button\" class=\"remove\" value=\"-\" />");
+        var fType1 = $("<select class=\"fieldtype1\"><option value=\"ex_title\">Experiment title</option><option value=\"pr_name\">Protein name</option><option value=\"tissue\">Tissue type</option><option value=\"allele\">Allele / Serotype</option><option value=\"cell_line\">Cell Line</option></select>");
+        var fType2 = $("<select class=\"fieldtype2\"><option value=\"checkbox\">Checked</option><option value=\"textbox\">Text</option><option value=\"textarea\">Paragraph</option></select>");
+        var removeButton = $("<input type=\"button\" class=\"remove btn btn-danger\" value=\"Remove this term\" />");
         removeButton.click(function() {
             $(this).parent().remove();
         });
+        fieldWrapper.append(fType1);
         fieldWrapper.append(fName);
-        fieldWrapper.append(fType);
+        //fieldWrapper.append(fType1);
+        //fieldWrapper.append(fType2);
         fieldWrapper.append(removeButton);
         $("#buildyourform").append(fieldWrapper);
     });
     $("#preview").click(function() {
         $("#yourform").remove();
-        var fieldSet = $("<fieldset id=\"yourform\"><legend>Your Form</legend></fieldset>");
+        var fieldSet = $("<fieldset id=\"yourform\" hidden><legend></legend></fieldset>");
         $("#buildyourform div").each(function() {
-            var id = "input" + $(this).attr("id").replace("field","");
-            var label = $("<label for=\"" + id + "\">" + $(this).find("input.fieldname").first().val() + "</label>");
-            var input;
-            switch ($(this).find("select.fieldtype").first().val()) {
+            var id = "input_" + $(this).attr("id").replace("field","");
+            //var label = $("<label for=\"" + id + "\">" + $(this).find("input.fieldname").first().val() + "</label>");
+            var value = $(this).find("input.fieldname").first().val() ;
+            var input1;
+            var input2;
+            switch ($(this).find("select.fieldtype1").first().val()) {
+                case "ex_title":
+                    input1 = $("<input type=\"hidden\" id=\"checkbox" + id + "\" name=\"" + id + "_1\" value=\"ex_title\"/>");
+                    input2 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_2\" value=\"" + value + "\" />");
+                    break;
+                case "pr_name":
+                    input1 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_1\"  value=\"pr_name\"/>");
+                    input2 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_2\" value=\"" + value + "\" />");
+                    break;
+                case "tissue":
+                    input1 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_1\" value=\"tissue\"/>");
+                    input2 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_2\" value=\"" + value + "\" />");
+                    break;    
+                case "cell_line":
+                    input1 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_1\" value=\"cell_line\"/>");
+                    input2 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_2\" value=\"" + value + "\" />");
+                    break;    
+                case "allele":
+                    input1 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_1\" value=\"allele\"/>");
+                    input2 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_2\" value=\"" + value + "\" />");
+                    break;    
+                }
+            /*switch ($(this).find("select.fieldtype2").first().val()) {
                 case "checkbox":
-                    input = $("<input type=\"checkbox\" id=\"" + id + "\" name=\"" + id + "\" />");
+                    input2 = $("<input type=\"checkbox\" id=\"checkbox" + id + "\" name=\"check" + id + "_2\" />");
                     break;
                 case "textbox":
-                    input = $("<input type=\"text\" id=\"" + id + "\" name=\"" + id + "\" />");
+                    input2 = $("<input type=\"text\" id=\"text" + id + "\" name=\"txt" + id + "_2\" />");
                     break;
                 case "textarea":
-                    input = $("<textarea id=\"" + id + "\" name=\"" + id + "\" ></textarea>");
+                    input2 = $("<textarea id=\"textarea" + id + "\" name=\"tb" + id + "_2\" ></textarea>");
                     break;    
-            }
-            fieldSet.append(label);
-            fieldSet.append(input);
+                }
+                */
+
+            //fieldSet.append(label);
+            fieldSet.append(input1);
+            fieldSet.append(input2);
         });
-        $("#formloc").append(fieldSet);
+
+    //fieldSet.append( "<input class=\"btn btn-lg btn-success\" type=\"submit\" value=\"Submit\"></input>" );
+    $("#formloc").append(fieldSet);
+    $("#formloc").submit();
+
     });
 
 });
@@ -113,10 +153,16 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 <fieldset id="buildyourform">
     <legend>Build your own form!</legend>
 </fieldset>
-<input type="button" value="Preview form" class="add" id="preview" />
-<input type="button" value="Add a field" class="add" id="add" />
+<input type="button" class="btn btn-info" value="Add a field" class="add" id="add" />
+<input type="button" class="btn btn-lg btn-success" value="Search on these terms" class="add" id="preview" />
 
-<div id="formloc"></div>
+
+<form id="formloc" method="POST" action="{% url 'pepsite:comp_results' %}">
+
+        {% csrf_token %}
+
+
+</form>
 
 
 <div id="footer"></div>

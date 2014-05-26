@@ -21,6 +21,27 @@ def index( request ):
 	return render( request, 'pepsite/index.html', {})
 
 @login_required
+def formdump( request ):
+        context = { 'post' : request.POST.dict() }
+	return render( request, 'pepsite/formdump.html', context )
+
+@login_required
+def comp_results( request ):
+        post = request.POST.dict()
+        newdic = {}
+        for k in post.keys():
+            newdic[k] = post[k]
+            if 'input' in str(k) and str(k[-2:]) == '_1':
+                qtype = post[k]
+                qstring = post[ k[:-2] + '_2' ]
+                ordinal =  k.split('_')[1]
+                newdic[ordinal] = { 'qtype' : qtype, 'qstring' : qstring }
+        context = { 'post' : newdic }
+	return render( request, 'pepsite/formdump.html', context )
+
+
+
+@login_required
 def allele_browse( request ):
 	alleles = Allele.objects.all().distinct()
 	context = { 'alleles' : alleles }

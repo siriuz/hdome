@@ -4,6 +4,8 @@ from pepsite import views
 
 urlpatterns = patterns('',
     url(r'^$', views.index, name='index'),
+    url(r'^formdump$', views.formdump, name='formdump'),
+    url(r'^comp_results$', views.comp_results, name='comp_results'),
     url(r'^model_info/(?P<model_type>(Protein|Peptide|IdEstimate|Ptm|Ion|Experiment|Antibody|CellLine|Allele|Serotype|Gene|Individual|Entity|Organism))/(?P<model_id>\d+)/$', views.model_info, name='model_info'),
     url(r'^composite_search$', views.composite_search, name='composite_search'),
     url(r'^allele_search$', views.allele_search, name='allele_search'),
