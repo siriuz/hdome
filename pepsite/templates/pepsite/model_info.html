@@ -384,17 +384,31 @@
             </tr>
             <tr>
                 <th>
-                    Alleles
+                    Common Alleles
                 </th>
                 <td>
                     {% for allele in instance.alleles.all %}
-                    <a href="{% url 'pepsite:allele_expts' allele.id %}">{{allele.code}}</a>
+                        {% if not allele.isSer %}
+                            <a href="{% url 'pepsite:allele_expts' allele.id %}">{{allele.code}}</a>
+                        {% endif %}
                     {% endfor %}
                 </td>
             </tr>
             <tr>
                 <th>
-                    Antibodies with common Alleles
+                    Common Serotypes
+                </th>
+                <td>
+                    {% for allele in instance.alleles.all %}
+                        {% if allele.isSer %}
+                            <a href="{% url 'pepsite:allele_expts' allele.id %}">{{allele.code}}</a>
+                        {% endif %}
+                    {% endfor %}
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    Antibodies with common Alleles / Serotypes
                 </th>
                 <td>
                     {% for ab in instance.get_antibodies_targeting %}

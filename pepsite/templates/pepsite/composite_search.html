@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+
+    {% load staticfiles %}
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="../../docs-assets/ico/favicon.png">
+
+    <title>HaploDome - Welcome</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/tablesorter_style.css" %}" rel="stylesheet">
+
+		<script src="{% static "js/jquery-2.0.3.min.js" %}">
+                </script>
+                <script src="{% static "js/composite_search.js" %}"></script>
+
+
+<script>
+
+
+    $(document).ready(function() {
+
+
+
+
+
+
+$('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+
+            $("#add").click(function() {
+        var intId = $("#buildyourform div").length + 1;
+        var fieldWrapper = $("<div class=\"fieldwrapper\" id=\"field" + intId + "\"/>");
+        var fName = $("<input type=\"text\" class=\"fieldname\" />");
+        var fType = $("<select class=\"fieldtype\"><option value=\"checkbox\">Checked</option><option value=\"textbox\">Text</option><option value=\"textarea\">Paragraph</option></select>");
+        var removeButton = $("<input type=\"button\" class=\"remove\" value=\"-\" />");
+        removeButton.click(function() {
+            $(this).parent().remove();
+        });
+        fieldWrapper.append(fName);
+        fieldWrapper.append(fType);
+        fieldWrapper.append(removeButton);
+        $("#buildyourform").append(fieldWrapper);
+    });
+    $("#preview").click(function() {
+        $("#yourform").remove();
+        var fieldSet = $("<fieldset id=\"yourform\"><legend>Your Form</legend></fieldset>");
+        $("#buildyourform div").each(function() {
+            var id = "input" + $(this).attr("id").replace("field","");
+            var label = $("<label for=\"" + id + "\">" + $(this).find("input.fieldname").first().val() + "</label>");
+            var input;
+            switch ($(this).find("select.fieldtype").first().val()) {
+                case "checkbox":
+                    input = $("<input type=\"checkbox\" id=\"" + id + "\" name=\"" + id + "\" />");
+                    break;
+                case "textbox":
+                    input = $("<input type=\"text\" id=\"" + id + "\" name=\"" + id + "\" />");
+                    break;
+                case "textarea":
+                    input = $("<textarea id=\"" + id + "\" name=\"" + id + "\" ></textarea>");
+                    break;    
+            }
+            fieldSet.append(label);
+            fieldSet.append(input);
+        });
+        $("#formloc").append(fieldSet);
+    });
+
+});
+
+</script>
+
+
+</head>
+
+<br>
+
+<div class="container">
+<div class="jumbotron">
+<span class="text-center">
+
+<h1>Create a <span class="text-primary">composite</span> search</h1>
+<p class="text-info">Search by multiple terms</p>
+
+</span>
+</div>
+
+<div id="header"></div>
+
+<form action="{% url 'pepsite:composite_search' %}" method="post">
+
+        {% csrf_token %}
+
+    <div class="fieldWrapper">
+        {{ textform.subject.errors }}
+        <label for="id_subject">Enter Cell Line name:</label>
+        {{ textform.text_input }}
+    </div>
+<input class="btn btn-lg btn-success" type="submit" value="Search"></input>
+</form>
+<hr>
+<br>
+
+
+<fieldset id="buildyourform">
+    <legend>Build your own form!</legend>
+</fieldset>
+<input type="button" value="Preview form" class="add" id="preview" />
+<input type="button" value="Add a field" class="add" id="add" />
+
+<div id="formloc"></div>
+
+
+<div id="footer"></div>
+
+</div>
+</html>

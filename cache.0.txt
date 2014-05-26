@@ -1,0 +1,285 @@
+ID   A0QSU3_MYCS2            Unreviewed;       513 AA.
+AC   A0QSU3;
+DT   09-JAN-2007, integrated into UniProtKB/TrEMBL.
+DT   09-JAN-2007, sequence version 1.
+DT   14-MAY-2014, entry version 65.
+DE   RecName: Full=Inosine-5'-monophosphate dehydrogenase;
+DE            Short=IMP dehydrogenase;
+DE            Short=IMPD;
+DE            Short=IMPDH;
+DE            EC=1.1.1.205;
+GN   Name=guaB; OrderedLocusNames=MSMEG_1602;
+OS   Mycobacterium smegmatis (strain ATCC 700084 / mc(2)155).
+OC   Bacteria; Actinobacteria; Actinobacteridae; Actinomycetales;
+OC   Corynebacterineae; Mycobacteriaceae; Mycobacterium.
+OX   NCBI_TaxID=246196;
+RN   [1]
+RP   NUCLEOTIDE SEQUENCE [LARGE SCALE GENOMIC DNA].
+RC   STRAIN=ATCC 700084 / mc(2)155;
+RA   Fleischmann R.D., Dodson R.J., Haft D.H., Merkel J.S., Nelson W.C.,
+RA   Fraser C.M.;
+RL   Submitted (OCT-2006) to the EMBL/GenBank/DDBJ databases.
+CC   -!- FUNCTION: Catalyzes the conversion of inosine 5'-phosphate (IMP)
+CC       to xanthosine 5'-phosphate (XMP), the first committed and rate-
+CC       limiting step in the de novo synthesis of guanine nucleotides, and
+CC       therefore plays an important role in the regulation of cell growth
+CC       (By similarity).
+CC   -!- CATALYTIC ACTIVITY: Inosine 5'-phosphate + NAD(+) + H(2)O =
+CC       xanthosine 5'-phosphate + NADH.
+CC   -!- COFACTOR: Potassium (By similarity).
+CC   -!- ENZYME REGULATION: Mycophenolic acid (MPA) is a non-competitive
+CC       inhibitor that prevents formation of the closed enzyme
+CC       conformation by binding to the same site as the amobile flap. In
+CC       contrast, mizoribine monophosphate (MZP) is a competitive
+CC       inhibitor that induces the closed conformation. MPA is a potent
+CC       inhibitor of mammalian IMPDHs but a poor inhibitor of the
+CC       bacterial enzymes. MZP is a more potent inhibitor of bacterial
+CC       IMPDH (By similarity).
+CC   -!- PATHWAY: Purine metabolism; XMP biosynthesis via de novo pathway;
+CC       XMP from IMP: step 1/1.
+CC   -!- SUBUNIT: Homotetramer (By similarity).
+CC   -!- SIMILARITY: Belongs to the IMPDH/GMPR family.
+CC   -!- SIMILARITY: Contains 2 CBS domains.
+CC   -----------------------------------------------------------------------
+CC   Copyrighted by the UniProt Consortium, see http://www.uniprot.org/terms
+CC   Distributed under the Creative Commons Attribution-NoDerivs License
+CC   -----------------------------------------------------------------------
+DR   EMBL; CP000480; ABK69632.1; -; Genomic_DNA.
+DR   RefSeq; YP_885981.1; NC_008596.1.
+DR   ProteinModelPortal; A0QSU3; -.
+DR   STRING; 246196.MSMEG_1602; -.
+DR   EnsemblBacteria; ABK69632; ABK69632; MSMEG_1602.
+DR   GeneID; 4535458; -.
+DR   KEGG; msm:MSMEG_1602; -.
+DR   PATRIC; 18075663; VBIMycSme59918_1588.
+DR   eggNOG; COG0517; -.
+DR   HOGENOM; HOG000165755; -.
+DR   KO; K00088; -.
+DR   OMA; FQADVRS; -.
+DR   OrthoDB; EOG6GTZPV; -.
+DR   BioCyc; MSME246196:GJ4Y-1602-MONOMER; -.
+DR   UniPathway; UPA00601; UER00295.
+DR   GO; GO:0030554; F:adenyl nucleotide binding; IEA:InterPro.
+DR   GO; GO:0003938; F:IMP dehydrogenase activity; IEA:UniProtKB-HAMAP.
+DR   GO; GO:0046872; F:metal ion binding; IEA:UniProtKB-HAMAP.
+DR   GO; GO:0006177; P:GMP biosynthetic process; IEA:UniProtKB-HAMAP.
+DR   Gene3D; 3.20.20.70; -; 1.
+DR   HAMAP; MF_01964; IMPDH; 1.
+DR   InterPro; IPR013785; Aldolase_TIM.
+DR   InterPro; IPR000644; CBS_dom.
+DR   InterPro; IPR005990; IMP_DH.
+DR   InterPro; IPR015875; IMP_DH/GMP_Rdtase_CS.
+DR   InterPro; IPR001093; IMP_DH_GMPRt.
+DR   Pfam; PF00571; CBS; 2.
+DR   Pfam; PF00478; IMPDH; 1.
+DR   PIRSF; PIRSF000130; IMPDH; 1.
+DR   SMART; SM00116; CBS; 2.
+DR   TIGRFAMs; TIGR01302; IMP_dehydrog; 1.
+DR   PROSITE; PS51371; CBS; 2.
+DR   PROSITE; PS00487; IMP_DH_GMP_RED; 1.
+PE   3: Inferred from homology;
+KW   CBS domain; Complete proteome; GMP biosynthesis; Metal-binding; NAD;
+KW   Oxidoreductase; Potassium; Purine biosynthesis; Reference proteome;
+KW   Repeat.
+FT   DOMAIN      113    169       CBS 1 (By similarity).
+FT   DOMAIN      173    230       CBS 2 (By similarity).
+FT   NP_BIND     318    320       NAD (By similarity).
+FT   REGION      358    360       IMP binding (By similarity).
+FT   REGION      381    382       IMP binding (By similarity).
+FT   REGION      405    409       IMP binding (By similarity).
+FT   ACT_SITE    325    325       Thioimidate intermediate (By similarity).
+FT   METAL       320    320       Potassium; via carbonyl oxygen (By
+FT                                similarity).
+FT   METAL       322    322       Potassium; via carbonyl oxygen (By
+FT                                similarity).
+FT   METAL       325    325       Potassium; via carbonyl oxygen (By
+FT                                similarity).
+FT   METAL       495    495       Potassium; via carbonyl oxygen; shared
+FT                                with tetrameric partner (By similarity).
+FT   METAL       496    496       Potassium; via carbonyl oxygen; shared
+FT                                with tetrameric partner (By similarity).
+FT   METAL       497    497       Potassium; via carbonyl oxygen; shared
+FT                                with tetrameric partner (By similarity).
+FT   BINDING     267    267       NAD (By similarity).
+FT   BINDING     323    323       IMP (By similarity).
+FT   BINDING     442    442       IMP (By similarity).
+SQ   SEQUENCE   513 AA;  53332 MW;  160D02EAA40E23AC CRC64;
+     MSIAESSVPI AVPVPTGGDD PTKVAMLGLT FDDVLLLPAA SDVVPATADT SSQLTKRIRL
+     RVPLVSSAMD TVTESRMAIA MARAGGMGVL HRNLPVAEQA GQVETVKRSE AGMVTDPVTC
+     SPDNTLAEVD AMCARFRISG LPVVDDTGEL VGIITNRDMR FEVDQSKPVS EVMTKAPLIT
+     AKEGVSAEAA LGLLRRHKIE KLPIVDGHGK LTGLITVKDF VKTEQFPLST KDSDGRLLVG
+     AAVGVGDDAW TRAMTLVDAG VDVLIVDTAH AHNRGVLDMV SRLKQAVGER VDVVGGNVAT
+     RAAAAALVEA GADAVKVGVG PGSICTTRVV AGVGAPQITA ILEAVAACKP YGVPVIADGG
+     LQYSGDIAKA LAAGASTAML GSLLAGTAES PGELIFVNGK QFKSYRGMGS LGAMQGRGAA
+     KSYSKDRYFQ DDVLSEDKLV PEGIEGRVPF RGPLGTVIHQ LTGGLRAAMG YTGSATIEQL
+     QQAQFVQITA AGLKESHPHD ITMTVEAPNY YTR
+//
+ID   EFG_MYCA1               Reviewed;         701 AA.
+AC   A0QL36;
+DT   15-JAN-2008, integrated into UniProtKB/Swiss-Prot.
+DT   09-JAN-2007, sequence version 1.
+DT   14-MAY-2014, entry version 53.
+DE   RecName: Full=Elongation factor G;
+DE            Short=EF-G;
+GN   Name=fusA; OrderedLocusNames=MAV_4490;
+OS   Mycobacterium avium (strain 104).
+OC   Bacteria; Actinobacteria; Actinobacteridae; Actinomycetales;
+OC   Corynebacterineae; Mycobacteriaceae; Mycobacterium;
+OC   Mycobacterium avium complex (MAC).
+OX   NCBI_TaxID=243243;
+RN   [1]
+RP   NUCLEOTIDE SEQUENCE [LARGE SCALE GENOMIC DNA].
+RC   STRAIN=104;
+RA   Fleischmann R.D., Dodson R.J., Haft D.H., Merkel J.S., Nelson W.C.,
+RA   Fraser C.M.;
+RL   Submitted (OCT-2006) to the EMBL/GenBank/DDBJ databases.
+CC   -!- FUNCTION: Catalyzes the GTP-dependent ribosomal translocation step
+CC       during translation elongation. During this step, the ribosome
+CC       changes from the pre-translocational (PRE) to the post-
+CC       translocational (POST) state as the newly formed A-site-bound
+CC       peptidyl-tRNA and P-site-bound deacylated tRNA move to the P and E
+CC       sites, respectively. Catalyzes the coordinated movement of the two
+CC       tRNA molecules, the mRNA and conformational changes in the
+CC       ribosome (By similarity).
+CC   -!- SUBCELLULAR LOCATION: Cytoplasm (By similarity).
+CC   -!- SIMILARITY: Belongs to the GTP-binding elongation factor family.
+CC       EF-G/EF-2 subfamily.
+CC   -----------------------------------------------------------------------
+CC   Copyrighted by the UniProt Consortium, see http://www.uniprot.org/terms
+CC   Distributed under the Creative Commons Attribution-NoDerivs License
+CC   -----------------------------------------------------------------------
+DR   EMBL; CP000479; ABK67903.1; -; Genomic_DNA.
+DR   RefSeq; YP_883624.1; NC_008595.1.
+DR   ProteinModelPortal; A0QL36; -.
+DR   SMR; A0QL36; 7-695.
+DR   STRING; 243243.MAV_4490; -.
+DR   EnsemblBacteria; ABK67903; ABK67903; MAV_4490.
+DR   GeneID; 4527454; -.
+DR   KEGG; mav:MAV_4490; -.
+DR   PATRIC; 17990675; VBIMycAvi38287_4411.
+DR   eggNOG; COG0480; -.
+DR   HOGENOM; HOG000231585; -.
+DR   KO; K02355; -.
+DR   OMA; GAKYEVQ; -.
+DR   OrthoDB; EOG6X6RBF; -.
+DR   BioCyc; MAVI243243:GH3Y-4490-MONOMER; -.
+DR   GO; GO:0005737; C:cytoplasm; IEA:UniProtKB-SubCell.
+DR   GO; GO:0005525; F:GTP binding; IEA:UniProtKB-HAMAP.
+DR   GO; GO:0003924; F:GTPase activity; IEA:InterPro.
+DR   GO; GO:0003746; F:translation elongation factor activity; IEA:UniProtKB-HAMAP.
+DR   Gene3D; 3.30.230.10; -; 1.
+DR   Gene3D; 3.30.70.240; -; 1.
+DR   Gene3D; 3.40.50.300; -; 1.
+DR   HAMAP; MF_00054_B; EF_G_EF_2_B; 1.
+DR   InterPro; IPR000795; EF_GTP-bd_dom.
+DR   InterPro; IPR009022; EFG_III-V.
+DR   InterPro; IPR000640; EFG_V.
+DR   InterPro; IPR027417; P-loop_NTPase.
+DR   InterPro; IPR020568; Ribosomal_S5_D2-typ_fold.
+DR   InterPro; IPR014721; Ribosomal_S5_D2-typ_fold_subgr.
+DR   InterPro; IPR005225; Small_GTP-bd_dom.
+DR   InterPro; IPR009000; Transl_B-barrel.
+DR   InterPro; IPR004540; Transl_elong_EFG/EF2.
+DR   InterPro; IPR005517; Transl_elong_EFG/EF2_IV.
+DR   InterPro; IPR004161; Transl_elong_EFTu/EF1A_2.
+DR   Pfam; PF00679; EFG_C; 1.
+DR   Pfam; PF14492; EFG_II; 1.
+DR   Pfam; PF03764; EFG_IV; 1.
+DR   Pfam; PF00009; GTP_EFTU; 1.
+DR   Pfam; PF03144; GTP_EFTU_D2; 1.
+DR   PRINTS; PR00315; ELONGATNFCT.
+DR   SMART; SM00838; EFG_C; 1.
+DR   SMART; SM00889; EFG_IV; 1.
+DR   SUPFAM; SSF50447; SSF50447; 1.
+DR   SUPFAM; SSF52540; SSF52540; 1.
+DR   SUPFAM; SSF54211; SSF54211; 1.
+DR   SUPFAM; SSF54980; SSF54980; 2.
+DR   TIGRFAMs; TIGR00484; EF-G; 1.
+DR   TIGRFAMs; TIGR00231; small_GTP; 1.
+DR   PROSITE; PS00301; EFACTOR_GTP; 1.
+PE   3: Inferred from homology;
+KW   Complete proteome; Cytoplasm; Elongation factor; GTP-binding;
+KW   Nucleotide-binding; Protein biosynthesis.
+FT   CHAIN         1    701       Elongation factor G.
+FT                                /FTId=PRO_1000008852.
+FT   NP_BIND      20     27       GTP (By similarity).
+FT   NP_BIND      84     88       GTP (By similarity).
+FT   NP_BIND     138    141       GTP (By similarity).
+SQ   SEQUENCE   701 AA;  77233 MW;  F1D420E6549BDE92 CRC64;
+     MAQKDVLTDL TKVRNIGIMA HIDAGKTTTT ERILYYTGIS YKIGEVHDGA ATMDWMEQEQ
+     ERGITITSAA TTCFWNDNQI NIIDTPGHVD FTVEVERSLR VLDGAVAVFD GKEGVEPQSE
+     QVWRQADKYD VPRICFVNKM DKIGADFYFS VRTMEERLGA NVIPIQIPVG SEGDFEGVVD
+     LVEMKAKVWS AEAKLGEKYD VVDIPADLQE KAEEYRTKLL EAVAETDEAL LDKYLGGEEL
+     TIEEIKGAIR KLTISSEAYP VLCGSAFKNK GVQPMLDAVI DYLPSPLDVP PAEGHVPGKE
+     EELITRKPST DEPFSALAFK VATHPFFGKL TYVRVYSGKV DSGSQVINST KGKKERLGKL
+     FQMHSNKENP VETASAGHIY AVIGLKDTTT GDTLSDPNHQ IVLESMTFPD PVIEVAIEPK
+     TKSDQEKLSL SIQKLAEEDP TFKVHLDQET GQTVIGGMGE LHLDILVDRM RREFKVEANV
+     GKPQVAYKET IRRKVENVEY THKKQTGGSG QFAKVIINLE PFTGEDGATY EFENKVTGGR
+     IPREYIPSVD AGAQDAMQYG VLAGYPLVNL KVTLLDGAFH EVDSSEMAFK IAGSQVLKKA
+     AAQAQPVILE PIMAVEVTTP EDYMGDVIGD LNSRRGQIQA MEERSGARVV KAHVPLSEMF
+     GYVGDLRSKT QGRANYSMVF DSYAEVPANV SKEIIAKATG Q
+//
+ID   D9QCH6_CORP2            Unreviewed;       301 AA.
+AC   D9QCH6;
+DT   05-OCT-2010, integrated into UniProtKB/TrEMBL.
+DT   05-OCT-2010, sequence version 1.
+DT   14-MAY-2014, entry version 18.
+DE   SubName: Full=Polyphosphate kinase 2;
+GN   OrderedLocusNames=CpC231_1796;
+OS   Corynebacterium pseudotuberculosis (strain C231).
+OC   Bacteria; Actinobacteria; Actinobacteridae; Actinomycetales;
+OC   Corynebacterineae; Corynebacteriaceae; Corynebacterium.
+OX   NCBI_TaxID=681645;
+RN   [1]
+RP   NUCLEOTIDE SEQUENCE [LARGE SCALE GENOMIC DNA].
+RC   STRAIN=C231;
+RX   PubMed=21533164; DOI=10.1371/journal.pone.0018551;
+RA   Ruiz J.C., D'Afonseca V., Silva A., Ali A., Pinto A.C., Santos A.R.,
+RA   Rocha A.A., Lopes D.O., Dorella F.A., Pacheco L.G., Costa M.P.,
+RA   Turk M.Z., Seyffert N., Moraes P.M., Soares S.C., Almeida S.S.,
+RA   Castro T.L., Abreu V.A., Trost E., Baumbach J., Tauch A.,
+RA   Schneider M.P., McCulloch J., Cerdeira L.T., Ramos R.T., Zerlotini A.,
+RA   Dominitini A., Resende D.M., Coser E.M., Oliveira L.M., Pedrosa A.L.,
+RA   Vieira C.U., Guimaraes C.T., Bartholomeu D.C., Oliveira D.M.,
+RA   Santos F.R., Rabelo E.M., Lobo F.P., Franco G.R., Costa A.F.,
+RA   Castro I.M., Dias S.R., Ferro J.A., Ortega J.M., Paiva L.V.,
+RA   Goulart L.R., Almeida J.F., Ferro M.I., Carneiro N.P., Falcao P.R.,
+RA   Grynberg P., Teixeira S.M., Brommonschenkel S., Oliveira S.C.,
+RA   Meyer R., Moore R.J., Miyoshi A., Oliveira G.C., Azevedo V.;
+RT   "Evidence for reductive genome evolution and lateral acquisition of
+RT   virulence functions in two Corynebacterium pseudotuberculosis
+RT   strains.";
+RL   PLoS ONE 6:E18551-E18551(2011).
+CC   -----------------------------------------------------------------------
+CC   Copyrighted by the UniProt Consortium, see http://www.uniprot.org/terms
+CC   Distributed under the Creative Commons Attribution-NoDerivs License
+CC   -----------------------------------------------------------------------
+DR   EMBL; CP001829; ADL11252.1; -; Genomic_DNA.
+DR   RefSeq; YP_005684154.1; NC_017301.1.
+DR   EnsemblBacteria; ADL11252; ADL11252; CpC231_1796.
+DR   GeneID; 12298973; -.
+DR   KEGG; cpq:CpC231_1796; -.
+DR   PATRIC; 42902084; VBICorPse140234_1879.
+DR   HOGENOM; HOG000176512; -.
+DR   OMA; TKLWFSV; -.
+DR   BioCyc; CPSE681645:GLBW-1889-MONOMER; -.
+DR   GO; GO:0008976; F:polyphosphate kinase activity; IEA:InterPro.
+DR   Gene3D; 3.40.50.300; -; 1.
+DR   InterPro; IPR027417; P-loop_NTPase.
+DR   InterPro; IPR016898; Polyphosphate_kinase-2.
+DR   InterPro; IPR022488; PPK2-related.
+DR   InterPro; IPR022486; PPK2_PA0141.
+DR   Pfam; PF03976; PPK2; 1.
+DR   PIRSF; PIRSF028756; PPK2_prd; 1.
+DR   SUPFAM; SSF52540; SSF52540; 1.
+DR   TIGRFAMs; TIGR03707; PPK2_P_aer; 1.
+PE   4: Predicted;
+KW   Complete proteome; Kinase; Transferase.
+SQ   SEQUENCE   301 AA;  35343 MW;  05F6FA1904D4E3A7 CRC64;
+     MMNMSASDKE LPIIDLAAIE GYIVDDSDED DPVLLAPDGN PVDTWKESYP YPERMSREEY
+     EHTKRALQIE LLKWQNWTKD TGQRHIILFE GRDAAGKGGT IKRFNEHLNP RGARTVALEK
+     PSPRESTSWY FQRYIEHFPC AGEIVFFDRS WYNRSGVERV MGFCTESQHA EFLREVPMLE
+     NMILGSGISL TKFWFSVTQK EQRTRFAIRQ VDPVRQWKLS PMDLASLDKW DSYTRAKEEQ
+     FRYTDTDESP WITIRSNDKK RARINAMRYI LSKFEYTNKD YDVVGIPDPN IVMRGRDRIG
+     D
+//

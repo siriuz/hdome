@@ -180,15 +180,20 @@ class Ptm(models.Model):
 
 
 class Protein(models.Model):
-    #prot_id = models.CharField(max_length=200)
+    prot_id = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
     description = models.TextField( default = '' )
     sequence = models.TextField( default = '' )
 
     def get_uniprot_link(self):
         """docstring for get_uniprot_code"""
+        externaldb = ExternalDb.objects.get( db_name = 'UniProt' )
+        return externaldb.url_stump + self.prot_id + externaldb.url_suffix
+
+    def get_uniprot_code(self):
+        """docstring for get_uniprot_code"""
         lu = LookupCode.objects.get( protein = self, externaldb__db_name = 'UniProt' )
-        return lu.externaldb.url_stump + lu.code + lu.externaldb.url_suffix
+        return lu.code
 
     def __str__(self):
 	return self.description

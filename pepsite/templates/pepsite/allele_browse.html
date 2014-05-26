@@ -27,7 +27,8 @@
 
 $(document).ready(function() {
 
-$('#footer').load( "{% url 'pepsite:footer' %}" );
+$('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 $("#cssTable1").tablesorter({
     //textExtraction : 'complex',
@@ -80,6 +81,9 @@ cursor:pointer;
 
 </span>
 </div>
+
+
+<div id="header"></div>
 
 {% if alleles %}
     <h3><span class="text-primary">DNA</span> alleles:</h3>
@@ -168,26 +172,9 @@ cursor:pointer;
 {% endif %}
 
 
-<br>
-
-<form action="{% url 'pepsite:allele_search' %}">
-<input class="btn btn-warning" type="submit" value="Make another allele search">
-</form>
-
-<br>
-
-<form action="{% url 'pepsite:index' %}">
-<input class="btn btn-danger" type="submit" value="Return to Haplodome search index">
-</form>
-
-<br>
-
-<form action="{% url 'home' %}">
-<input class="btn btn-danger" type="submit" value="Return to Haplodome home">
-</form>
-
-
 <div id="footer"></div>
+
+<br>
 
 </div>
 </html>

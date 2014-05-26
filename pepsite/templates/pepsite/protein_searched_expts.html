@@ -124,6 +124,38 @@ cursor:pointer;
     
 </div>
 
+
+{% if proteins %}
+
+<h3>Proteins found for query term <span class="text-info">{{text_input}}</span></h3>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Protein</th>
+            <th>Uniprot ID</th>
+        </tr>
+    </thead>
+    {% for protein in proteins %}
+    <tr>
+        <td>
+            <a href="{% url 'pepsite:protein_full_listing' protein.id %}">{{ protein.name }}</a>
+        </td>
+        <td>
+            <a href="{{ protein.get_uniprot_link }}" target="_blank">{{protein.prot_id}}</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<br><hr><br>
+
+
+
+{% endif %}
+
+
+
 {% if msg %}
     <h3>Expermiments found for query <span class="text-primary">{{text_input}}</span>:</h3>
     </br>
@@ -133,7 +165,7 @@ cursor:pointer;
     <tr>
         <th>Experiment</th>
         <th>Proteins matching search term</th>
-        <th>Cell Line</th><th>Organism(s)</th><th>Antibody(ies)</th><th>Alleles</th><th>Serotypes</th>
+        <th>Cell Line</th><th>Organism(s)</th><th>Antibody(ies)</th><th>Common Alleles</th><th>Common Serotypes</th>
     </tr>
     </thead>
     <tbody>
@@ -144,7 +176,7 @@ cursor:pointer;
             <td>
                 {% for protein in proteins %}
                 {% if protein in exp.get_proteins %}
-                <a href="{% url 'pepsite:protein_full_listing' protein.id %}">{{ protein.description }}</a>
+                <a href="{% url 'pepsite:protein_full_listing' protein.id %}">{{ protein.name }}</a>
                 {% endif %}
                 {% endfor %}
             </td>

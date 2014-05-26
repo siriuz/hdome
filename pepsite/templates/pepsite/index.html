@@ -39,7 +39,7 @@ $('#footer').load( "{% url 'pepsite:footer' %}" );
 <div class="jumbotron">
 <span class="text-center">
 
-<h1><strong class="text-primary">Haplodome</strong> peptide search</h1>
+<h1><strong class="text-primary">Haplodome</strong> peptide searches</h1>
 <p class="text-info">A platform for retrieval of immunoproteomic data</p>
 
 </span>
@@ -86,6 +86,11 @@ $('#footer').load( "{% url 'pepsite:footer' %}" );
 
 </p>
 
+<p>
+
+<a href="{% url 'pepsite:composite_search' %}" class="btn btn-lg btn-primary">Composite Search</a>
+
+</p>
 
 <p>
 

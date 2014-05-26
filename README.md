@@ -10,6 +10,8 @@ Dependencies:
 	- django_extensions
         - django-guardian
         - db_ops
+        - requests
+        - uniprot
 
 
 Note to self, to plot db map:

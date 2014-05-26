@@ -106,6 +106,8 @@ STATICFILES_DIRS = (
 )
 
 SHELL_PLUS_PRE_IMPORTS = (
+    'pprint',
+    'uniprot',
     ( 'db_ops.dbtools', 'DBTools' ),    
     ( 'pepsite.make_searches', '*' ),    
     #('module.submodule1', ('class1', 'function2')),
