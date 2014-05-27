@@ -128,30 +128,19 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 <span class="text-center">
 
 <h1>Create a <span class="text-primary">composite</span> search</h1>
-<p class="text-info">Search by multiple terms</p>
+<p class="text-info">Search for an <strong>Experiment</strong> by multiple terms</p>
 
 </span>
 </div>
 
 <div id="header"></div>
 
-<form action="{% url 'pepsite:composite_search' %}" method="post">
-
-        {% csrf_token %}
-
-    <div class="fieldWrapper">
-        {{ textform.subject.errors }}
-        <label for="id_subject">Enter Cell Line name:</label>
-        {{ textform.text_input }}
-    </div>
-<input class="btn btn-lg btn-success" type="submit" value="Search"></input>
-</form>
+<br>
 <hr>
 <br>
 
-
 <fieldset id="buildyourform">
-    <legend>Build your own form!</legend>
+    <legend><h3 class="text-primary">Build your own form!</h3></legend>
 </fieldset>
 <input type="button" class="btn btn-info" value="Add a field" class="add" id="add" />
 <input type="button" class="btn btn-lg btn-success" value="Search on these terms" class="add" id="preview" />

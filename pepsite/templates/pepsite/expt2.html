@@ -103,8 +103,9 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
     
 </div>
 
+</div> <!-- container --> 
 
-<h2 class="text-primary">Peptides detected{% if perms.pepsite.view_dataset %} hello {% else %} noperms {% endif %} </h2>
+<h2 class="text-primary">{% if perms.pepsite.view_dataset %} Peptides detected {% else %} You do not have permission to view some or all of this data {% endif %} </h2>
 
 {% if paginate %}
 
@@ -141,6 +142,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 {% endif %}
 
+
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
     <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th></tr>
@@ -149,7 +151,8 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
     {% for protein in proteins %}
 {% query_idestimate ion__experiments=expt peptide__proteins=protein as myides %}
 	{% for idestimate in myides %}
-        {% get_obj_perms user for idestimate.get_lodgement as "lodgement_perms" %}
+          {% query_lodgement dataset__ions__idestimate=idestimate dataset__experiment=expt as lodgement1 %}
+          {% get_obj_perms user for lodgement1 as "lodgement_perms" %}
         {% if "view_lodgement" in lodgement_perms %}
         <tr>
 	<td>
@@ -238,5 +241,5 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 <div id="footer"></div>
 
-</div>
+
 </html>

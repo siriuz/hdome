@@ -89,7 +89,7 @@ class CellLine(models.Model):
 
     class Meta:
         """docstring for Meta"""
-        unique_together = ('name', 'description')
+        #unique_together = ('name', 'description')
             
 
     def __str__(self):
@@ -303,6 +303,7 @@ class Dataset(models.Model):
     gradient_duration = models.FloatField()
     instrument = models.ForeignKey(Instrument)
     lodgement = models.ForeignKey(Lodgement)
+    experiment = models.ForeignKey(Experiment)
     ions = models.ManyToManyField( Ion )
 
     class Meta:

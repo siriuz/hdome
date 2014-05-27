@@ -23,3 +23,13 @@ def query_idestimate( **kwargs):
           {% endfor %}
     """
     return IdEstimate.objects.filter(**kwargs)
+
+@register.assignment_tag
+def query_lodgement( **kwargs ):
+    """ template tag which allows queryset filtering. Usage:
+          {% query books author=author as mybooks %}
+          {% for book in mybooks %}
+            ...
+          {% endfor %}
+    """
+    return Lodgement.objects.get( **kwargs )

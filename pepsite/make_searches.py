@@ -78,6 +78,30 @@ class CellLineSearch( BaseSearch ):
 	expts = set( Experiment.objects.filter( cell_line__name__icontains = cl_term ) )
 	return expts
 
+
+class ExperimentTitleSearch( BaseSearch ):
+    """
+
+
+    """
+    def get_experiments_basic( self, cl_term ):
+	expts = set( Experiment.objects.filter( title__iexact = cl_term ) )
+	if len( expts ):
+	    return expts
+        else:
+	    return self.get_experiments_startswith( cl_term )
+
+    def get_experiments_startswith( self, cl_term ):
+	expts = set( Experiment.objects.filter( title__istartswith = cl_term ) )
+	if len( expts ):
+	    return expts
+        else:
+	    return self.get_experiments_contains( cl_term )
+
+    def get_experiments_contains( self, cl_term ):
+	expts = set( Experiment.objects.filter( title__icontains = cl_term ) )
+	return expts
+
 class CellLineTissueSearch( BaseSearch ):
     """
 
@@ -178,4 +202,31 @@ class ExptAssemble( BaseSearch ):
 
     def get_common_alleles( self, expt_obj ):
 	return Allele.objects.filter( cellline__experiment = expt_obj, antibody__experiments = expt_obj )
+
+class CompositeSearch( BaseSearch ):
+    """
+
+
+    """
+    def make_qseries(self, dic, keys):
+        """docstring for make_qseries"""
+        expts = []
+        for k in keys:
+            if dic[k]['qtype'] == 'pr_name':
+                ps = ProteinsSearch()
+                expts.append( set( ps.get_experiments_basic( dic[k]['qstring'] )[0] ) )
+            elif dic[k]['qtype'] == 'tissue':
+                ct = CellLineTissueSearch()
+                expts.append( set( ct.get_experiments_basic( dic[k]['qstring'] ) ) )
+            elif dic[k]['qtype'] == 'cell_line':
+                cl = CellLineSearch()
+                expts.append( set( cl.get_experiments_basic( dic[k]['qstring'] ) ) )
+            elif dic[k]['qtype'] == 'ex_title':
+                ex = ExperimentTitleSearch()
+                expts.append( set( ex.get_experiments_basic( dic[k]['qstring'] ) ) )
+            elif dic[k]['qtype'] == 'allele':
+                al = AlleleSearch()
+                expts.append( set( al.get_experiments_basic( dic[k]['qstring'] ) ) )
+        return list( set.intersection( *expts ) )
+
 

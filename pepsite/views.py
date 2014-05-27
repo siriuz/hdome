@@ -30,14 +30,20 @@ def comp_results( request ):
         post = request.POST.dict()
         newdic = {}
         for k in post.keys():
-            newdic[k] = post[k]
+            #newdic[k] = post[k]
             if 'input' in str(k) and str(k[-2:]) == '_1':
                 qtype = post[k]
                 qstring = post[ k[:-2] + '_2' ]
                 ordinal =  k.split('_')[1]
                 newdic[ordinal] = { 'qtype' : qtype, 'qstring' : qstring }
-        context = { 'post' : newdic }
-	return render( request, 'pepsite/formdump.html', context )
+        ndkeys = sorted( newdic.keys(), key = lambda a: int(a) )
+        cs = CompositeSearch()
+        expts = cs.make_qseries( newdic, ndkeys )
+
+        #context = { 'post' : expts }
+        #return render( request, 'pepsite/formdump.html', context )
+        context = { 'msg' : expts, 'search' : True, 'heading' : 'Composite' }
+        return render( request, 'pepsite/composite_results.html', context )
 
 
 
