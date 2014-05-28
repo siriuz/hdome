@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+
+      {% load staticfiles %}
+      {% load guardian_tags %}
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="../../docs-assets/ico/favicon.png">
+
+    <title>HaploDome - Peptides in Experiment</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/tablesorter_style.css" %}" rel="stylesheet">
+
+		<script src="{% static "js/jquery-2.0.3.min.js" %}"></script>
+<script type="text/javascript" src="{% static "js/jquery.tablesorter.js" %}"></script>
+<script src="{% static "js/pepsite_page_boilerplate.js" %}"></script>
+
+
+<link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/tablesorter_style.css" %}" rel="stylesheet">
+		<script src="{% static "js/jquery-2.0.3.min.js" %}">
+		</script>
+<script type="text/javascript" src="{% static "js/jquery.tablesorter.js" %}"></script>
+
+
+{% load template_filter %}
+
+</head>
+
+<body>
+
+<div id="banner"></div>
+
+
+<br>
+
+<div class="container">
+<div class="jumbotron">
+<span class="text-center">
+
+{% block headline %}
+
+
+{% endblock %}
+
+</span>
+</div>
+
+
+<div id="header"></div>
+
+<br>
+
+
+
+
+{% block content %} {% endblock %}
+
+<br>
+
+<div id="footer"></div>
+
+<br>
+
+</body>
+
+</html>
+

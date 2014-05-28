@@ -1,31 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
+{% extends 'pepsite/base.html' %}
 
-    {% load staticfiles %}
-
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="shortcut icon" href="../../docs-assets/ico/favicon.png">
-
-    <title>HaploDome - Welcome</title>
-
-    <!-- Bootstrap core CSS -->
-    <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
-    <link href="{% static "css/tablesorter_style.css" %}" rel="stylesheet">
-
-		<script src="{% static "js/jquery-2.0.3.min.js" %}">
-		</script>
+{% block headline %}
 
 <script>
 
 
 $(document).ready(function() {
 
-$('#footer').load( "{% url 'pepsite:footer' %}" );
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 });
 
@@ -34,18 +16,14 @@ $('#footer').load( "{% url 'pepsite:footer' %}" );
 
 </head>
 
-<br>
-
-<div class="container">
-<div class="jumbotron">
-<span class="text-center">
 
 <h1>Search by <span class="text-primary">Protein</span></h1>
 <p class="text-info">Search by Protein</p>
 
-</span>
-</div>
 
+{% endblock %}
+
+{% block content %}
 
 
 <form action="{% url 'pepsite:protein_search' %}" method="post">
@@ -62,18 +40,5 @@ $('#footer').load( "{% url 'pepsite:footer' %}" );
 <hr>
 <br>
 
-<form action="{% url 'pepsite:index' %}">
-<input class="btn btn-danger" type="submit" value="Return to Haplodome search index">
-</form>
 
-<br>
-
-<form action="{% url 'home' %}">
-<input class="btn btn-danger" type="submit" value="Return to Haplodome home">
-</form>
-
-
-<div id="footer"></div>
-
-</div>
-</html>
+{% endblock %}

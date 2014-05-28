@@ -33,3 +33,37 @@ def query_lodgement( **kwargs ):
           {% endfor %}
     """
     return Lodgement.objects.get( **kwargs )
+
+@register.assignment_tag
+def query_dataset( **kwargs ):
+    """ template tag which allows queryset filtering. Usage:
+          {% query books author=author as mybooks %}
+          {% for book in mybooks %}
+            ...
+          {% endfor %}
+    """
+    return Dataset.objects.get( **kwargs )
+
+@register.assignment_tag
+def query_peptoprot( **kwargs ):
+    """ template tag which allows queryset filtering. Usage:
+          {% query books author=author as mybooks %}
+          {% for book in mybooks %}
+            ...
+          {% endfor %}
+    """
+    return PepToProt.objects.get( **kwargs )
+
+@register.assignment_tag
+def query_data_perms( user, expt ):
+    """ template tag which allows queryset filtering. Usage:
+          {% query books author=author as mybooks %}
+          {% for book in mybooks %}
+            ...
+          {% endfor %}
+    """
+    complete = True
+    for dataset in expt.dataset_set.all():
+        if not user.has_perm( 'pepsite.view_dataset', dataset ):
+            complete = False
+    return complete

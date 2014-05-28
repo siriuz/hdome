@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 import datetime
 from django.utils.timezone import utc
-
+import re
 
 NOW = models.DateTimeField( default = datetime.datetime.utcnow().replace(tzinfo=utc) )
 
@@ -154,6 +154,10 @@ class Experiment( models.Model ):
         """docstring for get_proteins"""
         return Protein.objects.filter( peptide__ion__experiments = self )
 
+    def get_publications(self):
+        """docstring for get_publications"""
+        return list( set( Publication.objects.filter( lodgements__dataset__experiment = self ) ) )
+
 class Antibody(models.Model):
     name = models.CharField(max_length=200, unique = True )
     description = models.TextField( default = '' )
@@ -231,6 +235,16 @@ class PepToProt(models.Model):
     def __str__(self):
         """docstring for __str__"""
         return self.peptide.sequence + '--' + self.protein.name
+
+    def get_positions(self):
+        """docstring for get_positions"""
+        poslist = [(m.start(0), m.end(0)) for m in re.finditer(self.peptide.sequence, self.protein.sequence)]
+        pstr = ''
+        for pos in poslist:
+            pstr += '%d-%d ' %( pos[0], pos[1])
+        return pstr.strip()
+        
+
 
 
 class Ion(models.Model):
@@ -348,7 +362,7 @@ class Publication(models.Model):
     display = models.TextField()
     lodgements = models.ManyToManyField( Lodgement )
     cell_lines = models.ManyToManyField( CellLine )
-    lookupcode = models.OneToOneField( LookupCode )
+    lookupcode = models.OneToOneField( LookupCode, null=True )
 
     def __str__(self):
         """docstring for _"""

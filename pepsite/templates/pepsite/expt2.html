@@ -1,25 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
+{% extends 'pepsite/base.html' %}
 
-      {% load staticfiles %}
-      {% load guardian_tags %}
-
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="shortcut icon" href="../../docs-assets/ico/favicon.png">
-
-    <title>HaploDome - Peptides in Experiment</title>
-
-    <!-- Bootstrap core CSS -->
-    <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
-    <link href="{% static "css/tablesorter_style.css" %}" rel="stylesheet">
-
-		<script src="{% static "js/jquery-2.0.3.min.js" %}"></script>
-<script type="text/javascript" src="{% static "js/jquery.tablesorter.js" %}"></script>
+{% block headline %}
 
 <style>
 #cssTable td 
@@ -41,6 +22,14 @@ background-color:yellow;
 {
 cursor:pointer;
 }
+
+.table_body
+{
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+
 
 </style>
 
@@ -79,33 +68,42 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 </script>
 
 
-{% load template_filter %}
 
 </head>
 
-<br>
-
-<div class="container">
-<div class="jumbotron">
-<span class="text-center">
 
 <h1>Experiment = <span class="text-primary">{{expt.title}}</span></h1>
 
-</span>
-</div>
+
+{% endblock %}
+
+{% block content %}
+
+<div id="summary"></div>
 
 
-<div id="summary">
-    
-</div>
 
-<div id="header">
-    
-</div>
+<h2 class="text-primary">Please cite the following publications when using this data:</h2>
+<ul>
+{% for publication in expt.get_publications %}
+
+<li>{{publication.display}}</li>
+
+{% endfor %}
+
+</ul>
 
 </div> <!-- container --> 
 
-<h2 class="text-primary">{% if perms.pepsite.view_dataset %} Peptides detected {% else %} You do not have permission to view some or all of this data {% endif %} </h2>
+{% load template_filter %}
+      {% load guardian_tags %}
+{% query_data_perms user expt as complete %}
+
+<div class="table_body">
+
+<h2 class="text-primary">Peptides detected</h2>
+
+{% if not complete %}<p class="text-info">You do not have permission to view some or all of this data {% endif %} </p>
 
 {% if paginate %}
 
@@ -142,18 +140,18 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 {% endif %}
 
-
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
-    <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th></tr>
+        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th></tr>
     </thead>
     <tbody>
     {% for protein in proteins %}
 {% query_idestimate ion__experiments=expt peptide__proteins=protein as myides %}
 	{% for idestimate in myides %}
-          {% query_lodgement dataset__ions__idestimate=idestimate dataset__experiment=expt as lodgement1 %}
-          {% get_obj_perms user for lodgement1 as "lodgement_perms" %}
-        {% if "view_lodgement" in lodgement_perms %}
+          {% query_dataset ions__idestimate=idestimate experiment=expt as dataset1 %}
+          {% get_obj_perms user for dataset1 as "dataset_perms" %}
+        {% if "view_dataset" in dataset_perms %}
+          {% query_peptoprot peptide=idestimate.peptide protein=protein as peptoprot1 %}
         <tr>
 	<td>
 	<a href="{% url 'pepsite:protein_full_listing' protein.id %}" class="link">{{protein.name}}</a>
@@ -169,6 +167,9 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 	<td>
 	{{ idestimate.peptide.sequence | length }}
 	</td>
+            <td>
+                {{ peptoprot1.get_positions }}
+	    </td>
 	<td>
 	{% if idestimate.ptm %}
 	<a href="{% url 'pepsite:ptm_expts' idestimate.ptm.id %}" class="link">{{idestimate.ptm.description}}</a>
@@ -239,7 +240,9 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 
 
-<div id="footer"></div>
 
+</div> <!-- table_body -->
 
-</html>
+<div class="container">
+
+{% endblock %}

@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.template import RequestContext, loader
 
+from pepsite.models import Publication
 
 from django.contrib.auth import authenticate, login
 
@@ -39,3 +40,29 @@ def logout_page(request):
     """
     logout(request)
     return HttpResponseRedirect('/')
+
+def publications( request ):
+    """docstring for publications"""
+    publications = Publication.objects.all()
+    return render( request, 'publications.html', { 'publications' : publications } )
+
+def news( request ):
+    """docstring for publications"""
+    return render( request, 'news.html', {} )
+
+def sponsors( request ):
+    """docstring for publications"""
+    return render( request, 'sponsors.html', {} )
+
+def about( request ):
+    """docstring for publications"""
+    return render( request, 'about.html', {} )
+
+def contact( request ):
+    """docstring for publications"""
+    return render( request, 'contact.html', {} )
+
+def banner(request):
+    context = {  }
+    return render(request, 'banner2.html', context)
+

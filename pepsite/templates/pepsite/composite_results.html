@@ -1,26 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
+{% extends 'pepsite/base.html' %}
 
-    {% load staticfiles %}
-
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="shortcut icon" href="../../docs-assets/ico/favicon.png">
-
-    <title>HaploDome - Welcome</title>
-
-    <!-- Bootstrap core CSS -->
-    <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
-    <link href="{% static "css/tablesorter_style.css" %}" rel="stylesheet">
-
-		<script src="{% static "js/jquery-2.0.3.min.js" %}">
-		</script>
-<script type="text/javascript" src="{% static "js/jquery.tablesorter.js" %}"></script>
-
+{% block headline %}
 
 <script>
 
@@ -71,12 +51,6 @@ cursor:pointer;
 
 </head>
 
-<br>
-
-<div class="container">
-<div class="jumbotron">
-<span class="text-center">
-
 {% if search %}
 
 {% if heading %}
@@ -99,17 +73,15 @@ cursor:pointer;
 
 {% endif %}
 
-</span>
-</div>
 
+{% endblock %}
 
-<div id="summary">
+{% block content %}
+
+<div id="summary"></div>
     
-</div>
 
-<div id="header">
     
-</div>
 
 {% if msg %}
     <h3>Expermiments found for composite query:</h3>
@@ -169,7 +141,5 @@ cursor:pointer;
 
 
 
-<div id="footer"></div>
 
-</div>
-</html>
+{% endblock %}

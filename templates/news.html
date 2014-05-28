@@ -11,7 +11,7 @@
     <meta name="author" content="">
     <link rel="shortcut icon" href="../../docs-assets/ico/favicon.png">
 
-    <title>Submissions available</title>
+    <title>HaploDome - Welcome</title>
 
     <!-- Bootstrap core CSS -->
     <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
@@ -19,6 +19,7 @@
 		<script src="{% static "js/jquery-2.0.3.min.js" %}">
 		</script>
 
+		<script src="{% static "js/page_boilerplate.js" %}"></script>
 
 
     <!-- Just for debugging purposes. Don't actually copy this line! -->
@@ -33,49 +34,38 @@
 <script>
 
 
+$(document).ready(function() {
+
+//$('#footer').load( "{% url 'pepsite:footer' %}" );
+
+});
+
 </script>
 
-
-  </head>
-
-<br>
+</head>
 
 <div id="banner"></div>
 
+<br>
 <div class="container">
-
 <div class="jumbotron">
 <span class="text-center">
 
-<h1>Please enter your login details</h1>
+<h1><strong class="text-primary">Haplodome</strong> news</h1>
+<p class="text-info">News from the group / field</p>
 
 </span>
 </div>
 
-    {% if form.errors %}
-      <p>Your username and password didn't match, please try again.</p>
-    {% endif %}
 
-    <form method="post" action=".">
-      {% csrf_token %}
-      <p>
-        <label for="id_username">Username:</label>
-        {{ form.username }}
-      </p>
-      <p>
-        <label for="id_password">Password:</label>
-        {{ form.password }}
-      </p>
-      {% if next %}
-        <input type="hidden" name="next" value="{{ next }}" />
-      {% else %}
-      <input type="hidden" name="next" value="{% url 'home' %}" />
-      {% endif %}
-	<input class="btn btn-success btn-lg" type="submit" value="Login">
-    </form>
-<br>
-<a class="btn btn-danger btn-lg" href="/" value="poo"/>Return to HaploDome homepage</a>
 
+
+<form action='pepsite/'>
+<input class="btn btn-success" type="submit" value="Query the database">
+</form>
+
+
+<div id="footer"></div>
 </div>
 
 </html>

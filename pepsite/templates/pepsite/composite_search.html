@@ -1,27 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
+{% extends 'pepsite/base.html' %}
 
-    {% load staticfiles %}
-
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="shortcut icon" href="../../docs-assets/ico/favicon.png">
-
-    <title>HaploDome - Welcome</title>
-
-    <!-- Bootstrap core CSS -->
-    <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
-    <link href="{% static "css/tablesorter_style.css" %}" rel="stylesheet">
-
-		<script src="{% static "js/jquery-2.0.3.min.js" %}"></script>
-                <script src="{% static "js/composite_search.js" %}"></script>
-
-
-                <style>
+{% block headline %}
+<style>
 
                     #yourform {
                         border : none;
@@ -121,23 +101,16 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 </head>
 
-<br>
-
-<div class="container">
-<div class="jumbotron">
-<span class="text-center">
 
 <h1>Create a <span class="text-primary">composite</span> search</h1>
 <p class="text-info">Search for an <strong>Experiment</strong> by multiple terms</p>
 
-</span>
-</div>
 
-<div id="header"></div>
+{% endblock %}
 
-<br>
-<hr>
-<br>
+{% block content %}
+
+
 
 <fieldset id="buildyourform">
     <legend><h3 class="text-primary">Build your own form!</h3></legend>
@@ -157,4 +130,4 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 <div id="footer"></div>
 
 </div>
-</html>
+{% endblock %}

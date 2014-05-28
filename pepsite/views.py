@@ -16,6 +16,8 @@ import zipfile
 
 from django.contrib.auth.decorators import login_required
 
+import re
+
 @login_required
 def index( request ):
 	return render( request, 'pepsite/index.html', {})
@@ -289,6 +291,9 @@ def expt2( request, expt_id ):
   if not ( request.POST.has_key( 'full_list' ) and request.POST['full_list'] ):
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
+    lodgements = Lodgement.objects.filter( dataset__experiment = expt_id )
+    if not( len(lodgements)):
+        lodgements = False
     paginator = Paginator(proteins, 25 ) # Show 25 contacts per page
 
     page = request.GET.get('page')
@@ -300,11 +305,14 @@ def expt2( request, expt_id ):
     except EmptyPage:
         # If page is out of range (e.g. 9999), deliver last page of results.
         proteins = paginator.page(paginator.num_pages)
-    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'paginate' : True })
+    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'paginate' : True })
   else:
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
-    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'paginate' : False })
+    lodgements = Lodgement.objects.filter( dataset__experiment = expt_id )
+    if not( len(lodgements)):
+        lodgements = False
+    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'paginate' : False })
 
 
 
