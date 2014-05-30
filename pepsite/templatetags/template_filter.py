@@ -64,6 +64,6 @@ def query_data_perms( user, expt ):
     """
     complete = True
     for dataset in expt.dataset_set.all():
-        if not user.has_perm( 'pepsite.view_dataset', dataset ):
+        if ( not user.has_perm( 'pepsite.view_dataset', dataset ) ) and ( not user.has_perm( 'pepsite.view_lodgement', dataset.lodgement ) ):
             complete = False
     return complete
