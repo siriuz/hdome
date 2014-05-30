@@ -78,7 +78,7 @@ class DatasetInLine(admin.StackedInline):
 
 class InstrumentInLine(admin.StackedInline):
     model = Instrument
-    extra = 3
+    extra = 1
     exclude = (
             #'ions',
             )
@@ -123,7 +123,7 @@ class LcClInline(admin.TabularInline):
 
 class IdEstimateInLine(admin.StackedInline):
     model = IdEstimate
-    extra = 3
+    extra = 1
 
 class LookupCodeInLine(admin.StackedInline):
     model = LookupCode
@@ -175,7 +175,7 @@ class PtmAdmin(admin.ModelAdmin):
 
 class PepToProtInLine(admin.StackedInline):
     model = PepToProt
-    extra = 3
+    extra = 1
 
 class PeptideAdmin( admin.ModelAdmin):
     inlines = [
@@ -193,6 +193,17 @@ class ProteinAdmin( admin.ModelAdmin ):
             LookupCodeInLine,
             ]
 
+class IndividualAdmin( admin.ModelAdmin ):
+    pass
+
+class IndividualInLine( admin.StackedInline ):
+    model = Individual
+    extra = 1
+
+class EntityAdmin( admin.ModelAdmin ):
+    inlines = [
+            IndividualInLine,
+            ]
 
 admin.site.register(Allele, AlleleAdmin)
 admin.site.register(Antibody, AntibodyAdmin)
@@ -212,5 +223,7 @@ admin.site.register(Ptm, PtmAdmin)
 admin.site.register(Peptide, PeptideAdmin)
 admin.site.register(Position, PositionAdmin)
 admin.site.register(Protein, ProteinAdmin)
+admin.site.register(Individual, IndividualAdmin)
+admin.site.register(Entity, EntityAdmin)
 
 # Register your models here.
