@@ -20,11 +20,19 @@ class Uploads(dbtools.DBTools):
         self.expt = None
         pass
 
+    def preview_ss_simple(self):
+        """docstring for preview_ss_simple"""
+        if int(cleaned_data[ 'expt1' ]) != -1: 
+	    self.expt = self.get_model_object( Experiment, id = cleaned_data[ 'expt1' ] )
+        elif cleaned_data[ 'expt2' ].strip() != '':
+            self.cell_line = self.get_model_object( CellLine, id = cleaned_data[ 'cl1' ] )
+
+
     def upload_ss_simple(self, cleaned_data):
         """docstring for fname(self, cleaned_data"""
         self.success = True
         self.data = cleaned_data
-        pass
+        
         if int(cleaned_data[ 'expt1' ]) != -1: 
 	    self.expt = self.get_model_object( Experiment, id = cleaned_data[ 'expt1' ] )
         elif cleaned_data[ 'expt2' ].strip() != '':
