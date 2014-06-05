@@ -1,0 +1,51 @@
+{% extends 'pepsite/base.html' %}
+
+{% block headline %}
+
+<script>
+
+
+$(document).ready(function() {
+
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+});
+
+</script>
+
+
+</head>
+
+
+<h1>Upload status</h1>
+<p class="text-info"></p>
+
+
+{% endblock %}
+{% block content %}
+
+<h1 class="text-primary">Upload successful</h1>
+
+
+{{upload.success}}
+{{upload.data}}
+<br>
+{{upload.data.cl1}}
+{{upload.data.ab1}}
+
+<h2>Experiment title</h2>
+{{upload.expt.title}}
+<h2>Antibodies</h2>
+
+
+{% for ab in upload.expt.antibody_set.all %}
+    {{ab.name}}<br>
+{% endfor %}
+
+
+<h2>Cell Line</h2>
+{{upload.expt.cell_line.name}}
+
+
+
+{% endblock %}

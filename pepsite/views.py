@@ -12,6 +12,8 @@ import datetime
 from django.http import HttpResponse
 import tempfile
 
+import pepsite.uploaders
+
 import zipfile
 
 from django.contrib.auth.decorators import login_required
@@ -107,6 +109,25 @@ def composite_search( request ):
         textform = TextOnlyForm()
         context = { 'textform' : textform }
         return render( request, 'pepsite/composite_search.html', context)
+
+@login_required
+def upload_ss_form( request ):
+    if request.method == 'POST': # If the form has been submitted...
+        form = UploadSSForm(request.POST) # A form bound to the POST data
+        if form.is_valid(): # All validation rules pass
+            ul = pepsite.uploaders.Uploads()
+	    ul.upload_ss_simple( form.cleaned_data.dict() )
+            #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Cell Line'  }
+            return render( request, 'pepsite/upload_status.html', { 'upload' : ul } ) # Redirect after POST
+	else:
+            ul = pepsite.uploaders.Uploads()
+	    ul.upload_ss_simple( form.data )
+            return render( request, 'pepsite/upload_status.html', { 'upload' : ul }  ) # Redirect after POST
+ 
+    else:
+        textform = UploadSSForm()
+        context = { 'textform' : textform }
+        return render( request, 'pepsite/upload_ss_form.html', context)
 
 @login_required
 def cell_line_search( request ):

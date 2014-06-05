@@ -1,0 +1,71 @@
+{% extends 'pepsite/base.html' %}
+
+{% block headline %}
+
+<script>
+
+
+$(document).ready(function() {
+
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+$('#id_expt1').click( function() {
+    var selected = $('#id_expt1 option:selected').val();
+    if ( selected === "-1" ) {
+        $("label[for='id_expt2']").show();
+        $("#id_expt2").show();
+        //$('#res1').html( '<h1>NEW</h1>' );
+    }
+    else {
+        $("label[for='id_expt2']").hide();
+        $("#id_expt2").hide();
+        //$('#res1').html( '<h1>' + selected + '</h1>' );
+    }
+    
+});
+
+
+
+});
+
+</script>
+
+
+</head>
+
+
+<h1>Upload a <span class="text-primary">Spreadsheet</span></h1>
+<p class="text-info">Upload text-only data</p>
+
+
+{% endblock %}
+{% block content %}
+
+<form action="{% url 'pepsite:upload_ss_form' %}" method="post">
+
+    {% csrf_token %}
+    {% for field in textform %}
+        <div class="fieldWrapper">
+            {{ field.errors }}
+            {{ field.label_tag }} {{ field }}
+            {{ field.help_text }}
+            {{ field.urlstr }}
+            {{ field.crap }}
+        </div>
+    {% endfor %}
+    <br>
+
+
+
+<input class="btn btn-lg btn-success" type="submit" value="Upload"></input>
+</form>
+<hr>
+<br>
+
+
+
+
+
+
+
+{% endblock %}
