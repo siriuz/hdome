@@ -1,0 +1,138 @@
+{% extends 'pepsite/base.html' %}
+
+{% block headline %}
+
+<script>
+
+
+$(document).ready(function() {
+
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+});
+
+</script>
+
+
+</head>
+
+
+<h1>Upload preview</h1>
+<p class="text-info">How upload will look if committed</p>
+
+
+{% endblock %}
+{% block content %}
+{% load template_filter %}
+
+<h1 class="text-primary">Details for data to be uploaded</h1>
+
+
+<br>
+
+
+<table class="table table-striped">
+    <tbody>
+        <tr>
+            <th>
+                Experiment Title
+            </th>
+            <td>
+                {% if upload.expt %}
+                    {{upload.expt.title}}
+                {% else %}
+                    {{upload.expt_title}}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Name for this Lodgement
+            </th>
+            <td>
+                {{upload.lodgement_title}}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Antibodies
+            </th>
+            <td>
+                {% if upload.expt %}
+                    {% for ab in upload.expt.antibody_set.all %}
+                        {{ab.name}}
+                    {% endfor %}
+                {% else %}
+                    {% for ab in upload.antibodies %}
+                        {{ab.name}}
+                    {% endfor %}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Cell Line
+            </th>
+            <td>
+                {% if upload.expt %}
+                    {{upload.expt.cell_line.name}}
+                {% else %}
+                    {{upload.cell_line.name}}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Common Alleles
+            </th>
+            <td>
+                {% query_alleles_putative cell_line=upload.cell_line antibodies=upload.antibodies as alleles %}
+                {% for al in alleles %}
+                    {{al.code}}
+                {% endfor %}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Publications (including existing associations)
+            </th>
+            <td>
+                {% if upload.expt %}
+                    {% for pl_existing in upload.expt.publications %}
+                        {% if pl_existing not in upload.publications %}
+                            {{pl_existing.display}}
+                        {% endif %}
+                    {% endfor %}
+                    {% for pl in upload.publications %}
+                        {{pl.display}}
+                    {% endfor %}
+                {% else %}
+                    {% for pl in upload.publications %}
+                        {{pl.display}}
+                    {% endfor %}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Data security
+            </th>
+            <td>
+                {% if upload.public %}
+                    <strong class='text-success'>Will be available to public</strong>
+                {% else %}
+                    <strong class="text-danger">Restricted access</strong> Purcell group members only
+                {% endif %}
+             </td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Allstr</h2>
+
+{{upload.filestr}}
+{{upload.ss}}
+
+{{upload.allstr}}
+
+{% endblock %}

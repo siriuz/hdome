@@ -113,16 +113,22 @@ def composite_search( request ):
 @login_required
 def upload_ss_form( request ):
     if request.method == 'POST': # If the form has been submitted...
-        form = UploadSSForm(request.POST) # A form bound to the POST data
+        form = UploadSSForm(request.POST, request.FILES) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
             ul = pepsite.uploaders.Uploads()
-	    ul.upload_ss_simple( form.cleaned_data.dict() )
+            ss = request.FILES['ss']
+	    #ul.upload_ss_simple( form.cleaned_data.dict() )
+	    ul.preview_ss_simple( form.cleaned_data )
+	    ul.preprocess_ss_simple( ss )
             #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Cell Line'  }
-            return render( request, 'pepsite/upload_status.html', { 'upload' : ul } ) # Redirect after POST
+            return render( request, 'pepsite/upload_preview.html', { 'upload' : ul } ) # Redirect after POST
 	else:
             ul = pepsite.uploaders.Uploads()
-	    ul.upload_ss_simple( form.data )
-            return render( request, 'pepsite/upload_status.html', { 'upload' : ul }  ) # Redirect after POST
+            ss = request.FILES['ss']
+	    #ul.upload_ss_simple( form.cleaned_data.dict() )
+	    ul.preview_ss_simple( request.POST )
+	    ul.preprocess_ss_simple( ss )
+            return render( request, 'pepsite/upload_preview.html', { 'upload' : ul }  ) # Redirect after POST
  
     else:
         textform = UploadSSForm()

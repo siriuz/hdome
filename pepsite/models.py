@@ -158,6 +158,14 @@ class Experiment( models.Model ):
         """docstring for get_publications"""
         return list( set( Publication.objects.filter( lodgements__dataset__experiment = self ) ) )
 
+    @property
+    def publications(self):
+        """docstring for get_publications"""
+        return list( set( Publication.objects.filter( lodgements__dataset__experiment = self ) ) )
+
+
+
+
 class Antibody(models.Model):
     name = models.CharField(max_length=200, unique = True )
     description = models.TextField( default = '' )

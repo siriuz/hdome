@@ -1,4 +1,5 @@
 from django import template
+from django.db.models import Q
 
 register = template.Library()
 
@@ -23,6 +24,32 @@ def query_idestimate( **kwargs):
           {% endfor %}
     """
     return IdEstimate.objects.filter(**kwargs)
+
+@register.assignment_tag
+def query_alleles( **kwargs):
+    """ template tag which allows queryset filtering. Usage:
+          {% query books author=author as mybooks %}
+          {% for book in mybooks %}
+            ...
+          {% endfor %}
+    """
+    return Allele.objects.filter(**kwargs)
+
+@register.assignment_tag
+def query_alleles_putative( cell_line = None, antibodies = [] ):
+    """ template tag which allows queryset filtering. Usage:
+          {% query books author=author as mybooks %}
+          {% for book in mybooks %}
+            ...
+          {% endfor %}
+    """
+    qchain = Q()
+    for antb in antibodies:
+        qs = Q( antibody = antb )
+        qchain |= qs
+    qcl = Q( expression__cell_line = cell_line )
+
+    return Allele.objects.filter( qchain, qcl )
 
 @register.assignment_tag
 def query_lodgement( **kwargs ):

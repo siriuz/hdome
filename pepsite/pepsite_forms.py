@@ -140,7 +140,7 @@ class UploadSSForm(forms.Form):
     cl1 = forms.ChoiceField( label = 'Select an existinng Cell Line', choices = [ [b.id, b.name] for b in CellLine.objects.all()] )
     pl1 = forms.ChoiceField( label = 'Select Publication(s)', widget = forms.SelectMultiple, choices = [ [b.id, b.display] for b in Publication.objects.all()] )
     rel = forms.BooleanField( label = 'Data publically available?' )
-    ds = forms.CharField( label = 'Dataset Name' )
+    ldg = forms.CharField( label = 'Name for this Lodgement' )
     ss = forms.FileField( label = 'Spreadsheet for upload' )
 
 class AjaxForm(forms.Form):

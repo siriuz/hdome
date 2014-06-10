@@ -41,7 +41,7 @@ $('#id_expt1').click( function() {
 {% endblock %}
 {% block content %}
 
-<form action="{% url 'pepsite:upload_ss_form' %}" method="post">
+<form enctype="multipart/form-data" action="{% url 'pepsite:upload_ss_form' %}" method="post" >
 
     {% csrf_token %}
     {% for field in textform %}
