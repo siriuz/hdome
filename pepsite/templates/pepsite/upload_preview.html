@@ -6,8 +6,9 @@
 
 
 $(document).ready(function() {
-
-$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+    $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+    var prw = "{{upload.allstr|escapejs}}";
+    $('#peptides').html( prw );
 
 });
 
@@ -130,9 +131,6 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 <h2>Allstr</h2>
 
-{{upload.filestr}}
-{{upload.ss}}
-
-{{upload.allstr}}
+<div id="peptides"></div>
 
 {% endblock %}

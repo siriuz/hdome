@@ -24,7 +24,19 @@ class Uploads(dbtools.DBTools):
         self.public = False
         self.now = datetime.datetime.utcnow().replace(tzinfo=utc)
         self.nowstring = self.now.strftime('%H:%M:%S.%f %d %B %Y %Z')
-        pass
+        self.delim = ','
+        self.indexmap = []
+        self.valid = False
+        self.match_dict = {
+                'peptide_sequence' : { 'matches' : [ 'Peptide' ], 'order' : 0, 'display' : 'Peptide Sequence' },
+                'protein_description' : { 'matches' : [ 'protein', 'description' ], 'order' : 1, 'display' : 'Protein Description' },
+                'uniprot_id' : { 'matches' : [ 'uniprot' ], 'order' : 2, 'display' : 'UniProt code' },
+                'ptm' : { 'matches' : [ 'modification', 'ptm' ], 'order' : 3, 'display' : 'PTM(s)' },
+                'confidence' : { 'matches' : [ 'confidence' ], 'order' : 4, 'display' : 'Confidence' },
+                'charge' : { 'matches' : [ 'charge' ], 'order' : 5, 'display' : 'Charge State' },
+                'delta_mass' : { 'matches' : [ 'delta' ], 'order' : 6, 'display' : 'Delta Mass (Da)' },
+                'precursor_mass' : { 'matches' : [ 'precursor' ], 'order' : 7, 'display' : 'Precursor Mass (Da)' },
+                }
 
     def preview_ss_simple(self, cleaned_data):
         """docstring for preview_ss_simple"""
@@ -50,11 +62,50 @@ class Uploads(dbtools.DBTools):
         except:
             pass
 
+    def translate_headers( self, header ):
+        coldic = {}
+        headerdic = { b : [] for b in self.match_dict.keys() }
+        valid = True
+        for i in range(len( header )):
+            coldic[header[i]] = []
+            for k in self.match_dict.keys():
+                v = self.match_dict[k][ 'matches' ]
+                matching = False
+                for trialstr in v:
+                    if re.match( '\\w*%s' % ( trialstr ), header[i], flags = re.IGNORECASE ):
+                        matching = True
+                if matching:
+                    coldic[header[i]].append(k)
+                    headerdic[k].append(header[i])
+                    self.indexmap.append([ self.match_dict[k]['order'], i, k ] )
+        self.indexmap = sorted( self.indexmap, key = lambda a : a[0] )
+        for k in coldic.keys():
+            if len( coldic[k] ) != 1:
+                valid = False
+        for k in headerdic.keys():
+            if len( headerdic[k] ) != 1:
+                valid = False
+        self.valid = valid
+
     def preprocess_ss_simple( self, fileobj ):
         #with open( ss_file
-        allstr = ''
+        allstr = '<table class=\"table table-striped\"><tbody>'
+        headers = fileobj.readline().split( self.delim )
+        self.translate_headers( headers )
+        allstr += '<thead><tr>'
+        for i, k, m in self.indexmap:
+           allstr += '<th>' + self.match_dict[m]['display'] + '</th>'
+        allstr += '</tr></thead><tbody>'
+        j = 0
         for line in fileobj:
-            allstr += line[0]
+            if j:
+                elements = line.split(self.delim )
+                allstr += '<tr>'
+                for i, k, m in self.indexmap:
+                   allstr += '<td>' + elements[k] + '</td>'
+                allstr += '</tr>'
+            j += 1
+        allstr += '</tbody></table>'
         self.allstr = allstr
 
 
