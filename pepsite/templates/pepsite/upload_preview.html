@@ -8,7 +8,23 @@
 $(document).ready(function() {
     $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
     var prw = "{{upload.allstr|escapejs}}";
-    $('#peptides').html( prw );
+    //$('#peptides').html( prw );
+
+    $("#cssTable").tablesorter({ 
+        // pass the headers argument and assing a object 
+        headers: { 
+            // assign the secound column (we start counting zero) 
+            //1: { 
+                // disable it by setting the property sorter to false 
+            //    sorter: false 
+            //}, 
+            // assign the third column (we start counting zero) 
+            //2: { 
+            //    // disable it by setting the property sorter to false 
+            //    sorter: false 
+            //} 
+        } 
+    });
 
 });
 
@@ -129,8 +145,11 @@ $(document).ready(function() {
     </tbody>
 </table>
 
-<h2>Allstr</h2>
+<hr>
+<br>
 
-<div id="peptides"></div>
+<h2 class="text-primary">Data Preview</h2>
+
+<div id="peptides">{{upload.allstr|safe}}</div>
 
 {% endblock %}

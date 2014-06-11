@@ -89,7 +89,7 @@ class Uploads(dbtools.DBTools):
 
     def preprocess_ss_simple( self, fileobj ):
         #with open( ss_file
-        allstr = '<table class=\"table table-striped\"><tbody>'
+        allstr = '<table id=\"cssTable\" class=\"table table-striped tablesorter\">'
         headers = fileobj.readline().split( self.delim )
         self.translate_headers( headers )
         allstr += '<thead><tr>'
