@@ -196,6 +196,34 @@ def cell_line_tissue_search( request ):
         return render( request, 'pepsite/cell_line_tissue_search.html', context)
 
 @login_required
+def mass_search( request ):
+    if request.GET.items(): # If the form has been submitted...
+        form = MassSearchForm(request.GET) # A form bound to the POST data
+        if form.is_valid(): # All validation rules pass
+	    target_input = form.cleaned_data['target_input']
+	    tolerance = form.cleaned_data['tolerance']
+            context = { 'target_input' : target_input, 'tolerance' : tolerance }
+	    #s1 = MassSearch()
+	    #expts = s1.get_experiments_basic( target )
+	    #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele', 'search' : True }
+            return render( request, 'pepsite/formdump.html', context ) # Redirect after POST
+	else:
+            context = {}
+            for f in form.fields.keys():
+                if f in form.data.keys():
+                    context[f] = form.data[f]
+                else:
+                    context[f] = form.fields[f].initial
+	    #target = request.get['target_input']
+	    #context = { 'msg' : text_input }
+            return render( request, 'pepsite/formdump.html', context ) # Redirect after POST
+
+    else:
+        textform = MassSearchForm()
+        context = { 'massform' : textform }
+        return render( request, 'pepsite/mass_search.html', context)
+
+@login_required
 def allele_search( request ):
     if request.method == 'POST': # If the form has been submitted...
         form = TextOnlyForm(request.POST) # A form bound to the POST data

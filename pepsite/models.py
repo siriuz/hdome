@@ -318,6 +318,7 @@ class Instrument(models.Model):
 class Dataset(models.Model):
     """docstring for Dataset"""
     title = models.CharField(max_length=300, unique=True )
+    rank = models.IntegerField( null=True )
     datetime = models.DateTimeField( )
     data = models.FileField()
     gradient_min = models.FloatField()
@@ -336,7 +337,21 @@ class Dataset(models.Model):
 
     def __str__(self):
         """docstring for __str__"""
-        return self.title 
+        return self.title
+
+    def update_rank(self):
+        """docstring for update_rank"""
+        expt = Experiment.objects.get( dataset = self )
+        curmax = max( [ b.rank for b in expt.dataset_set.all() ] )
+        print curmax
+        #if self.rank is not None:
+        if curmax is not None:
+            if self.rank is None:
+                self.rank = curmax + 1
+        else:
+            self.rank = 0
+        self.save()
+
 
         
 

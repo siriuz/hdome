@@ -1,0 +1,50 @@
+{% extends 'pepsite/base.html' %}
+
+{% block headline %}
+
+<script>
+
+
+$(document).ready(function() {
+
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+});
+
+</script>
+
+
+</head>
+
+
+<h1>Search by <span class="text-primary">peptide mass</span></h1>
+<p class="text-info">Search by Peptide mass including PTM(s)</p>
+
+
+{% endblock %}
+
+{% block content %}
+
+<form action="{% url 'pepsite:mass_search' %}" method="get" >
+
+    {% csrf_token %}
+    {% for field in massform %}
+        <div class="fieldWrapper">
+            {{ field.errors }}
+            {{ field.label_tag }} {{ field }}
+            {{ field.help_text }}
+            {{ field.urlstr }}
+            {{ field.crap }}
+        </div>
+    {% endfor %}
+    <br>
+
+
+
+<input class="btn btn-lg btn-success" type="submit" value="Search"></input>
+</form>
+
+<div id="footer"></div>
+
+
+{% endblock %}

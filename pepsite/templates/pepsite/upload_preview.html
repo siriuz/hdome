@@ -7,7 +7,7 @@
 
 $(document).ready(function() {
     $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
-    var prw = "{{upload.allstr|escapejs}}";
+    //var prw = "{{upload.allstr|escapejs}}";
     //$('#peptides').html( prw );
 
     $("#cssTable").tablesorter({ 
@@ -30,11 +30,41 @@ $(document).ready(function() {
 
 </script>
 
+<style>
+#cssTable td 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+#cssTable th 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+
+.hilite:hover
+{
+background-color:yellow;
+}
+.hilite
+{
+cursor:pointer;
+}
+
+.table_body
+{
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+
+
+</style>
 
 </head>
 
 
-<h1>Upload preview</h1>
+<h1 class="text-primary">Upload preview</h1>
 <p class="text-info">How upload will look if committed</p>
 
 

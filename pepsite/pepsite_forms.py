@@ -129,6 +129,10 @@ from django.core.urlresolvers import reverse
 class TextOnlyForm(forms.Form):
     text_input = forms.CharField()
 
+class MassSearchForm(forms.Form):
+    target_input = forms.FloatField( label = 'Enter a mass (Da)')
+    tolerance = forms.FloatField(label = 'Tolerance for mass search (Da)', initial = 0.1 )
+
 class UploadSSForm(forms.Form):
     #expt1 = forms.ChoiceField( label = 'Select an existing Experiment', choices = [[-1, u'ADD NEW EXPERIMENT']] + [ [b.id, b.title] for b in Experiment.objects.all()] )
     expt1 = append_choicefield( label = 'Select an existing Experiment', choices = [[-1, u'ADD NEW EXPERIMENT']] + [ [b.id, b.title] for b in Experiment.objects.all()], urltext = 'Need a different experiment?', urlstr = 'pepsite:cell_line_search' )
