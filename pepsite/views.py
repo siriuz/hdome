@@ -315,6 +315,26 @@ def ptm_expts( request, ptm_id ):
     return render( request, 'pepsite/searched_expts.html', context)
 
 @login_required
+def ptm_peptides( request, ptm_id ):
+    user = request.user
+    ptm1 = get_object_or_404( Ptm, id = ptm_id )
+    text_input = ptm1.description
+    s1 = MassSearch()
+    ides = s1.get_peptide_array_from_ptm( ptm1, user )
+    context = { 'text_input' : text_input, 'query_on' : 'Ptm', 'query_obj' : ptm1, 'rows' : ides }
+    return render( request, 'pepsite/found_peptides.html', context)
+
+@login_required
+def protein_peptides( request, protein_id ):
+    user = request.user
+    prot1 = get_object_or_404( Protein, id = protein_id )
+    text_input = prot1.description
+    s1 = MassSearch()
+    ides = s1.get_peptide_array_from_protein( prot1, user )
+    context = { 'text_input' : text_input, 'query_on' : 'Ptm', 'query_obj' : prot1, 'rows' : ides }
+    return render( request, 'pepsite/found_peptides.html', context)
+
+@login_required
 def allele_expts( request, allele_id ):
     al1 = get_object_or_404( Allele, id = allele_id )
     text_input = al1.code

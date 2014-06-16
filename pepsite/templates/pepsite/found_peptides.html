@@ -1,34 +1,101 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-
-    {% load staticfiles %}
+{% extends 'pepsite/base.html' %}
 {% load template_filter %}
 
-    <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
-    <link href="{% static "css/tablesorter_style.css" %}" rel="stylesheet">
+{% block headline %}
 
-		<script src="{% static "js/jquery-2.0.3.min.js" %}"></script>
-                <script src="{% static "js/composite_search.js" %}"></script>
+<style>
+#cssTable td 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+#cssTable th 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+
+.hilite:hover
+{
+background-color:yellow;
+}
+.hilite
+{
+cursor:pointer;
+}
+
+.table_body
+{
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+
+
+</style>
+
+
+<script>
+
+
+$(document).ready(function() {
+
+
+
+$('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+
+//$("#cssTable").tablesorter(); 
+    $("#cssTable").tablesorter({ 
+        // pass the headers argument and assing a object 
+        headers: { 
+            // assign the secound column (we start counting zero) 
+            1: { 
+                // disable it by setting the property sorter to false 
+                sorter: false 
+            }, 
+            // assign the third column (we start counting zero) 
+            //2: { 
+            //    // disable it by setting the property sorter to false 
+            //    sorter: false 
+            //} 
+        } 
+    });
+
+});
+
+</script>
+
 
 
 </head>
 
-{{user}}
+
+<h1>Peptides found<span class="text-primary"></span></h1>
+
+
+{% endblock %}
+
+{% block content %}
+
+</div> <!--  container  -->
 
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
-        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th></tr>
+        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
     </thead>
     <tbody>
     {% for row in rows %}
         {% query_peptoprot peptide=row.ide.peptide protein=row.protein as peptoprot1 %}
         <tr>
             <td>
-                {{row.protein.description}}
+	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
             </td>
             <td>
-                {{row.protein.prot_id}}
+            <form action="{{ row.protein.get_uniprot_link }}" target="_blank">
+        <input class="btn btn-primary" type="submit" value="UniProt entry for {{row.protein.name}}">
+	</form>
             </td>
             <td>
                 {{row.ide.peptide.sequence}}
@@ -41,7 +108,7 @@
 	   </td>
 	   <td>
 	   {% if row.ide.ptm %}
-	       <a href="{% url 'pepsite:ptm_expts' row.ide.ptm.id %}" class="link">{{row.ide.ptm.description}}</a>
+	       <a href="{% url 'pepsite:ptm_peptides' row.ide.ptm.id %}" class="link">{{row.ide.ptm.description}}</a>
 	   {% endif %}
 	   </td>
 	   <td>
@@ -58,26 +125,15 @@
 	   </td>
 	   <td>
 	   {{ row.ide.ion.precursor_mass }}
-	   </td>
+           </td>
+           <td>
+	       <a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a>
+           </td>
         </tr>
     {% endfor %}
     </tbody>
     </table>
 
+{% endblock %}
 
 
-
-
-{{post}}
-
-{% for k, v in post.items %}
-{{k}}
-{{v}}
-{% endfor %}
-
-
-{{get}}
-{% for k, v in get.items %}
-{{k}}
-{{v}}
-{% endfor %}

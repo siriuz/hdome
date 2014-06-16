@@ -21,6 +21,9 @@ $('#footer').load( "{% url 'pepsite:footer' %}" );
 
 {% block content %}
 
+<h2>Returning Experiments</h2>
+<br>
+
 
 <p>
 
@@ -69,12 +72,24 @@ $('#footer').load( "{% url 'pepsite:footer' %}" );
 
 </p>
 
+<hr>
+
+<h2>Returning peptide lists</h2>
+<br>
+
+<p>
+
+<a href="{% url 'pepsite:mass_search' %}" class="btn btn-lg btn-primary">Search by Mass</a>
+
+</p>
+
 <p>
 
 <a href="{% url 'home' %}" class="btn btn-danger">Return to Haplodome home</a>
 
 </p>
 
-
+<hr>
+<br>
 
 {% endblock %}

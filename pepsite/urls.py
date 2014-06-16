@@ -34,6 +34,8 @@ urlpatterns = patterns('',
     url(r'^antibody_expts/(?P<antibody_id>\d+)$', views.antibody_expts, name='antibody_expts'),
     url(r'^allele_expts/(?P<allele_id>\d+)$', views.allele_expts, name='allele_expts'),
     url(r'^ptm_expts/(?P<ptm_id>\d+)$', views.ptm_expts, name='ptm_expts'),
+    url(r'^ptm_peptides/(?P<ptm_id>\d+)$', views.ptm_peptides, name='ptm_peptides'),
+    url(r'^protein_peptides/(?P<protein_id>\d+)$', views.protein_peptides, name='protein_peptides'),
     # Examples:
     # url(r'^$', 'hdome.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),

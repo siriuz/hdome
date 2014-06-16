@@ -170,8 +170,34 @@ class MassSearch( BaseSearch ):
         ml = []
         ides = IdEstimate.objects.filter( ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ).order_by( 'peptide__sequence' ) 
         peptides = set( [ b.peptide for b in ides ] )
+        return self.get_peptide_array( ides, user, ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance )
         for ide in ides:
                 for expt in Experiment.objects.filter( ion__idestimate = ide, ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ):
+                    for ds in Dataset.objects.filter( ions__idestimate = ide, experiment = expt ).order_by( 'rank' ):
+                        if user.has_perm( 'view_dataset', ds ):
+                            for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide, peptoprot__peptide__idestimate__ion__dataset = ds ): 
+                                ml.append( { 'ide': ide, 'expt' : expt, 'ds' : ds, 'protein' : protein } )
+                            break
+	return ml
+
+    def get_peptide_array_from_ptm( self, ptm_obj, user ):
+        ml = []
+        ides = IdEstimate.objects.filter( ptm = ptm_obj ).order_by( 'peptide__sequence' ) 
+        peptides = set( [ b.peptide for b in ides ] )
+        return self.get_peptide_array( ides, user, ion__idestimate__ptm = ptm_obj )
+
+    def get_peptide_array_from_protein( self, protein_obj, user ):
+        ml = []
+        ides = IdEstimate.objects.filter( peptide__proteins = protein_obj ).order_by( 'peptide__sequence' ) 
+        peptides = set( [ b.peptide for b in ides ] )
+        return self.get_peptide_array( ides, user, ion__idestimate__peptide__proteins = protein_obj )
+
+    def get_peptide_array( self, ides, user, **kwargs ):
+        """
+        """
+        ml = []
+        for ide in ides:
+            for expt in Experiment.objects.filter( ion__idestimate = ide, **kwargs ):# ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ):
                     for ds in Dataset.objects.filter( ions__idestimate = ide, experiment = expt ).order_by( 'rank' ):
                         if user.has_perm( 'view_dataset', ds ):
                             for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide, peptoprot__peptide__idestimate__ion__dataset = ds ): 
