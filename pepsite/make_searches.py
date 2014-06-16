@@ -157,6 +157,33 @@ class PeptideSearch( BaseSearch ):
 	expts = set(Experiment.objects.filter( ion__peptides = peptide_obj ))
 	return expts
 
+class MassSearch( BaseSearch ):
+    """
+
+
+    """
+    def get_ides_from_mass( self, mass, tolerance ):
+        ides = IdEstimate.objects.filter( ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ).order_by( 'peptide__sequence' ) 
+	return ides
+
+    def get_unique_peptide_ides_from_mass( self, mass, tolerance, user ):
+        ml = []
+        ides = IdEstimate.objects.filter( ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ).order_by( 'peptide__sequence' ) 
+        peptides = set( [ b.peptide for b in ides ] )
+        for ide in ides:
+                for expt in Experiment.objects.filter( ion__idestimate = ide, ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ):
+                    for ds in Dataset.objects.filter( ions__idestimate = ide, experiment = expt ).order_by( 'rank' ):
+                        if user.has_perm( 'view_dataset', ds ):
+                            for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide, peptoprot__peptide__idestimate__ion__dataset = ds ): 
+                                ml.append( { 'ide': ide, 'expt' : expt, 'ds' : ds, 'protein' : protein } )
+                            break
+	return ml
+
+    def find_hirank_peptide(self, peptide, ):
+        """docstring for find_hirank_peptide"""
+        pass
+
+
 
 
 class ProteinSearch( BaseSearch ):
