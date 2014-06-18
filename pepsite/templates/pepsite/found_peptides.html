@@ -37,7 +37,7 @@ cursor:pointer;
 
 <script>
 
-
+/*
 $(document).ready(function() {
 
 
@@ -64,6 +64,37 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
     });
 
 });
+*/
+
+    $(document).ready(function() {
+        $('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+        $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+        var search = "{{search}}";
+
+        if ( search === "True" ) {
+            search = true;
+            } else {
+            search = false;
+        }
+
+        var query_on = "{{query_on}}";
+        var queryObjId = "1";
+
+        if ( !search ) {
+            var queryObjId = "{{query_obj.id}}";
+            var a = "1";
+            var url1 = "{% url 'pepsite:model_info' query_on "1"  %}";
+            var url2 = url1.replace( "1", queryObjId );
+
+            $('#summary').load( url2 );
+            //$('#summary').html( url2 );
+            }
+            
+        $("#cssTable").tablesorter({
+            textExtraction : 'complex',
+            sortMultiSortKey: 'none'
+        });
+    });
 
 </script>
 
@@ -72,12 +103,36 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 </head>
 
 
-<h1>Peptides found<span class="text-primary"></span></h1>
 
+{% if search %}
+
+{% if heading %}
+
+<h1>Search results for <span class="text-primary">{{ heading }}</span> search on <span class="text-info">{{text_input}}</span></h1>
+<p class="text-info">Interactive results page</p>
+
+{% else %}
+
+<h1>Search results for <span class="text-primary">{{ query_on }}</span> search on <span class="text-info">{{text_input}}</span></h1>
+<p class="text-info">Interactive results page</p>
+
+{% endif %}
+
+{% else %}
+
+<h1><span class="text-primary">{{ query_on }}</span> = <span class="text-info">{{text_input}}</span></h1>
+<p class="text-info">Interactive results page</p>
+
+
+{% endif %}
 
 {% endblock %}
 
 {% block content %}
+
+Search = {{search}} {{query_on}}
+
+<div id="summary"></div>
 
 </div> <!--  container  -->
 
@@ -87,7 +142,6 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
     </thead>
     <tbody>
     {% for row in rows %}
-        {% query_peptoprot peptide=row.ide.peptide protein=row.protein as peptoprot1 %}
         <tr>
             <td>
 	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
@@ -98,13 +152,13 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 	</form>
             </td>
             <td>
-                {{row.ide.peptide.sequence}}
+	        <a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a>
             </td>
             <td>
                 {{row.ide.peptide.sequence|length}}
             </td>
             <td>
-               {{ peptoprot1.get_positions }}
+               {{ row.peptoprot.get_positions }}
 	   </td>
 	   <td>
 	   {% if row.ide.ptm %}

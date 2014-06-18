@@ -207,7 +207,8 @@ def mass_search( request ):
 	    s1 = MassSearch()
 	    ides = s1.get_unique_peptide_ides_from_mass( target_input, tolerance, user )
 	    #ides = s1.get_ides_from_mass( target_input, tolerance )
-            context = { 'rows' : ides }
+            desc = u'mass %f \u00B1 %f' % ( target_input, tolerance ) 
+            context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
 	    #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele', 'search' : True }
             return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
 	else:
@@ -223,7 +224,8 @@ def mass_search( request ):
 	    s1 = MassSearch()
 	    ides = s1.get_unique_peptide_ides_from_mass( target_input, tolerance, user )
 	    #ides = s1.get_ides_from_mass( target_input, tolerance )
-            context = { 'rows' : ides }
+            desc = u'mass %f \u00B1 %f' % ( target_input, tolerance ) 
+            context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
 	    #target = request.get['target_input']
 	    #context = { 'msg' : text_input }
             return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
@@ -321,7 +323,7 @@ def ptm_peptides( request, ptm_id ):
     text_input = ptm1.description
     s1 = MassSearch()
     ides = s1.get_peptide_array_from_ptm( ptm1, user )
-    context = { 'text_input' : text_input, 'query_on' : 'Ptm', 'query_obj' : ptm1, 'rows' : ides }
+    context = { 'text_input' : text_input, 'query_on' : 'Ptm', 'query_obj' : ptm1, 'rows' : ides, 'search' : False }
     return render( request, 'pepsite/found_peptides.html', context)
 
 @login_required
@@ -331,7 +333,17 @@ def protein_peptides( request, protein_id ):
     text_input = prot1.description
     s1 = MassSearch()
     ides = s1.get_peptide_array_from_protein( prot1, user )
-    context = { 'text_input' : text_input, 'query_on' : 'Ptm', 'query_obj' : prot1, 'rows' : ides }
+    context = { 'text_input' : text_input, 'query_on' : 'Protein', 'query_obj' : prot1, 'rows' : ides, 'search' : False }
+    return render( request, 'pepsite/found_peptides.html', context)
+
+@login_required
+def peptide_peptides( request, peptide_id ):
+    user = request.user
+    pep = get_object_or_404( Peptide, id = peptide_id )
+    text_input = pep.sequence
+    s1 = MassSearch()
+    ides = s1.get_peptide_array_from_peptide( pep, user )
+    context = { 'text_input' : text_input, 'query_on' : 'Peptide', 'query_obj' : pep, 'rows' : ides }
     return render( request, 'pepsite/found_peptides.html', context)
 
 @login_required
@@ -373,6 +385,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 @login_required
 def expt2( request, expt_id ):
+  user = request.user
   if not ( request.POST.has_key( 'full_list' ) and request.POST['full_list'] ):
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
@@ -390,14 +403,18 @@ def expt2( request, expt_id ):
     except EmptyPage:
         # If page is out of range (e.g. 9999), deliver last page of results.
         proteins = paginator.page(paginator.num_pages)
-    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'paginate' : True })
+    s1 = ExptArrayAssemble()
+    rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user )
+    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'rows' : rows, 'paginate' : True })
   else:
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
     lodgements = Lodgement.objects.filter( dataset__experiment = expt_id )
     if not( len(lodgements)):
         lodgements = False
-    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'paginate' : False })
+    s1 = ExptArrayAssemble()
+    rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user )
+    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'rows' : rows, 'paginate' : False })
 
 
 

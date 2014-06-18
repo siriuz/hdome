@@ -142,60 +142,58 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
-        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th></tr>
+        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
     </thead>
     <tbody>
-    {% for protein in proteins %}
-{% query_idestimate ion__experiments=expt peptide__proteins=protein as myides %}
-	{% for idestimate in myides %}
-          {% query_dataset ions__idestimate=idestimate experiment=expt as dataset1 %}
-          {% get_obj_perms user for dataset1 as "dataset_perms" %}
-        {% if "view_dataset" in dataset_perms %}
-          {% query_peptoprot peptide=idestimate.peptide protein=protein as peptoprot1 %}
+    {% for row in rows %}
         <tr>
-	<td>
-	<a href="{% url 'pepsite:protein_full_listing' protein.id %}" class="link">{{protein.name}}</a>
-	</td>
-	<td>
-            <form action="{{ protein.get_uniprot_link }}" target="_blank">
-        <input class="btn btn-primary" type="submit" value="UniProt entry for {{protein.name}}">
-	</form>
-	</td>
-	<td>
-	<a href="{% url 'pepsite:peptide_expts' idestimate.peptide.id %}" class="link">{{idestimate.peptide.sequence}}</a>
-	</td>
-	<td>
-	{{ idestimate.peptide.sequence | length }}
-	</td>
             <td>
-                {{ peptoprot1.get_positions }}
-	    </td>
-	<td>
-	{% if idestimate.ptm %}
-	<a href="{% url 'pepsite:ptm_expts' idestimate.ptm.id %}" class="link">{{idestimate.ptm.description}}</a>
-	{% endif %}
-	</td>
-	<td>
-	{{ idestimate.delta_mass }}
-	</td>
-	<td>
-	{{ idestimate.confidence }}
-	</td>
-	<td>
-	{{ idestimate.ion.charge_state }}
-	</td>
-	<td>
-	{{ idestimate.ion.retention_time }}
-	</td>
-	<td>
-	{{ idestimate.ion.precursor_mass }}
-	</td>
+	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
+            </td>
+            <td>
+            <form action="{{ row.protein.get_uniprot_link }}" target="_blank">
+        <input class="btn btn-primary" type="submit" value="UniProt entry for {{row.protein.name}}">
+	</form>
+            </td>
+            <td>
+	        <a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a>
+            </td>
+            <td>
+                {{row.ide.peptide.sequence|length}}
+            </td>
+            <td>
+               {{ row.peptoprot.get_positions }}
+	   </td>
+	   <td>
+	   {% if row.ide.ptm %}
+	       <a href="{% url 'pepsite:ptm_peptides' row.ide.ptm.id %}" class="link">{{row.ide.ptm.description}}</a>
+	   {% endif %}
+	   </td>
+	   <td>
+	   {{ row.ide.delta_mass }}
+	   </td>
+	   <td>
+	   {{ row.ide.confidence }}
+	   </td>
+	   <td>
+	   {{ row.ide.ion.charge_state }}
+	   </td>
+	   <td>
+	   {{ row.ide.ion.retention_time }}
+	   </td>
+	   <td>
+	   {{ row.ide.ion.precursor_mass }}
+           </td>
+           <td>
+	       <a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a>
+           </td>
         </tr>
-        {% endif %}
-	{% endfor %}
     {% endfor %}
     </tbody>
     </table>
+
+
+
 
 {% if paginate %}
 

@@ -36,6 +36,7 @@ urlpatterns = patterns('',
     url(r'^ptm_expts/(?P<ptm_id>\d+)$', views.ptm_expts, name='ptm_expts'),
     url(r'^ptm_peptides/(?P<ptm_id>\d+)$', views.ptm_peptides, name='ptm_peptides'),
     url(r'^protein_peptides/(?P<protein_id>\d+)$', views.protein_peptides, name='protein_peptides'),
+    url(r'^peptide_peptides/(?P<peptide_id>\d+)$', views.peptide_peptides, name='peptide_peptides'),
     # Examples:
     # url(r'^$', 'hdome.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),

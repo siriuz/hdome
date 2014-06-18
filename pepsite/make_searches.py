@@ -157,6 +157,31 @@ class PeptideSearch( BaseSearch ):
 	expts = set(Experiment.objects.filter( ion__peptides = peptide_obj ))
 	return expts
 
+
+class ExptArrayAssemble( BaseSearch ):
+    """
+    """
+    def get_peptide_array_from_protein_expt(self, proteins, expt, user):
+        """docstring for get_peptide_array_from_proteins"""
+        ides = IdEstimate.objects.filter( peptide__proteins__in = proteins, ion__experiments = expt ).order_by( 'peptide__sequence' )
+        return self.get_peptide_array_expt( ides, expt, user )
+
+    def get_peptide_array_expt( self, ides, expt, user, **kwargs ):
+        """
+        """
+        ml = []
+        for ide in ides:
+                    for ds in Dataset.objects.filter( ions__idestimate = ide, experiment = expt ).order_by( 'rank' ):
+                        if user.has_perm( 'view_dataset', ds ):
+                            for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide, peptoprot__peptide__idestimate__ion__dataset = ds ): 
+                                p2p = PepToProt.objects.get( peptide = ide.peptide, protein = protein )
+                                ml.append( { 'ide': ide, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
+                            break
+	return ml
+
+
+
+
 class MassSearch( BaseSearch ):
     """
 
@@ -176,7 +201,8 @@ class MassSearch( BaseSearch ):
                     for ds in Dataset.objects.filter( ions__idestimate = ide, experiment = expt ).order_by( 'rank' ):
                         if user.has_perm( 'view_dataset', ds ):
                             for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide, peptoprot__peptide__idestimate__ion__dataset = ds ): 
-                                ml.append( { 'ide': ide, 'expt' : expt, 'ds' : ds, 'protein' : protein } )
+                                p2p = PepToProt.objects.get( peptide = ide.peptide, protein = protein )
+                                ml.append( { 'ide': ide, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
                             break
 	return ml
 
@@ -192,6 +218,12 @@ class MassSearch( BaseSearch ):
         peptides = set( [ b.peptide for b in ides ] )
         return self.get_peptide_array( ides, user, ion__idestimate__peptide__proteins = protein_obj )
 
+    def get_peptide_array_from_peptide( self, peptide_obj, user ):
+        ml = []
+        ides = IdEstimate.objects.filter( peptide = peptide_obj ) 
+        peptides = set( [ b.peptide for b in ides ] )
+        return self.get_peptide_array( ides, user, ion__idestimate__peptide = peptide_obj )
+
     def get_peptide_array( self, ides, user, **kwargs ):
         """
         """
@@ -201,7 +233,8 @@ class MassSearch( BaseSearch ):
                     for ds in Dataset.objects.filter( ions__idestimate = ide, experiment = expt ).order_by( 'rank' ):
                         if user.has_perm( 'view_dataset', ds ):
                             for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide, peptoprot__peptide__idestimate__ion__dataset = ds ): 
-                                ml.append( { 'ide': ide, 'expt' : expt, 'ds' : ds, 'protein' : protein } )
+                                p2p = PepToProt.objects.get( peptide = ide.peptide, protein = protein )
+                                ml.append( { 'ide': ide, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
                             break
 	return ml
 

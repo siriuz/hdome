@@ -26,6 +26,16 @@ def query_idestimate( **kwargs):
     return IdEstimate.objects.filter(**kwargs)
 
 @register.assignment_tag
+def query_idestimate_user( **kwargs):
+    """ template tag which allows queryset filtering. Usage:
+          {% query books author=author as mybooks %}
+          {% for book in mybooks %}
+            ...
+          {% endfor %}
+    """
+    return IdEstimate.objects.filter(**kwargs)
+
+@register.assignment_tag
 def query_alleles( **kwargs):
     """ template tag which allows queryset filtering. Usage:
           {% query books author=author as mybooks %}
