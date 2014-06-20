@@ -143,6 +143,7 @@ class Experiment( models.Model ):
     #data = models.FileField()
     cell_line = models.ForeignKey( CellLine )
     #lodgement = models.ForeignKey( Lodgement )
+    notes = models.TextField( default = '' )
 
     def __str__(self):
 	return self.title
@@ -275,6 +276,10 @@ class IdEstimate(models.Model):
     #experiment = models.ForeignKey(Experiment)
     delta_mass = models.FloatField()
     confidence = models.FloatField()
+    isValid = models.BooleanField( default = False )
+    isRedundent = models.BooleanField( default = False )
+    isRemoved = models.BooleanField( default = False )
+    reason = models.TextField( default = '' )
 
     def check_ptm(self):
         """docstring for check_ptm"""
@@ -328,6 +333,7 @@ class Dataset(models.Model):
     lodgement = models.ForeignKey(Lodgement)
     experiment = models.ForeignKey(Experiment)
     ions = models.ManyToManyField( Ion )
+    notes = models.TextField( default = '' )
 
     class Meta:
         permissions = (

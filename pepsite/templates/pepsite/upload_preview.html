@@ -36,7 +36,7 @@ $(document).ready(function() {
     text-align:center; 
     vertical-align:middle;
 }
-#cssTable th 
+#cssTable th, .peptabhead 
 {
     text-align:center; 
     vertical-align:middle;
@@ -76,7 +76,6 @@ cursor:pointer;
 
 
 <br>
-
 
 <table class="table table-striped">
     <tbody>
@@ -178,8 +177,12 @@ cursor:pointer;
 <hr>
 <br>
 
-<h2 class="text-primary">Data Preview</h2>
+</div> <!--  -->
+
+<h2 class="text-primary peptabhead">Data Preview</h2>
 
 <div id="peptides">{{upload.allstr|safe}}</div>
+
+<div id="dict">{{upload.uldict}}</div>
 
 {% endblock %}

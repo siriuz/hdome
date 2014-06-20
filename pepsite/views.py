@@ -201,13 +201,13 @@ def mass_search( request ):
     if request.GET.items(): # If the form has been submitted...
         form = MassSearchForm(request.GET) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
-	    target_input = float( form.cleaned_data['target_input'] )
-	    tolerance = float( form.cleaned_data['tolerance'] )
+	    target_input = form.cleaned_data['target_input'] 
+	    tolerance = form.cleaned_data['tolerance'] 
             context = { 'target_input' : target_input, 'tolerance' : tolerance }
 	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides_from_mass( target_input, tolerance, user )
+	    ides = s1.get_unique_peptide_ides_from_mass( float(target_input), float(tolerance), user )
 	    #ides = s1.get_ides_from_mass( target_input, tolerance )
-            desc = u'mass %f \u00B1 %f' % ( target_input, tolerance ) 
+            desc = u'mass %s \u00B1 %s' % ( target_input, tolerance ) 
             context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
 	    #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele', 'search' : True }
             return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
@@ -218,13 +218,13 @@ def mass_search( request ):
                     context[f] = form.data[f]
                 else:
                     context[f] = form.fields[f].initial
-	    target_input = float( context['target_input'] )
-	    tolerance = float( context['tolerance'] )
+	    target_input = context['target_input']
+	    tolerance = context['tolerance'] 
             context = { 'target_input' : target_input, 'tolerance' : tolerance }
 	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides_from_mass( target_input, tolerance, user )
+	    ides = s1.get_unique_peptide_ides_from_mass( float(target_input), float(tolerance), user )
 	    #ides = s1.get_ides_from_mass( target_input, tolerance )
-            desc = u'mass %f \u00B1 %f' % ( target_input, tolerance ) 
+            desc = u'mass %s \u00B1 %s' % ( target_input, tolerance ) 
             context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
 	    #target = request.get['target_input']
 	    #context = { 'msg' : text_input }
