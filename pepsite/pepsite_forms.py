@@ -1,5 +1,5 @@
 from django import forms
-from pepsite.models import Experiment, Antibody, CellLine, Publication
+from pepsite.models import Experiment, Antibody, CellLine, Publication, Instrument
 import os, sys
 from django.forms.util import ValidationError as FormValidationError
 
@@ -141,7 +141,8 @@ class UploadSSForm(forms.Form):
     expt2 = forms.CharField( label = 'New Experiment Name' )
     #expt2 = LinkField( label = 'New Experiment Name' )
     ab1 = forms.ChoiceField( label = 'Select existing Antibody(ies)', widget = forms.SelectMultiple, choices = [ [b.id, b.name] for b in Antibody.objects.all()] )
-    cl1 = forms.ChoiceField( label = 'Select an existinng Cell Line', choices = [ [b.id, b.name] for b in CellLine.objects.all()] )
+    cl1 = forms.ChoiceField( label = 'Select an existing Cell Line', choices = [ [b.id, b.name] for b in CellLine.objects.all()] )
+    inst = forms.ChoiceField( label = 'Select an existing Instrument', choices = [ [b.id, b.name] for b in Instrument.objects.all()] )
     pl1 = forms.ChoiceField( label = 'Select Publication(s)', widget = forms.SelectMultiple, choices = [ [b.id, b.display] for b in Publication.objects.all()] )
     rel = forms.BooleanField( label = 'Data publically available?' )
     ldg = forms.CharField( label = 'Name for this Lodgement' )

@@ -112,10 +112,11 @@ def composite_search( request ):
 
 @login_required
 def upload_ss_form( request ):
+    user = request.user
     if request.method == 'POST': # If the form has been submitted...
         form = UploadSSForm(request.POST, request.FILES) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
-            ul = pepsite.uploaders.Uploads()
+            ul = pepsite.uploaders.Uploads( user = user )
             ss = request.FILES['ss']
 	    #ul.upload_ss_simple( form.cleaned_data.dict() )
 	    ul.preview_ss_simple( form.cleaned_data )
@@ -123,7 +124,7 @@ def upload_ss_form( request ):
             #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Cell Line'  }
             return render( request, 'pepsite/upload_preview.html', { 'upload' : ul } ) # Redirect after POST
 	else:
-            ul = pepsite.uploaders.Uploads()
+            ul = pepsite.uploaders.Uploads( user = user )
             ss = request.FILES['ss']
 	    #ul.upload_ss_simple( form.cleaned_data.dict() )
 	    ul.preview_ss_simple( request.POST )
@@ -134,6 +135,15 @@ def upload_ss_form( request ):
         textform = UploadSSForm()
         context = { 'textform' : textform }
         return render( request, 'pepsite/upload_ss_form.html', context)
+
+@login_required
+def commit_upload_ss( request, upload ):
+    """
+    """
+    upload.get_protein_metadata()
+    upload.prepare_upload_simple()
+    upload.upload_simple()
+
 
 @login_required
 def cell_line_search( request ):

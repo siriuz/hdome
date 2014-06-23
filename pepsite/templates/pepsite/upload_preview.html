@@ -179,6 +179,11 @@ cursor:pointer;
 
 </div> <!--  -->
 
+<form action="{% url 'pepsite:commit_upload_ss' %}" method='post'>
+    <input type="hidden" value={{upload}}/>
+    <input class="btn btn-large btn-primary" type="submit" value="Commit upload"/>
+</form>
+
 <h2 class="text-primary peptabhead">Data Preview</h2>
 
 <div id="peptides">{{upload.allstr|safe}}</div>

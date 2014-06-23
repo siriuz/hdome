@@ -85,6 +85,7 @@ class CellLine(models.Model):
     #infecteds = models.ManyToManyField( Organism, related_name = 'Infections' )
     individuals = models.ManyToManyField( Individual )
     alleles = models.ManyToManyField( Allele, through='Expression' )
+    parent = models.ForeignKey( 'self', null = True )
     #antibodies = models.ManyToManyField( Antibody )
 
     class Meta:
@@ -272,7 +273,7 @@ class Ion(models.Model):
 class IdEstimate(models.Model):
     peptide = models.ForeignKey(Peptide)
     ion = models.ForeignKey(Ion)
-    ptm = models.ForeignKey(Ptm, null = True)
+    ptms = models.ManyToManyField(Ptm)
     #experiment = models.ForeignKey(Experiment)
     delta_mass = models.FloatField()
     confidence = models.FloatField()
@@ -324,11 +325,11 @@ class Dataset(models.Model):
     """docstring for Dataset"""
     title = models.CharField(max_length=300, unique=True )
     rank = models.IntegerField( null=True )
-    datetime = models.DateTimeField( )
+    datetime = models.DateTimeField( null=True )
     data = models.FileField()
-    gradient_min = models.FloatField()
-    gradient_max = models.FloatField()
-    gradient_duration = models.FloatField()
+    gradient_min = models.FloatField(null=True)
+    gradient_max = models.FloatField(null=True)
+    gradient_duration = models.FloatField(null=True)
     instrument = models.ForeignKey(Instrument)
     lodgement = models.ForeignKey(Lodgement)
     experiment = models.ForeignKey(Experiment)
@@ -396,6 +397,12 @@ class Publication(models.Model):
     def __str__(self):
         """docstring for _"""
         return self.title + '|' + self.journal
+
+    def refresh_display(self):
+        """docstring for refresh_display
+        idea is to get authors etc from PubMed and condense into string"""
+        pass
+        
 
         
 
