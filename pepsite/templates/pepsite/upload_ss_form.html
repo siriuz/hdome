@@ -9,6 +9,25 @@ $(document).ready(function() {
 
 $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
+
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+var csrftoken = getCookie('csrftoken');
+
 $('#id_expt1').click( function() {
     var selected = $('#id_expt1 option:selected').val();
     if ( selected === "-1" ) {
@@ -23,6 +42,38 @@ $('#id_expt1').click( function() {
     }
     
 });
+
+$('#ssupload').click( function () {
+    var resultdiv = "#resultdiv";
+    var datain = new FormData($('#ssform').get(0));
+
+    //var option=$('#ssform').serialize();
+                                //$( resultdiv ).html( option );
+
+                    //var input_string = $("#" + textfield_id ).val();
+                    $.ajax({
+                            url: $(this).attr('action'),
+                            type: $(this).attr('method'),
+                        //url : "upload_ss_form", 
+                        //type : "POST",
+                        //dataType: "html", 
+                            cache: false,
+    //processData: false,
+    contentType: false,
+                        data : {
+                            client_response : datain,
+                            csrfmiddlewaretoken: csrftoken
+                            },
+                            success : function(retdat) {
+                                $( resultdiv ).html( "DONE AGAIN" );
+                                //$( resultdiv ).html( datain );
+                            },
+                            error : function(xhr,errmsg,err) {
+                                alert(xhr.status + ": " + xhr.responseText);
+                            }
+                    });
+                    return false;
+            });
 
 
 
@@ -41,7 +92,7 @@ $('#id_expt1').click( function() {
 {% endblock %}
 {% block content %}
 
-<form enctype="multipart/form-data" action="{% url 'pepsite:upload_ss_form' %}" method="post" >
+<form enctype="multipart/form-data" action="{% url 'pepsite:upload_ss_form' %}" method="post" id="ssform">
 
     {% csrf_token %}
     {% for field in textform %}
@@ -57,13 +108,13 @@ $('#id_expt1').click( function() {
 
 
 
-<input class="btn btn-lg btn-success" type="submit" value="Upload"></input>
+<button id="ssupload" class="btn btn-lg btn-success" value="Upload">Yep see preview</button>
 </form>
 <hr>
 <br>
 
 
-
+<div id="resultdiv"></div>
 
 
 

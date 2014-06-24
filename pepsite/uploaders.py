@@ -20,11 +20,14 @@ class Uploads(dbtools.DBTools):
         self.data = None
         self.cell_line = None
         self.antibodies = []
+        self.antibody_ids = []
         self.publications = []
         self.dataset_nos = []
         self.datasets = []
         self.uniprot_ids = []
         self.expt = None
+        self.expt_title = None
+        self.expt_id = None
         self.lodgement = None
         self.public = False
         self.create_expt = False
@@ -54,6 +57,7 @@ class Uploads(dbtools.DBTools):
         if int(cleaned_data[ 'expt1' ]) != -1: 
 	    self.expt = self.get_model_object( Experiment, id = cleaned_data[ 'expt1' ] )
             self.expt_title = self.expt.title
+            self.expt_id = cleaned_data[ 'expt1' ] 
         elif cleaned_data[ 'expt2' ].strip() != '':
             self.expt_title = cleaned_data[ 'expt2' ]
             self.create_expt = True
@@ -62,8 +66,9 @@ class Uploads(dbtools.DBTools):
         for ab in cleaned_data.getlist( 'ab1'):
             ab_obj = self.get_model_object( Antibody, id = ab ) 
             self.antibodies.append( ab_obj )
+            self.antibody_ids.append( ab )
         for pl in cleaned_data.getlist( 'pl1' ):
-            self.publications.append( self.get_model_object( Publication, id = pl ) )
+            self.publications.append( pl )
         try:
             self.lodgement_title = cleaned_data[ 'ldg' ]
         except:
@@ -180,6 +185,7 @@ class Uploads(dbtools.DBTools):
             self.lodgement.save()
             if self.publications:
                 for pl in self.publications:
+                    pbln = self.get_model_object( Publication, id=pl )
                     self.add_if_not_already(  pl, self.lodgement.publication_set )
         for dsno in self.dataset_nos:
             ds = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgment, experiment = self.expt,

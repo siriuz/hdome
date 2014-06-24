@@ -135,9 +135,12 @@ def upload_ss_form( request ):
 	    ul.preview_ss_simple( formdata )
 	    ul.preprocess_ss_simple( ss )
             #request.session['ss'] = ss
+            upload_dict = { 'ul' : ul.uldict, 'proteins' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications,
+                    'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement, 'dataset_nos' : ul.dataset_nos }
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
-            return render( request, 'pepsite/upload_preview.html', { 'upload' : ul, 'ss' : ss, 'formdata' : formdata, 'filled_form' : form }  ) # Redirect after POST
+            #return HttpResponse( 'poo' )
+            return render( request, 'pepsite/upload_preview.html', { 'upload' : ul, 'ss' : ss, 'formdata' : formdata, 'filled_form' : form, 'ul_supp' : upload_dict }  ) # Redirect after POST
  
     else:
         textform = UploadSSForm()
