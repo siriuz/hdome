@@ -118,18 +118,26 @@ def upload_ss_form( request ):
         if form.is_valid(): # All validation rules pass
             ul = pepsite.uploaders.Uploads( user = user )
             ss = request.FILES['ss']
+            formdata = form.cleaned_data
 	    #ul.upload_ss_simple( form.cleaned_data.dict() )
-	    ul.preview_ss_simple( form.cleaned_data )
+	    ul.preview_ss_simple( formdata )
 	    ul.preprocess_ss_simple( ss )
+            #request.session['ss'] = ss
+            request.session['ul'] = ul.uldict
+            request.session['proteins'] = ul.uniprot_ids
             #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Cell Line'  }
-            return render( request, 'pepsite/upload_preview.html', { 'upload' : ul } ) # Redirect after POST
+            return render( request, 'pepsite/upload_preview.html', { 'upload' : ul, 'ss' : ss, 'formdata' : formdata, 'filled_form' : form } ) # Redirect after POST
 	else:
             ul = pepsite.uploaders.Uploads( user = user )
             ss = request.FILES['ss']
+            formdata = request.POST
 	    #ul.upload_ss_simple( form.cleaned_data.dict() )
-	    ul.preview_ss_simple( request.POST )
+	    ul.preview_ss_simple( formdata )
 	    ul.preprocess_ss_simple( ss )
-            return render( request, 'pepsite/upload_preview.html', { 'upload' : ul }  ) # Redirect after POST
+            #request.session['ss'] = ss
+            request.session['ul'] = ul.uldict
+            request.session['proteins'] = ul.uniprot_ids
+            return render( request, 'pepsite/upload_preview.html', { 'upload' : ul, 'ss' : ss, 'formdata' : formdata, 'filled_form' : form }  ) # Redirect after POST
  
     else:
         textform = UploadSSForm()
@@ -137,12 +145,19 @@ def upload_ss_form( request ):
         return render( request, 'pepsite/upload_ss_form.html', context)
 
 @login_required
-def commit_upload_ss( request, upload ):
+def commit_upload_ss( request ):
     """
     """
-    upload.get_protein_metadata()
-    upload.prepare_upload_simple()
-    upload.upload_simple()
+    if request.method == 'POST':
+        context = { 'data' : request.POST['data'], 'ul' : request.session['ul'] }
+        upload.get_protein_metadata( request.session['proteins'] )
+        upload.prepare_upload_simple( request.session['ul'] )
+        upload.upload_simple()
+        return render( request, 'pepsite/ss_uploading.html', context)
+    else:
+        textform = UploadSSForm()
+        context = { 'textform' : textform }
+        return render( request, 'pepsite/upload_ss_form.html', context)
 
 
 @login_required

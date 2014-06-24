@@ -177,12 +177,19 @@ cursor:pointer;
 <hr>
 <br>
 
+<form action="{% url 'pepsite:commit_upload_ss' %}" method='post'>
+    {% csrf_token %}
+    <input type="hidden" name="data" value="{{upload.uldict}}"/>
+    <input class="btn btn-lg btn-primary" type="submit" value="Commit upload"/>
+</form>
+
 </div> <!--  -->
 
-<form action="{% url 'pepsite:commit_upload_ss' %}" method='post'>
-    <input type="hidden" value={{upload}}/>
-    <input class="btn btn-large btn-primary" type="submit" value="Commit upload"/>
-</form>
+
+
+{{ul}}
+
+<br>
 
 <h2 class="text-primary peptabhead">Data Preview</h2>
 

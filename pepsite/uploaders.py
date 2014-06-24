@@ -187,11 +187,11 @@ class Uploads(dbtools.DBTools):
             ds.save()
             self.datasets.append( ds )
 
-    def get_protein_metadata( self ):
-        self.uniprot_data = uniprot.batch_uniprot_metadata( self.uniprot_ids )
+    def get_protein_metadata( self, uniprot_ids ):
+        self.uniprot_data = uniprot.batch_uniprot_metadata( uniprot_ids )
         
 
-    def upload_simple( self ):
+    def upload_simple( self, uldict ):
         """None -> None
         """
         for k in self.uldict.keys():
