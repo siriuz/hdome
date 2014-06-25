@@ -20,6 +20,8 @@ from django.contrib.auth.decorators import login_required
 
 import re
 
+import pickle
+
 @login_required
 def index( request ):
 	return render( request, 'pepsite/index.html', {})
@@ -162,6 +164,8 @@ def commit_upload_ss( request ):
     if request.method == 'POST':
         ul = pepsite.uploaders.Uploads( user = user )
         ul.repopulate( elems )
+        with open( '/home/rimmer/praccie/hdome/background/trial_ul_01.pickle', 'wb' ) as f:
+            pickle.dump( ul, f )
         context = { 'data' : request.POST['data'], 'ul' : ul }
         ul.get_protein_metadata(  )
         ul.prepare_upload_simple( )
@@ -427,7 +431,7 @@ def expt2( request, expt_id ):
   if not ( request.POST.has_key( 'full_list' ) and request.POST['full_list'] ):
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
-    lodgements = Lodgement.objects.filter( dataset__experiment = expt_id )
+    lodgements = Lodgement.objects.filter( dataset__experiment = expt )
     if not( len(lodgements)):
         lodgements = False
     paginator = Paginator(proteins, 25 ) # Show 25 contacts per page
@@ -447,7 +451,7 @@ def expt2( request, expt_id ):
   else:
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
-    lodgements = Lodgement.objects.filter( dataset__experiment = expt_id )
+    lodgements = Lodgement.objects.filter( dataset__experiment = expt )
     if not( len(lodgements)):
         lodgements = False
     s1 = ExptArrayAssemble()

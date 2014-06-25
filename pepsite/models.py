@@ -183,7 +183,7 @@ class Antibody(models.Model):
 class Ptm(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField( default = '' )
-    mass_change = models.FloatField()
+    mass_change = models.FloatField(null=True)
 
     def fname(self):
         """docstring for fname"""
@@ -218,7 +218,7 @@ class Protein(models.Model):
 
 class Peptide(models.Model):
     sequence = models.CharField(max_length=200)
-    mass = models.FloatField()
+    mass = models.FloatField( null=True )
     proteins = models.ManyToManyField( Protein, through='PepToProt' )
     #ptms = models.ManyToManyField( Ptm )
 

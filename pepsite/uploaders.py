@@ -25,6 +25,7 @@ class Uploads(dbtools.DBTools):
         self.dataset_nos = []
         self.datasets = []
         self.uniprot_ids = []
+        self.ptms = []
         self.expt = None
         self.expt_title = None
         self.expt_id = None
@@ -35,7 +36,7 @@ class Uploads(dbtools.DBTools):
         self.lodgement = None
         self.lodgement_title = None
         self.public = False
-        self.create_expt = False
+        self.create_expt = True
         self.now = datetime.datetime.utcnow().replace(tzinfo=utc)
         self.nowstring = self.now.strftime('%H:%M:%S.%f %d %B %Y %Z')
         self.delim = '\t'
@@ -47,7 +48,7 @@ class Uploads(dbtools.DBTools):
                 'proteins' : { 'matches' : [ 'Names', 'protein', 'description' ], 'order' : 1, 'display' : 'Protein(s)' },
                 'uniprot_ids' : { 'matches' : [ 'uniprot', 'Accessions' ], 'order' : 2, 'display' : 'UniProt code(s)' },
                 'ptms' : { 'matches' : [ 'modification', 'ptm' ], 'order' : 3, 'display' : 'PTM(s)' },
-                'confidence' : { 'matches' : [ 'confidence' ], 'order' : 4, 'display' : 'Confidence' },
+                'confidence' : { 'matches' : [ 'confidence', 'Conf' ], 'order' : 4, 'display' : 'Confidence' },
                 'charge' : { 'matches' : [ 'Theor z', 'charge' ], 'order' : 5, 'display' : 'Charge State' },
                 'delta_mass' : { 'matches' : [ 'dMass' ], 'order' : 6, 'display' : 'Delta Mass (Da)' },
                 'precursor_mass' : { 'matches' : [ 'Prec MW' ], 'order' : 7, 'display' : 'Precursor Mass (Da)' },
@@ -189,7 +190,7 @@ class Uploads(dbtools.DBTools):
         """docstring for fname(self, cleaned_data"""
         self.instrument = self.get_model_object( Instrument, id = self.instrument_id )
         self.cell_line = self.get_model_object( CellLine, id = self.cell_line_id )
-        if self.create_expt:
+        if not self.expt_id:
             self.expt = self.get_model_object( Experiment, cell_line = self.cell_line, title = self.expt_title )
             self.expt.save()
             for ab in self.antibodies:
@@ -202,7 +203,7 @@ class Uploads(dbtools.DBTools):
                     pbln = self.get_model_object( Publication, id=pl )
                     self.add_if_not_already(  pl, self.lodgement.publication_set )
         for dsno in self.dataset_nos:
-            ds = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgment, experiment = self.expt,
+            ds = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
                     datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title )  )
             ds.save()
             self.datasets.append( ds )
@@ -231,16 +232,20 @@ class Uploads(dbtools.DBTools):
             for ptm_desc in local['ptms']:
                 ptm = self.get_model_object( Ptm, description = ptm_desc, name = ptm_desc )
                 ptm.save()
+                self.ptms.append( ptm )
             ion = self.get_model_object( Ion,  charge_state = local['charge'], precursor_mass = local['precursor_mass'], retention_time = local['retention_time'] )
+            self.add_if_not_already( self.expt, ion.experiments )
+            ion.save()
             dsno = local['dataset']
-            dataset = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgment, experiment = self.expt,
+            dataset = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
                     datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title )  )
-            ide = self.get_model_object( IdEstimate, ion = ion, peptide = peptide, confidence = local['confidence'], delta_mass = local['delta_mass'] )
+            ide = self.get_model_object( IdEstimate, ion = ion, peptide = pep, confidence = local['confidence'], delta_mass = local['delta_mass'] )
             ide.save()
+            self.add_if_not_already( ion, dataset.ions )
             for ptm in self.ptms:
                 self.add_if_not_already( ptm, ide.ptms )
             for protein in proteins:
-                p2p = self.get_model_object( PepToProt, peptide = peptide, protein = protein )
+                p2p = self.get_model_object( PepToProt, peptide = pep, protein = protein )
                 p2p.save()
 
 
