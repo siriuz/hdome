@@ -73,11 +73,33 @@ cursor:pointer;
 
 </div> <!--  -->
 
+{% if ul.expt_id %}
+{{ul.expt_id}} <br>
+{% else %}
+<strong>No expt supplied</strong><br>
+{% endif %}
 
-{% for k,v in ul.items %}
+{% for k,v in ul.uldict.items %}
     {{k}} <br>
     {% for k1, v1 in v.items %}
+        {% if k1 == 'proteins' %}
+        <strong>{{k1}}</strong> <br>    
+            {% for pr in v1 %}
+                 {{pr}}<br>
+            {% endfor %}
+        {% elif k1 == 'ptms' %}
+        <strong>{{k1}}</strong> <br>    
+            {% for pr in v1 %}
+                 {{pr}}<br>
+            {% endfor %}
+        {% elif k1 == 'uniprot_ids' %}
+        <strong>{{k1}}</strong> <br>    
+            {% for pr in v1 %}
+                 {{pr}}<br>
+            {% endfor %}
+        {% else %}
         {{k1}} {{v1}} <br>
+        {% endif %}
     {% endfor %}
     <br><hr>
 {% endfor %}

@@ -28,7 +28,12 @@ class Uploads(dbtools.DBTools):
         self.expt = None
         self.expt_title = None
         self.expt_id = None
+        self.instrument = None
+        self.instrument_id = None
+        self.cell_line = None
+        self.cell_line_id = None
         self.lodgement = None
+        self.lodgement_title = None
         self.public = False
         self.create_expt = False
         self.now = datetime.datetime.utcnow().replace(tzinfo=utc)
@@ -52,6 +57,11 @@ class Uploads(dbtools.DBTools):
         if 'user' in kwargs.keys():
             self.user = kwargs['user']
 
+    def repopulate(self, dic):
+        """docstring for repopulate"""
+        for k in dic.keys():
+            setattr( self, k, dic[k] )
+
     def preview_ss_simple(self, cleaned_data):
         """docstring for preview_ss_simple"""
         if int(cleaned_data[ 'expt1' ]) != -1: 
@@ -61,6 +71,8 @@ class Uploads(dbtools.DBTools):
         elif cleaned_data[ 'expt2' ].strip() != '':
             self.expt_title = cleaned_data[ 'expt2' ]
             self.create_expt = True
+            self.cell_line_id = cleaned_data[ 'cl1' ] 
+            self.instrument_id = cleaned_data[ 'inst' ] 
             self.cell_line = self.get_model_object( CellLine, id = cleaned_data[ 'cl1' ] )
             self.instrument = self.get_model_object( Instrument, id = cleaned_data[ 'inst' ] )
         for ab in cleaned_data.getlist( 'ab1'):
@@ -175,13 +187,15 @@ class Uploads(dbtools.DBTools):
 
     def prepare_upload_simple(self):
         """docstring for fname(self, cleaned_data"""
+        self.instrument = self.get_model_object( Instrument, id = self.instrument_id )
+        self.cell_line = self.get_model_object( CellLine, id = self.cell_line_id )
         if self.create_expt:
             self.expt = self.get_model_object( Experiment, cell_line = self.cell_line, title = self.expt_title )
             self.expt.save()
             for ab in self.antibodies:
                 self.add_if_not_already(  ab, self.expt.antibody_set )
         if not self.lodgement:
-            self.lodgement = self.get_model_object( Lodgement, user = self.user, title = self.lodgement_title )
+            self.lodgement = self.get_model_object( Lodgement, user = self.user, title = self.lodgement_title, datetime = self.now )
             self.lodgement.save()
             if self.publications:
                 for pl in self.publications:
@@ -193,11 +207,11 @@ class Uploads(dbtools.DBTools):
             ds.save()
             self.datasets.append( ds )
 
-    def get_protein_metadata( self, uniprot_ids ):
-        self.uniprot_data = uniprot.batch_uniprot_metadata( uniprot_ids )
+    def get_protein_metadata( self ):
+        self.uniprot_data = uniprot.batch_uniprot_metadata( self.uniprot_ids )
         
 
-    def upload_simple( self, uldict ):
+    def upload_simple( self ):
         """None -> None
         """
         for k in self.uldict.keys():
