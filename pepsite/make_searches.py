@@ -161,21 +161,26 @@ class PeptideSearch( BaseSearch ):
 class ExptArrayAssemble( BaseSearch ):
     """
     """
-    def get_peptide_array_from_protein_expt(self, proteins, expt, user):
+    def get_peptide_array_from_protein_expt(self, proteins, expt, user, cutoffs = False ):
         """docstring for get_peptide_array_from_proteins"""
         ides = IdEstimate.objects.filter( peptide__proteins__in = proteins, ion__experiments = expt ).order_by( 'peptide__sequence' )
-        return self.get_peptide_array_expt( ides, expt, user )
+        return self.get_peptide_array_expt( ides, expt, user, cutoffs = cutoffs )
 
-    def get_peptide_array_expt( self, ides, expt, user, **kwargs ):
+    def get_peptide_array_expt( self, ides, expt, user, cutoffs = False, cutoff_list = [0.05, 99.0], **kwargs ):
         """
         """
         ml = []
-        for ide in ides:
+        for ide in ides.order_by('delta_mass'):
+                    ptms = ide.ptms.all()
                     for ds in Dataset.objects.filter( ions__idestimate = ide, experiment = expt ).order_by( 'rank' ):
                         if user.has_perm( 'view_dataset', ds ):
                             for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide, peptoprot__peptide__idestimate__ion__dataset = ds ): 
                                 p2p = PepToProt.objects.get( peptide = ide.peptide, protein = protein )
-                                ml.append( { 'ide': ide, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
+                                #if cutoffs and ds.dmass_cutoff > abs( ide.delta_mass ) and ds.confidence_cutoff < abs( ide.confidence ):
+                                if cutoffs and ds.dmass_cutoff > abs( ide.delta_mass ) and ds.confidence_cutoff < abs( ide.confidence ):
+                                    ml.append( { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
+                                elif not cutoffs:
+                                    ml.append( { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
                             break
 	return ml
 

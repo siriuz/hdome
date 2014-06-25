@@ -335,6 +335,8 @@ class Dataset(models.Model):
     experiment = models.ForeignKey(Experiment)
     ions = models.ManyToManyField( Ion )
     notes = models.TextField( default = '' )
+    confidence_cutoff = models.FloatField( null=True )
+    dmass_cutoff = models.FloatField( null=True )
 
     class Meta:
         permissions = (

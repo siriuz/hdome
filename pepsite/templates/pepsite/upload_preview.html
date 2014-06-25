@@ -179,6 +179,12 @@ cursor:pointer;
 
 <form action="{% url 'pepsite:commit_upload_ss' %}" method='post'>
     {% csrf_token %}
+    {% for number in ul_supp.dataset_nos %}
+    Confidence cutoff for Dataset #{{number}}<input type="number" label="Confidence cutoff for Dataset #{{number}}" name="cf_{{number}}" value="99.0"/><br>
+    Delta Mass cutoff for Dataset #{{number}}<input type="number" label="Delta Mass cutoff for Dataset #{{number}}" name="dm_{{number}}" value="0.05"/><br>
+    {% endfor %}
+
+
     <input type="hidden" name="data" value="{{upload.uldict}}"/>
     <input class="btn btn-lg btn-primary" type="submit" value="Commit upload"/>
 </form>
@@ -187,7 +193,7 @@ cursor:pointer;
 
 <br>
 
-{{ul_supp}}
+{{ul_supp.dataset_nos}}
 
 <br>
 

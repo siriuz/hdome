@@ -162,11 +162,13 @@ def commit_upload_ss( request ):
     user = request.user
     elems = request.session['ul_supp']
     if request.method == 'POST':
+        keys = request.POST.keys()
         ul = pepsite.uploaders.Uploads( user = user )
         ul.repopulate( elems )
+        ul.add_cutoff_mappings( request.POST )
         with open( '/home/rimmer/praccie/hdome/background/trial_ul_01.pickle', 'wb' ) as f:
             pickle.dump( ul, f )
-        context = { 'data' : request.POST['data'], 'ul' : ul }
+        context = { 'data' : request.POST['data'], 'ul' : ul, 'keys' : keys }
         ul.get_protein_metadata(  )
         ul.prepare_upload_simple( )
         ul.upload_simple()
@@ -446,7 +448,7 @@ def expt2( request, expt_id ):
         # If page is out of range (e.g. 9999), deliver last page of results.
         proteins = paginator.page(paginator.num_pages)
     s1 = ExptArrayAssemble()
-    rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user )
+    rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user, cutoffs = True )
     return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'rows' : rows, 'paginate' : True })
   else:
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))

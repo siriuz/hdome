@@ -62,6 +62,21 @@ class Uploads(dbtools.DBTools):
         """docstring for repopulate"""
         for k in dic.keys():
             setattr( self, k, dic[k] )
+    
+    def add_cutoff_mappings( self, post_dic, dm_prefix = 'dm_', cf_prefix = 'cf_' ):
+        """docstring for add_cutoffs"""
+        mdic = {}
+        for no in self.dataset_nos:
+            mdic[no] = {}
+        for k in post_dic.keys():
+            for no in self.dataset_nos:
+                if k == dm_prefix + no:
+                    mdic[no]['dm_cutoff'] = post_dic[k]
+                elif k == cf_prefix + no:
+                    mdic[no]['cf_cutoff'] = post_dic[k]
+        self.cutoff_mappings = mdic
+
+
 
     def preview_ss_simple(self, cleaned_data):
         """docstring for preview_ss_simple"""
@@ -146,7 +161,8 @@ class Uploads(dbtools.DBTools):
 
 
                         elif m == 'uniprot_ids':
-                            allstr += '<td><a href=\"http://www.uniprot.org/uniprot/' + elements[k].split('|')[1] + '\" target=\"_blank\">' + elements[k].split('|')[1] + '</a></td>'
+          
+                            #ide.save()allstr += '<td><a href=\"http://www.uniprot.org/uniprot/' + elements[k].split('|')[1] + '\" target=\"_blank\">' + elements[k].split('|')[1] + '</a></td>'
                             uldict[j]['uniprot_ids'] = [ elements[k].split('|')[1] ]
                             if elements[k].split('|')[1] not in self.uniprot_ids:
                                 self.uniprot_ids.append( elements[k].split('|')[1] )
@@ -185,6 +201,7 @@ class Uploads(dbtools.DBTools):
         allstr += '</tbody></table>'
         self.allstr = allstr
         self.uldict = uldict
+        self.dataset_nos = sorted( self.dataset_nos )
 
     def prepare_upload_simple(self):
         """docstring for fname(self, cleaned_data"""
@@ -204,7 +221,8 @@ class Uploads(dbtools.DBTools):
                     self.add_if_not_already(  pl, self.lodgement.publication_set )
         for dsno in self.dataset_nos:
             ds = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
-                    datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title )  )
+                    datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title ), 
+                    dmass_cutoff = self.cutoff_mappings[dsno]['dm_cutoff'], confidence_cutoff = self.cutoff_mappings[dsno]['cf_cutoff'] )
             ds.save()
             self.datasets.append( ds )
 
@@ -220,6 +238,7 @@ class Uploads(dbtools.DBTools):
             pep = self.get_model_object( Peptide, sequence = local['peptide_sequence'] )
             pep.save()
             proteins = []
+            ptms = []
             for prt, unp in zip( local['proteins'], local['uniprot_ids'] ):
                 pr1 = self.get_model_object( Protein,  prot_id = unp, description = prt, name = prt )
                 try:
@@ -232,18 +251,19 @@ class Uploads(dbtools.DBTools):
             for ptm_desc in local['ptms']:
                 ptm = self.get_model_object( Ptm, description = ptm_desc, name = ptm_desc )
                 ptm.save()
-                self.ptms.append( ptm )
+                ptms.append( ptm )
             ion = self.get_model_object( Ion,  charge_state = local['charge'], precursor_mass = local['precursor_mass'], retention_time = local['retention_time'] )
-            self.add_if_not_already( self.expt, ion.experiments )
             ion.save()
+            self.add_if_not_already( self.expt, ion.experiments )
             dsno = local['dataset']
             dataset = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
                     datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title )  )
             ide = self.get_model_object( IdEstimate, ion = ion, peptide = pep, confidence = local['confidence'], delta_mass = local['delta_mass'] )
             ide.save()
             self.add_if_not_already( ion, dataset.ions )
-            for ptm in self.ptms:
+            for ptm in ptms:
                 self.add_if_not_already( ptm, ide.ptms )
+                #ide.save()
             for protein in proteins:
                 p2p = self.get_model_object( PepToProt, peptide = pep, protein = protein )
                 p2p.save()
