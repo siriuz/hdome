@@ -431,7 +431,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 def expt2( request, expt_id ):
   user = request.user
   if not ( request.POST.has_key( 'full_list' ) and request.POST['full_list'] ):
-    proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
+    proteins = list(set(Protein.objects.filter( peptide__ion__experiment__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
     lodgements = Lodgement.objects.filter( dataset__experiment = expt )
     if not( len(lodgements)):

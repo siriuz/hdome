@@ -112,11 +112,11 @@ class ManufacturerAdmin(admin.ModelAdmin):
 class ExpAbInline(admin.TabularInline):
     model = Antibody.experiments.through
 
-class ExpIonInline(admin.TabularInline):
-    model = Ion.experiments.through
+#class ExpIonInline(admin.TabularInline):
+#    model = Ion.experiments.through
 
-class DsIonInline(admin.TabularInline):
-    model = Dataset.ions.through
+#class DsIonInline(admin.TabularInline):
+#    model = Dataset.ions.through
 
 class LcClInline(admin.TabularInline):
     model = LookupCode.cell_lines.through
@@ -134,8 +134,8 @@ class LookupCodeInLine(admin.StackedInline):
 
 class IonAdmin(admin.ModelAdmin):
     inlines = [
-        ExpIonInline,
-        DsIonInline,
+        #ExpIonInline,
+        #DsIonInline,
         IdEstimateInLine,
     ]
     exclude = ('experiments',)

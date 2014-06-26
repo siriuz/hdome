@@ -253,15 +253,15 @@ class Uploads(dbtools.DBTools):
                 ptm = self.get_model_object( Ptm, description = ptm_desc, name = ptm_desc )
                 ptm.save()
                 ptms.append( ptm )
-            ion = self.get_model_object( Ion,  charge_state = local['charge'], precursor_mass = local['precursor_mass'], retention_time = local['retention_time'] )
-            ion.save()
-            self.add_if_not_already( self.expt, ion.experiments )
             dsno = local['dataset']
             dataset = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
                     datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title )  )
+            dataset.save()
+            ion = self.get_model_object( Ion,  charge_state = local['charge'], precursor_mass = local['precursor_mass'],
+                    retention_time = local['retention_time'], experiment = self.expt, dataset = dataset )
+            ion.save()
             ide = self.get_model_object( IdEstimate, ion = ion, peptide = pep, confidence = local['confidence'], delta_mass = local['delta_mass'] )
             ide.save()
-            self.add_if_not_already( ion, dataset.ions )
             for ptm in ptms:
                 self.add_if_not_already( ptm, ide.ptms )
                 #ide.save()
