@@ -164,7 +164,9 @@ class ExptArrayAssemble( BaseSearch ):
     def get_peptide_array_from_protein_expt(self, proteins, expt, user, cutoffs = False ):
         """docstring for get_peptide_array_from_proteins"""
         ides = IdEstimate.objects.filter( peptide__proteins__in = proteins, ion__experiments = expt ).order_by( 'peptide__sequence' )
-        return self.get_peptide_array_expt( ides, expt, user, cutoffs = cutoffs )
+        peptides = Peptide.objects.filter( idestimate__in = ides ).distinct()
+        #return self.get_peptide_array_expt( ides, expt, user, cutoffs = cutoffs )
+        return self.get_peptide_array_expt_restricted( ides, peptides, expt, user, cutoffs = cutoffs )
 
     def get_peptide_array_expt( self, ides, expt, user, cutoffs = False, cutoff_list = [0.05, 99.0], **kwargs ):
         """
@@ -183,6 +185,49 @@ class ExptArrayAssemble( BaseSearch ):
                                     ml.append( { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
                             break
 	return ml
+
+    def get_peptide_array_expt_restricted( self, ides, peptides, expt, user, cutoffs = False, cutoff_list = [0.05, 99.0], **kwargs ):
+        """
+        """
+        ml = []
+        for pep in peptides.order_by('sequence'):
+            ideset = IdEstimate.objects.filter( peptide = pep, id__in = ides ).distinct()
+            ptmz = []
+            for ide in ideset:
+                ptmcon = [ b.id for b in ide.ptms.all().order_by( 'id' ) ]
+                if ptmcon not in ptmz:
+                    ptmz.append( ptmcon )
+            for ptmcon in ptmz:
+                qlist = []
+                if not ptmcon:
+                    qlist.append( Q(ptms__isnull = True) )
+
+                else:
+                    for ptm in ptmcon:
+                        qlist.append( Q( ptms__id = ptm ) )
+                # order by abs val of delta mass - this will be used for selecting best representative species
+                ideref = IdEstimate.objects.filter( id__in = ideset, *qlist ).distinct().extra(select={"diff": "abs(delta_mass)"}).order_by( 'diff' )
+                entry = self.best_entries( ideref, ptmcon, expt, user, cutoffs = cutoffs ) 
+                if entry is not None:
+                    ml.append( entry )
+        return ml
+
+
+
+    def best_entries(self, ideref, ptmcon, expt, user, cutoffs = False):
+        """docstring for best_entry"""
+        locl = []
+        ptms = Ptm.objects.filter( id__in = ptmcon )
+        for ide in ideref:
+            for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide): # peptoprot__peptide__idestimate__ion__dataset = ds ): 
+                for ds in Dataset.objects.filter( ions__idestimate = ide, experiment = expt ).order_by( 'rank' ):
+                    if user.has_perm( 'view_dataset', ds ):
+                        p2p = PepToProt.objects.get( peptide = ide.peptide, protein = protein )
+                        #if cutoffs and ds.dmass_cutoff > abs( ide.delta_mass ) and ds.confidence_cutoff < abs( ide.confidence ):
+                        if cutoffs and ds.dmass_cutoff > abs( ide.delta_mass ) and ds.confidence_cutoff < abs( ide.confidence ):
+                            return( { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
+                        elif not cutoffs:
+                            return( { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
 
 
 
