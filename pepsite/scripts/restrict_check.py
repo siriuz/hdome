@@ -36,3 +36,8 @@ if __name__ == '__main__':
     print IdEstimate.objects.filter( ptms__id = 5 ).filter( ptms__id = 12 ).filter( peptide = peptides[0]).filter( ion__experiment = expt ).distinct()
     print IdEstimate.objects.annotate(count=Count('ptms')).filter( ptms__id = 5 ).filter( ptms__id = 12 ).filter(count=2).filter( peptide = peptides[0]).filter( ion__experiment = expt ).distinct()
     print IdEstimate.objects.filter( *qlist[:2] ).filter( peptide = peptides[0]).filter( ion__experiment = expt ).distinct()
+    td = [ {'ptms__id' : 5}, {'ptms__id' : 12}, {'peptide' : peptides[0]}, {'ion__experiment' : expt }]
+    a = IdEstimate.objects.all()
+    for dic in td:
+        a = a.filter( **dic )
+    print [ b.id for b in a.distinct()]

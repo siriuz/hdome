@@ -200,17 +200,23 @@ class ExptArrayAssemble( BaseSearch ):
                     ptmz.append( ptmcon )
             for ptmcon in ptmz:
                 print 'ptmcon', ptmcon
-                qlist = []
+                #qlist = []
+                td = []
                 count = 0
                 if not ptmcon:
-                    qlist.append( Q(ptms__isnull = True) )
-
+                    td = [ {'ptms__isnull' : True}, {'peptide' : pep }, {'ion__experiment' : expt } ]
+                    #qlist.append( Q(ptms__isnull = True) )
                 else:
                     for ptm in ptmcon:
-                        qlist.append( Q( ptms__id = ptm ) )
+                        td.append( { 'ptms__id' : ptm } )
+                    td += [ {'peptide' : pep }, {'ion__experiment' : expt } ]
                     #qlist.append( Q(count = len( ptmcon )) )
                 # order by abs val of delta mass - this will be used for selecting best representative species
-                ideref = IdEstimate.objects.filter( id__in = ideset, *qlist ).distinct().extra(select={"diff": "abs(delta_mass)"}).order_by( 'diff' )
+                #ideref = IdEstimate.objects.filter( id__in = ideset, *qlist ).distinct().extra(select={"diff": "abs(delta_mass)"}).order_by( 'diff' )
+                a = IdEstimate.objects.all()
+                for dic in td:
+                    a = a.filter( **dic )
+                ideref = a.distinct()
                 print 'ideref', [b.id for b in ideref]
                 entry = self.best_entries( ideref, ptmcon, expt, user, cutoffs = cutoffs ) 
                 if entry is not None:
