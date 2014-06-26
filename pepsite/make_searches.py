@@ -198,6 +198,7 @@ class ExptArrayAssemble( BaseSearch ):
                 if ptmcon not in ptmz:
                     ptmz.append( ptmcon )
             for ptmcon in ptmz:
+                print ptmcon
                 qlist = []
                 if not ptmcon:
                     qlist.append( Q(ptms__isnull = True) )

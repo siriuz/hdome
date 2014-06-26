@@ -162,7 +162,7 @@ class Uploads(dbtools.DBTools):
 
                         elif m == 'uniprot_ids':
           
-                            #ide.save()allstr += '<td><a href=\"http://www.uniprot.org/uniprot/' + elements[k].split('|')[1] + '\" target=\"_blank\">' + elements[k].split('|')[1] + '</a></td>'
+                            allstr += '<td><a href=\"http://www.uniprot.org/uniprot/' + elements[k].split('|')[1] + '\" target=\"_blank\">' + elements[k].split('|')[1] + '</a></td>'
                             uldict[j]['uniprot_ids'] = [ elements[k].split('|')[1] ]
                             if elements[k].split('|')[1] not in self.uniprot_ids:
                                 self.uniprot_ids.append( elements[k].split('|')[1] )
@@ -179,7 +179,8 @@ class Uploads(dbtools.DBTools):
                     else:
                         entries = []
                         allstr += '<td>'
-                        for subel in elements[k].split(';'):
+                        loclist = [ b.strip() for b in elements[k].split(';') ]
+                        for subel in loclist:
                             if m == 'uniprot_ids':
                                 allstr += ' <a href=\"http://www.uniprot.org/uniprot/' + subel.split('|')[1] + '\" target=\"_blank\">' + subel.split('|')[1] + '</a> '
                                 entries.append( subel.split('|')[1] )
@@ -192,8 +193,8 @@ class Uploads(dbtools.DBTools):
                                     allstr += ' %s ' % ( subel )
 
                             else:
-                                allstr += ' %s ' % ( subel )
-                                entries.append( subel[0] )
+                                allstr += ' %s ' % ( loclist[0] )
+                                entries.append( loclist[0] )
                         allstr += '</td>'
                         uldict[j][m] = entries
                 allstr += '</tr>'
