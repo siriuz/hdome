@@ -166,8 +166,8 @@ def commit_upload_ss( request ):
         ul = pepsite.uploaders.Uploads( user = user )
         ul.repopulate( elems )
         ul.add_cutoff_mappings( request.POST )
-        with open( '/home/rimmer/praccie/hdome/background/trial_ul_01.pickle', 'wb' ) as f:
-            pickle.dump( ul, f )
+        #with open( '/home/rimmer/praccie/hdome/background/trial_ul_01.pickle', 'wb' ) as f:
+        #    pickle.dump( ul, f )
         context = { 'data' : request.POST['data'], 'ul' : ul, 'keys' : keys }
         ul.get_protein_metadata(  )
         ul.prepare_upload_simple( )
