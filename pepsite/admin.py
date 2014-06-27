@@ -73,7 +73,7 @@ class DatasetInLine(admin.StackedInline):
     model = Dataset
     extra = 1
     exclude = (
-            'ions',
+            #'ions',
             )
 
 class InstrumentInLine(admin.StackedInline):
@@ -89,8 +89,13 @@ class LodgementAdmin(GuardedModelAdmin):
         PlLodgeInLine,
     ]
 
+class DsIonInline(admin.StackedInline):
+    model = Ion
+    extra = 1
+
 class DatasetAdmin(GuardedModelAdmin):
     inlines = [
+        DsIonInline,
         #DatasetInLine,
         #PlLodgeInLine,
     ]
@@ -112,11 +117,9 @@ class ManufacturerAdmin(admin.ModelAdmin):
 class ExpAbInline(admin.TabularInline):
     model = Antibody.experiments.through
 
-#class ExpIonInline(admin.TabularInline):
-#    model = Ion.experiments.through
-
-#class DsIonInline(admin.TabularInline):
-#    model = Dataset.ions.through
+class ExpIonInline(admin.StackedInline):
+    model = Ion
+    extra = 1
 
 class LcClInline(admin.TabularInline):
     model = LookupCode.cell_lines.through
@@ -142,6 +145,7 @@ class IonAdmin(admin.ModelAdmin):
 
 class ExperimentAdmin(admin.ModelAdmin):
     inlines = [
+        ExpIonInline,
         ExpAbInline,
         #ExpIonInline,
         DatasetInLine,

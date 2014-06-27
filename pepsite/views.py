@@ -127,7 +127,7 @@ def upload_ss_form( request ):
             #request.session['ss'] = ss
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
-                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id }
+                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id }
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
             #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Cell Line'  }
@@ -143,7 +143,7 @@ def upload_ss_form( request ):
             #request.session['ss'] = ss
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
-                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id }
+                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id }
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
             request.session['ul_supp'] = upload_dict
@@ -433,6 +433,7 @@ def expt2( request, expt_id ):
   if not ( request.POST.has_key( 'full_list' ) and request.POST['full_list'] ):
     proteins = list(set(Protein.objects.filter( peptide__ion__experiment__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
+    publications = expt.get_publications()
     lodgements = Lodgement.objects.filter( dataset__experiment = expt )
     if not( len(lodgements)):
         lodgements = False
@@ -449,16 +450,17 @@ def expt2( request, expt_id ):
         proteins = paginator.page(paginator.num_pages)
     s1 = ExptArrayAssemble()
     rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user, cutoffs = True )
-    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'rows' : rows, 'paginate' : True })
+    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : True })
   else:
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
+    publications = expt.get_publications()
     lodgements = Lodgement.objects.filter( dataset__experiment = expt )
     if not( len(lodgements)):
         lodgements = False
     s1 = ExptArrayAssemble()
     rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user )
-    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'rows' : rows, 'paginate' : False })
+    return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False })
 
 
 

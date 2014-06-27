@@ -85,7 +85,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 <h2 class="text-primary">Please cite the following publications when using this data:</h2>
 <ul>
-{% for publication in expt.get_publications %}
+{% for publication in publications %}
 
 <li>{{publication.display}}</li>
 
@@ -152,7 +152,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
             </td>
             <td>
             <form action="{{ row.protein.get_uniprot_link }}" target="_blank">
-        <input class="btn btn-primary" type="submit" value="UniProt entry for {{row.protein.name}}">
+        <input class="btn btn-primary" type="submit" value="UniProt entry">
 	</form>
             </td>
             <td>

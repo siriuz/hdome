@@ -7,24 +7,6 @@
 
 $(document).ready(function() {
     $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
-    //var prw = "{{upload.allstr|escapejs}}";
-    //$('#peptides').html( prw );
-
-    $("#cssTable").tablesorter({ 
-        // pass the headers argument and assing a object 
-        headers: { 
-            // assign the secound column (we start counting zero) 
-            //1: { 
-                // disable it by setting the property sorter to false 
-            //    sorter: false 
-            //}, 
-            // assign the third column (we start counting zero) 
-            //2: { 
-            //    // disable it by setting the property sorter to false 
-            //    sorter: false 
-            //} 
-        } 
-    });
 
 });
 
@@ -64,8 +46,8 @@ cursor:pointer;
 </head>
 
 
-<h1 class="text-primary">Upload preview</h1>
-<p class="text-info">How upload will look if committed</p>
+<h1 class="text-primary">Upload status</h1>
+<p class="text-info"></p>
 
 
 {% endblock %}
@@ -73,42 +55,8 @@ cursor:pointer;
 
 </div> <!--  -->
 
-{{keys}}
 
-
-{% if ul.expt_id %}
-{{ul.expt_id}} <br>
-{% else %}
-<strong>No expt supplied</strong><br>
-{% endif %}
-
-{% for k,v in ul.uldict.items %}
-    {{k}} <br>
-    {% for k1, v1 in v.items %}
-        {% if k1 == 'proteins' %}
-        <strong>{{k1}}</strong> <br>    
-            {% for pr in v1 %}
-                 {{pr}}<br>
-            {% endfor %}
-        {% elif k1 == 'ptms' %}
-        <strong>{{k1}}</strong> <br>    
-            {% for pr in v1 %}
-                 {{pr}}<br>
-            {% endfor %}
-        {% elif k1 == 'uniprot_ids' %}
-        <strong>{{k1}}</strong> <br>    
-            {% for pr in v1 %}
-                 {{pr}}<br>
-            {% endfor %}
-        {% else %}
-        {{k1}} {{v1}} <br>
-        {% endif %}
-    {% endfor %}
-    <br><hr>
-{% endfor %}
-
-
-<h2 class="text-primary peptabhead">Data Preview</h2>
+<h2 class="text-primary peptabhead">Upload complete</h2>
 
 
 

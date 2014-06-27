@@ -1,11 +1,16 @@
 {% extends 'pepsite/base.html' %}
 
+{% load staticfiles %}
+
 {% block headline %}
 
 <script>
 
 
 $(document).ready(function() {
+    
+    $('#loader').hide();
+
     $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
     //var prw = "{{upload.allstr|escapejs}}";
     //$('#peptides').html( prw );
@@ -25,12 +30,40 @@ $(document).ready(function() {
             //} 
         } 
     });
+    
+    $('#commit_upload').click( function () {
+        $('.div-1').css(( "z-index" ), 10 );
+        $('#loader').show();
+    });
 
 });
 
 </script>
 
 <style>
+
+#loader
+{
+z-index:10;
+}
+
+.div-1 {
+    position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    z-index: -200;
+}
+.center {
+    width: 80%;
+    height: 80%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    
+}
+
 #cssTable td 
 {
     text-align:center; 
@@ -176,7 +209,7 @@ cursor:pointer;
 
 <hr>
 <br>
-
+<h2 class="text-primary">Please set cutoffs for your Datasets...</h2>
 <form action="{% url 'pepsite:commit_upload_ss' %}" method='post'>
     {% csrf_token %}
     {% for number in ul_supp.dataset_nos %}
@@ -184,20 +217,20 @@ cursor:pointer;
     Delta Mass cutoff for Dataset #{{number}}<input type="number" label="Delta Mass cutoff for Dataset #{{number}}" name="dm_{{number}}" value="0.05"/><br>
     {% endfor %}
 
+<div class="div-1">
+<img id="loader" class="center" src="{% static 'animations/ajax_loader_blue_512.gif' %}"/>
+</div>
 
     <input type="hidden" name="data" value="{{upload.uldict}}"/>
-    <input class="btn btn-lg btn-primary" type="submit" value="Commit upload"/>
+    <input id="commit_upload" class="btn btn-lg btn-primary" type="submit" value="Commit upload"/>
 </form>
 
 </div> <!--  -->
 
 <br>
 
-{{ul_supp.dataset_nos}}
 
-<br>
 
-{{ss}}
 
 <br>
 
@@ -205,6 +238,5 @@ cursor:pointer;
 
 <div id="peptides">{{upload.allstr|safe}}</div>
 
-<div id="dict">{{upload.uldict}}</div>
 
 {% endblock %}

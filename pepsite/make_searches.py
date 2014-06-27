@@ -293,7 +293,7 @@ class MassSearch( BaseSearch ):
         ml = []
         for ide in ides:
             for expt in Experiment.objects.filter( ion__idestimate = ide, **kwargs ):# ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ):
-                    for ds in Dataset.objects.filter( ions__idestimate = ide, experiment = expt ).order_by( 'rank' ):
+                    for ds in Dataset.objects.filter( ion__idestimate = ide, experiment = expt ).order_by( 'rank' ):
                         if user.has_perm( 'view_dataset', ds ):
                             for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide, peptoprot__peptide__idestimate__ion__dataset = ds ): 
                                 p2p = PepToProt.objects.get( peptide = ide.peptide, protein = protein )

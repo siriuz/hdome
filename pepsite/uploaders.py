@@ -84,6 +84,10 @@ class Uploads(dbtools.DBTools):
 	    self.expt = self.get_model_object( Experiment, id = cleaned_data[ 'expt1' ] )
             self.expt_title = self.expt.title
             self.expt_id = cleaned_data[ 'expt1' ] 
+            self.instrument_id = cleaned_data[ 'inst' ] 
+            self.instrument = self.get_model_object( Instrument, id = cleaned_data[ 'inst' ] )
+            self.cell_line = self.expt.cell_line
+            self.cell_line_id = self.expt.cell_line.id
         elif cleaned_data[ 'expt2' ].strip() != '':
             self.expt_title = cleaned_data[ 'expt2' ]
             self.create_expt = True
@@ -211,7 +215,10 @@ class Uploads(dbtools.DBTools):
         if not self.expt_id:
             self.expt = self.get_model_object( Experiment, cell_line = self.cell_line, title = self.expt_title )
             self.expt.save()
-            for ab in self.antibodies:
+        else:
+            self.expt = self.get_model_object( Experiment, id = self.expt_id )
+            self.expt.save()
+        for ab in self.antibodies:
                 self.add_if_not_already(  ab, self.expt.antibody_set )
         if not self.lodgement:
             self.lodgement = self.get_model_object( Lodgement, user = self.user, title = self.lodgement_title, datetime = self.now )

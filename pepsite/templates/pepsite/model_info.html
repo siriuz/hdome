@@ -284,7 +284,7 @@
             </tr>
             <tr>
                 <th>
-                    Common Alleles
+                    Eluted DNA types
                 </th>
                 <td>
                     {% for allele in instance.get_common_alleles %}
@@ -296,7 +296,7 @@
             </tr>
             <tr>
                 <th>
-                    Common Serotypes
+                    Eluted Serotypes
                 </th>
                 <td>
                     {% for allele in instance.get_common_alleles %}
@@ -384,7 +384,7 @@
             </tr>
             <tr>
                 <th>
-                    Common Alleles
+                    Eluted DNA types
                 </th>
                 <td>
                     {% for allele in instance.alleles.all %}
@@ -396,7 +396,7 @@
             </tr>
             <tr>
                 <th>
-                    Common Serotypes
+                    Eluted Serotypes
                 </th>
                 <td>
                     {% for allele in instance.alleles.all %}
@@ -408,7 +408,7 @@
             </tr>
             <tr>
                 <th>
-                    Antibodies with common Alleles / Serotypes
+                    Antibodies which elute common DNA types / Serotypes
                 </th>
                 <td>
                     {% for ab in instance.get_antibodies_targeting %}

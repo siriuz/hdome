@@ -1,6 +1,35 @@
 {% extends 'pepsite/base.html' %}
 
+{% load staticfiles %}
+
 {% block headline %}
+
+<style>
+
+#loader
+{
+z-index:10;
+}
+
+.div-1 {
+    position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    z-index: -200;
+}
+.center {
+    width: 80%;
+    height: 80%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    
+}
+
+</style>
+
 
 <script>
 
@@ -43,7 +72,12 @@ $('#id_expt1').click( function() {
     
 });
 
+$('#loader').hide();
+
+
 $('#ssupload').click( function () {
+    $('.div-1').css(( "z-index" ), 10 );
+    $('#loader').show();
     var resultdiv = "#resultdiv";
     var datain = new FormData($('#ssform').get(0));
 
@@ -92,6 +126,11 @@ $('#ssupload').click( function () {
 {% endblock %}
 {% block content %}
 
+<div class="div-1">
+<img id="loader" class="center" src="{% static 'animations/ajax_loader_blue_512.gif' %}"/>
+</div>
+
+<h2 class="text-primary">Please enter upload details...</h2>
 <form enctype="multipart/form-data" action="{% url 'pepsite:upload_ss_form' %}" method="post" id="ssform">
 
     {% csrf_token %}
@@ -107,11 +146,11 @@ $('#ssupload').click( function () {
     <br>
 
 
-
-<button id="ssupload" class="btn btn-lg btn-success" value="Upload">Yep see preview</button>
+<button id="ssupload" class="btn btn-lg btn-success" value="Upload">Proceed to Upload Preview</button>
 </form>
 <hr>
 <br>
+
 
 
 <div id="resultdiv"></div>
