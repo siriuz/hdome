@@ -1,0 +1,255 @@
+{% extends 'pepsite/base.html' %}
+
+{% block headline %}
+
+<style>
+#cssTable td 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+#cssTable th 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+
+.hilite:hover
+{
+background-color:yellow;
+}
+.hilite
+{
+cursor:pointer;
+}
+
+.table_body
+{
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+
+
+</style>
+
+
+<script>
+
+
+$(document).ready(function() {
+
+
+
+$('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+
+//$("#cssTable").tablesorter(); 
+    $("#cssTable").tablesorter({ 
+        // pass the headers argument and assing a object 
+        headers: { 
+            // assign the secound column (we start counting zero) 
+            1: { 
+                // disable it by setting the property sorter to false 
+                sorter: false 
+            }, 
+            // assign the third column (we start counting zero) 
+            //2: { 
+            //    // disable it by setting the property sorter to false 
+            //    sorter: false 
+            //} 
+        } 
+    });
+
+});
+
+</script>
+
+
+
+</head>
+
+
+<h1>Experiment = <span class="text-primary">{{expt.title}}</span></h1>
+
+
+{% endblock %}
+
+{% block content %}
+
+<div id="summary"></div>
+
+
+{{expt1}}
+
+{{exptz}}
+
+
+<div id="summary"></div>
+
+
+
+<h2 class="text-primary">Please cite the following publications when using this data:</h2>
+<ul>
+{% for publication in publications %}
+
+<li>{{publication.display}}</li>
+
+{% endfor %}
+
+</ul>
+
+</div> <!-- container --> 
+
+{% load template_filter %}
+      {% load guardian_tags %}
+{% query_data_perms user expt as complete %}
+
+<div class="table_body">
+
+<h2 class="text-primary">Peptides detected</h2>
+
+{% if not complete %}<p class="text-info">You do not have permission to view some or all of this data {% endif %} </p>
+
+{% if paginate %}
+
+<div class="pagination">
+    <span class="step-links">
+        {% if proteins.has_previous %}
+            <a href="?page={{ proteins.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ proteins.number }} of {{ proteins.paginator.num_pages }}.
+        </span>
+
+        {% if proteins.has_next %}
+            <a href="?page={{ proteins.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+<form action="{% url 'pepsite:expt2' expt.id %}" method="post">
+{% csrf_token %}
+<input type='hidden' name='full_list' value='1' />
+<input class="btn btn-danger" type="submit" value="Show complete peptide list for {{expt.title}}">
+</form>
+</div>
+
+{% else %}
+
+<div>
+<form action="{% url 'pepsite:expt2' expt.id %}" method="post">
+{% csrf_token %}
+<input class="btn btn-danger" type="submit" value="Go to paginated peptide list for {{expt.title}}">
+</form>
+</div>
+
+
+{% endif %}
+
+    <table class="table table-striped tablesorter" id="cssTable">
+    <thead>
+        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
+    </thead>
+    <tbody>
+    {% for row in rows %}
+        <tr>
+            <td>
+	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
+            </td>
+            <td>
+            <form action="{{ row.protein.get_uniprot_link }}" target="_blank">
+        <input class="btn btn-primary" type="submit" value="UniProt entry">
+	</form>
+            </td>
+            <td>
+	        <a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a>
+            </td>
+            <td>
+                {{row.ide.peptide.sequence|length}}
+            </td>
+            <td>
+               {{ row.peptoprot.get_positions }}
+	   </td>
+	   <td>
+	   {% for ptm in row.ptms %}
+	       <a href="{% url 'pepsite:ptm_peptides' ptm.id %}" class="link">{{ptm.description}}</a>
+	   {% endfor %}
+	   </td>
+	   <td>
+	   {{ row.ide.delta_mass }}
+	   </td>
+	   <td>
+	   {{ row.ide.confidence }}
+	   </td>
+	   <td>
+	   {{ row.ide.ion.charge_state }}
+	   </td>
+	   <td>
+	   {{ row.ide.ion.retention_time }}
+	   </td>
+	   <td>
+	   {{ row.ide.ion.precursor_mass }}
+           </td>
+           <td>
+	       <a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a>
+           </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+
+
+
+
+{% if paginate %}
+
+<div class="pagination">
+    <span class="step-links">
+        {% if proteins.has_previous %}
+            <a href="?page={{ proteins.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ proteins.number }} of {{ proteins.paginator.num_pages }}.
+        </span>
+
+        {% if proteins.has_next %}
+            <a href="?page={{ proteins.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+<form action="{% url 'pepsite:expt2' expt.id %}" method="post">
+{% csrf_token %}
+<input type='hidden' name='full_list' value='1' />
+<input class="btn btn-danger" type="submit" value="Show complete peptide list for {{expt.title}}">
+</form>
+</div>
+
+{% else %}
+
+<div>
+<form action="{% url 'pepsite:expt2' expt.id %}" method="post">
+{% csrf_token %}
+<input class="btn btn-danger" type="submit" value="Go to paginated peptide list for {{expt.title}}">
+</form>
+</div>
+
+
+{% endif %}
+
+<br>
+
+<form action="{% url 'pepsite:send_expt_csv' expt.id %}">
+<input class="btn btn-primary" type="submit" value="Download csv">
+</form>
+
+
+
+
+</div> <!-- table_body -->
+
+
+
+<div class="container">
+
+{% endblock %}

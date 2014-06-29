@@ -148,6 +148,10 @@ class UploadSSForm(forms.Form):
     ldg = forms.CharField( label = 'Name for this Lodgement' )
     ss = forms.FileField( label = 'Spreadsheet for upload' )
 
+class CompareExptForm( forms.Form ):
+    expt1 = forms.ChoiceField( label = 'Select an existing Experiment', choices = [ [b.id, b.title] for b in Experiment.objects.all()] )
+    exptz = forms.ChoiceField( label = 'Select Experiment(s) for comparison', widget = forms.SelectMultiple, choices = [ [b.id, b.title] for b in Experiment.objects.all()] )
+
 class AjaxForm(forms.Form):
     """
     """
