@@ -119,8 +119,8 @@ $('#ssupload').click( function () {
 </head>
 
 
-<h1>Upload a <span class="text-primary">Spreadsheet</span></h1>
-<p class="text-info">Upload text-only data</p>
+<h1>Compare <span class="text-primary">Experiments</span></h1>
+<p class="text-info">Select Experiments for comparison</p>
 
 
 {% endblock %}
@@ -136,7 +136,7 @@ $('#ssupload').click( function () {
 
 {% endif %}
 
-<h2 class="text-primary">Please enter upload details...</h2>
+<h2 class="text-primary">Please select and initiate comparison...</h2>
 <form enctype="multipart/form-data" action="{% url 'pepsite:compare_expt_form' %}" method="post" id="ssform">
 
     {% csrf_token %}
