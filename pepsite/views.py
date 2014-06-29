@@ -159,16 +159,7 @@ def upload_ss_form( request ):
 def compare_expt_form( request ):
     user = request.user
     if request.method == 'POST': # If the form has been submitted...
-        form = CompareExptForm(request.POST) # A form bound to the POST data
-
-        if form.is_valid(): # All validation rules pass
-            formdata = form.cleaned_data
-            expt1 = formdata['expt1']
-            exptz = formdata.getlist( 'exptz' )
-            context = { 'expt1' : expt1, 'exptz' : exptz }
-            return render( request, 'pepsite/compare_expt_results.html', context  ) # Redirect after POST
-	else:
-            formdata = form.cleaned_data
+            form = CompareExptForm(request.POST) # A form bound to the POST data
             expt1 = request.POST['expt1']
             exptz = request.POST.getlist('exptz' )
             #exptz = formdata['exptz']
@@ -177,21 +168,23 @@ def compare_expt_form( request ):
             expt = get_object_or_404( Experiment, id = expt1 )
             publications = expt.get_publications()
             lodgements = Lodgement.objects.filter( dataset__experiment = expt )
-            comp_exz = []
+            comp_exz = {}
             for ex in exptz:
                 ex_obj = get_object_or_404( Experiment, id = ex )
-                comp_exz.append( ex_obj )
+                comp_exz[ ex_obj ] = []
                 publications.append( ex_obj.get_publications() )
             #publications = set( publications )
+            compare_ds = []
+            for exp_cm in comp_exz:
+                for ds in exp_cm.dataset_set.all().distinct().order_by('title'):
+                    if user.has_perm( 'view_dataset', ds ):
+                        compare_ds.append( ds )
+                        comp_exz[ exp_cm ].append( ds )
             if not( len(lodgements)):
                 lodgements = False
             s1 = ExptArrayAssemble()
-            rows = s1.get_peptide_array_from_protein_expt_comparison( proteins, expt, comp_exz, user, cutoffs=True )
-            return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False })
-            return render( request, 'pepsite/compare_expt_results.html', context  ) # Redirect after POST
-            compare_form = CompareExptForm()
-            context = { 'compare_form' : compare_form, 'invalid' : True }
-            return render( request, 'pepsite/compare_expt_form.html', context)
+            rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user, compare = True, comparators = compare_ds, cutoffs=True )
+            return render( request, 'pepsite/compare_expt_results.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False, 'expt_cm' : comp_exz, 'compare_ds' : compare_ds  })
     else:
         compare_form = CompareExptForm()
         context = { 'compare_form' : compare_form }

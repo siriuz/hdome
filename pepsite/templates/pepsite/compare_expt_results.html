@@ -71,7 +71,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 </head>
 
 
-<h1>Experiment = <span class="text-primary">{{expt.title}}</span></h1>
+<h1>Comparing Experiments</h1>
 
 
 {% endblock %}
@@ -81,9 +81,6 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 <div id="summary"></div>
 
 
-{{expt1}}
-
-{{exptz}}
 
 
 <div id="summary"></div>
@@ -110,46 +107,21 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 <h2 class="text-primary">Peptides detected</h2>
 
-{% if not complete %}<p class="text-info">You do not have permission to view some or all of this data {% endif %} </p>
-
-{% if paginate %}
-
-<div class="pagination">
-    <span class="step-links">
-        {% if proteins.has_previous %}
-            <a href="?page={{ proteins.previous_page_number }}">previous</a>
-        {% endif %}
-
-        <span class="current">
-            Page {{ proteins.number }} of {{ proteins.paginator.num_pages }}.
-        </span>
-
-        {% if proteins.has_next %}
-            <a href="?page={{ proteins.next_page_number }}">next</a>
-        {% endif %}
-    </span>
-<form action="{% url 'pepsite:expt2' expt.id %}" method="post">
-{% csrf_token %}
-<input type='hidden' name='full_list' value='1' />
-<input class="btn btn-danger" type="submit" value="Show complete peptide list for {{expt.title}}">
-</form>
-</div>
-
-{% else %}
-
-<div>
-<form action="{% url 'pepsite:expt2' expt.id %}" method="post">
-{% csrf_token %}
-<input class="btn btn-danger" type="submit" value="Go to paginated peptide list for {{expt.title}}">
-</form>
-</div>
+{% if not complete %}<p class="text-info">You do not have permission to view some or all of this data </p>{% endif %}
 
 
-{% endif %}
 
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
-        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
+        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th>
+                {% for ds in compare_ds %}
+                <th><span class="text-primary">{{ds.experiment.title}}</span>
+                    {{ds.title}}</th>
+                {% endfor %}
+
+            
+            
+            </tr>
     </thead>
     <tbody>
     {% for row in rows %}
@@ -194,6 +166,14 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
            <td>
 	       <a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a>
            </td>
+           {% for check in row.checkers %}
+           {% if check %}
+           <td>+</td>
+           {% else %}
+           <td></td>
+           {% endif %}
+           {% endfor %}
+
         </tr>
     {% endfor %}
     </tbody>
@@ -202,47 +182,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 
 
-{% if paginate %}
-
-<div class="pagination">
-    <span class="step-links">
-        {% if proteins.has_previous %}
-            <a href="?page={{ proteins.previous_page_number }}">previous</a>
-        {% endif %}
-
-        <span class="current">
-            Page {{ proteins.number }} of {{ proteins.paginator.num_pages }}.
-        </span>
-
-        {% if proteins.has_next %}
-            <a href="?page={{ proteins.next_page_number }}">next</a>
-        {% endif %}
-    </span>
-<form action="{% url 'pepsite:expt2' expt.id %}" method="post">
-{% csrf_token %}
-<input type='hidden' name='full_list' value='1' />
-<input class="btn btn-danger" type="submit" value="Show complete peptide list for {{expt.title}}">
-</form>
-</div>
-
-{% else %}
-
-<div>
-<form action="{% url 'pepsite:expt2' expt.id %}" method="post">
-{% csrf_token %}
-<input class="btn btn-danger" type="submit" value="Go to paginated peptide list for {{expt.title}}">
-</form>
-</div>
-
-
-{% endif %}
-
 <br>
-
-<form action="{% url 'pepsite:send_expt_csv' expt.id %}">
-<input class="btn btn-primary" type="submit" value="Download csv">
-</form>
-
 
 
 

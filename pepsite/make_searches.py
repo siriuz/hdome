@@ -1,5 +1,7 @@
 from pepsite.models import *
 from django.db.models import Q
+from django.db.models import Count
+
 
 def rek(lok):
     a = abs( lok)
@@ -161,19 +163,19 @@ class PeptideSearch( BaseSearch ):
 class ExptArrayAssemble( BaseSearch ):
     """
     """
-    def get_peptide_array_from_protein_expt(self, proteins, expt, user, cutoffs = False ):
+    def get_peptide_array_from_protein_expt(self, proteins, expt, user, compare = False, comparators = None, cutoffs = False ):
         """docstring for get_peptide_array_from_proteins"""
         ides = IdEstimate.objects.filter( peptide__proteins__in = proteins, ion__experiment = expt ).order_by( 'peptide__sequence' )
         peptides = Peptide.objects.filter( idestimate__in = ides ).distinct()
         #return self.get_peptide_array_expt( ides, expt, user, cutoffs = cutoffs )
-        return self.get_peptide_array_expt_restricted( ides, peptides, expt, user, cutoffs = cutoffs )
+        return self.get_peptide_array_expt_restricted( ides, peptides, expt, user, compare = compare, comparators = comparators, cutoffs = cutoffs )
 
     def get_peptide_array_from_protein_expt_comparison(self, proteins, expt, exptz, user, cutoffs = False ):
         """docstring for get_peptide_array_from_proteins"""
         ides = IdEstimate.objects.filter( peptide__proteins__in = proteins, ion__experiment = expt ).order_by( 'peptide__sequence' )
         peptides = Peptide.objects.filter( idestimate__in = ides ).distinct()
         #return self.get_peptide_array_expt( ides, expt, user, cutoffs = cutoffs )
-        return self.get_peptide_array_expt_restricted_comparison( ides, peptides, expt, exptz, user, cutoffs = cutoffs )
+        return self.get_peptide_array_expt_restricted( ides, peptides, expt, exptz, user, cutoffs = cutoffs )
 
     def get_peptide_array_expt( self, ides, expt, user, cutoffs = False, cutoff_list = [0.05, 99.0], **kwargs ):
         """
@@ -193,7 +195,7 @@ class ExptArrayAssemble( BaseSearch ):
                             break
 	return ml
 
-    def get_peptide_array_expt_restricted( self, ides, peptides, expt, user, cutoffs = False, cutoff_list = [0.05, 99.0], **kwargs ):
+    def get_peptide_array_expt_restricted( self, ides, peptides, expt, user, cutoffs = False, compare = False, comparators = None, cutoff_list = [0.05, 99.0], **kwargs ):
         """
         """
         ml = []
@@ -212,64 +214,52 @@ class ExptArrayAssemble( BaseSearch ):
                 count = 0
                 if not ptmcon:
                     td = [ {'ptms__isnull' : True}, {'peptide' : pep }, {'ion__experiment' : expt } ]
-                    #qlist.append( Q(ptms__isnull = True) )
                 else:
                     for ptm in ptmcon:
                         td.append( { 'ptms__id' : ptm } )
                     td += [ {'peptide' : pep }, {'ion__experiment' : expt } ]
-                    #qlist.append( Q(count = len( ptmcon )) )
-                # order by abs val of delta mass - this will be used for selecting best representative species
-                #ideref = IdEstimate.objects.filter( id__in = ideset, *qlist ).distinct().extra(select={"diff": "abs(delta_mass)"}).order_by( 'diff' )
-                a = IdEstimate.objects.all()
+                a = IdEstimate.objects.all().annotate( count = Count('ptms'))
                 for dic in td:
                     a = a.filter( **dic )
-                ideref = a.distinct()
+                ideref = a.filter(count = len(ptmcon)).distinct()
                 print 'ideref', [b.id for b in ideref]
                 entry = self.best_entries( ideref, ptmcon, expt, user, cutoffs = cutoffs ) 
-                if entry is not None:
-                    ml.append( entry )
-        return ml
-
-    def get_peptide_array_expt_restricted_comparison( self, ides, peptides, expt, exptz, user, cutoffs = False, cutoff_list = [0.05, 99.0], **kwargs ):
-        """
-        """
-        ml = []
-        for pep in peptides.order_by('sequence'):
-            ideset = IdEstimate.objects.filter( peptide = pep, id__in = ides ).distinct()
-            print 'ideset', [b.id for b in ideset]
-            ptmz = []
-            for ide in ideset:
-                ptmcon = [ b.id for b in ide.ptms.all().order_by( 'id' ) ]
-                if ptmcon not in ptmz:
-                    ptmz.append( ptmcon )
-            for ptmcon in ptmz:
-                print 'ptmcon', ptmcon
-                #qlist = []
-                td = []
-                count = 0
-                if not ptmcon:
-                    td = [ {'ptms__isnull' : True}, {'peptide' : pep }, {'ion__experiment' : expt } ]
-                    #qlist.append( Q(ptms__isnull = True) )
+                if compare:
+                    if entry is not None:
+                        checkers = self.check_datasets( comparators, pep, ptmcon )
+                        entry[ 'checkers' ] = checkers 
+                        ml.append( entry )
                 else:
-                    for ptm in ptmcon:
-                        td.append( { 'ptms__id' : ptm } )
-                    td += [ {'peptide' : pep }, {'ion__experiment' : expt } ]
-                    #qlist.append( Q(count = len( ptmcon )) )
-                # order by abs val of delta mass - this will be used for selecting best representative species
-                #ideref = IdEstimate.objects.filter( id__in = ideset, *qlist ).distinct().extra(select={"diff": "abs(delta_mass)"}).order_by( 'diff' )
-                for expt_comp in exptz:
-                    pass
-                a = IdEstimate.objects.all()
-                for dic in td:
-                    a = a.filter( **dic )
-                ideref = a.distinct()
-                print 'ideref', [b.id for b in ideref]
-                entry = self.best_entries_comparison( ideref, ptmcon, expt, exptz, user, cutoffs = cutoffs ) 
-                if entry is not None:
-                    ml.append( entry )
+                    if entry is not None:
+                        ml.append( entry )
         return ml
 
+    def check_datasets(self, datasets, peptide, ptmcon, cutoffs = False):
+        """docstring for e"""
+        td = []
+        hitdic = {}
+        hitlist = [False] * len(datasets)
+        for ds in datasets:
+            hitdic[ds.experiment] = { ds : False }
+        if not ptmcon:
+            td = [ {'ptms__isnull' : True}, {'peptide' : peptide } ]
+        else:
+            for ptm in ptmcon:
+                td.append( { 'ptms__id' : ptm } )
+        td += [ {'peptide' : peptide } ]
+        a = IdEstimate.objects.all().annotate( count = Count('ptms'))
+        for dic in td:
+            a = a.filter( **dic )
+        ideref = a.filter(count = len(ptmcon)).distinct()
+        for i in range( len(datasets)):
+            if IdEstimate.objects.filter( ion__dataset = datasets[i], id__in = ideref ):
+                hitlist[i] = True
 
+        return hitlist
+
+            
+
+        
 
     def best_entries(self, ideref, ptmcon, expt, user, cutoffs = False):
         """docstring for best_entry"""
@@ -335,9 +325,9 @@ class MassSearch( BaseSearch ):
 
     def get_peptide_array_from_ptm( self, ptm_obj, user ):
         ml = []
-        ides = IdEstimate.objects.filter( ptm = ptm_obj ).order_by( 'peptide__sequence' ) 
+        ides = IdEstimate.objects.filter( ptms = ptm_obj ).order_by( 'peptide__sequence' ) 
         peptides = set( [ b.peptide for b in ides ] )
-        return self.get_peptide_array( ides, user, ion__idestimate__ptm = ptm_obj )
+        return self.get_peptide_array( ides, user, ion__idestimate__ptms = ptm_obj )
 
     def get_peptide_array_from_protein( self, protein_obj, user ):
         ml = []
@@ -387,7 +377,7 @@ class ExptAssemble( BaseSearch ):
 
     """
     def get_peptide_info( self, expt_obj ):
-        ids = IdEstimate.objects.filter( ion__experiments = expt_obj )
+        ids = IdEstimate.objects.filter( ion__experiment = expt_obj )
 	#return ([['howdy', 'pardner'],])
 	details = []
 	for b in ids:
@@ -403,9 +393,9 @@ class ExptAssemble( BaseSearch ):
     def get_ancillaries( self, protein_list, expt_obj ):
 	flist = []
 	for p in protein_list:
-	    peplist = p.peptide_set.filter( proteins = p, ion__experiments = expt_obj )
+	    peplist = p.peptide_set.filter( proteins = p, ion__experiment = expt_obj )
    	    for pep in peplist:
-                idlist = pep.idestimate_set.filter( peptide__proteins = p, ion__experiments = expt_obj )
+                idlist = pep.idestimate_set.filter( peptide__proteins = p, ion__experiment = expt_obj )
                 for ide in idlist:
 		    flist.append( [ p, pep, ide ] )
 	return flist
@@ -414,7 +404,7 @@ class ExptAssemble( BaseSearch ):
 	return crude_id.split('|')[1]
 
     def get_common_alleles( self, expt_obj ):
-	return Allele.objects.filter( cellline__experiment = expt_obj, antibody__experiments = expt_obj )
+	return Allele.objects.filter( cellline__experiment = expt_obj, antibody__experiment = expt_obj )
 
 class CompositeSearch( BaseSearch ):
     """
