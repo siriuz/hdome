@@ -75,7 +75,7 @@ cursor:pointer;
     <tbody>
         {% for protein in proteins %}
         <td>
-	    <a href="{% url 'pepsite:protein_full_listing' protein.id %}">{{protein.name}}</a> 
+	    <a href="{% url 'pepsite:protein_peptides' protein.id %}">{{protein.name}}</a> 
         </td>
         <td>
             {% for peptide in protein.peptide_set.all %}

@@ -299,7 +299,7 @@ class ExptArrayAssemble( BaseSearch ):
 
 
 
-class MassSearch( BaseSearch ):
+class MassSearch( ExptArrayAssemble ):
     """
 
 
@@ -310,7 +310,7 @@ class MassSearch( BaseSearch ):
 
     def get_unique_peptide_ides_from_mass( self, mass, tolerance, user ):
         ml = []
-        ides = IdEstimate.objects.filter( ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ).order_by( 'peptide__sequence' ) 
+        ides = IdEstimate.objects.filter( ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ).distinct().order_by( 'peptide__sequence' ) 
         peptides = set( [ b.peptide for b in ides ] )
         return self.get_peptide_array( ides, user, ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance )
         for ide in ides:
@@ -345,14 +345,10 @@ class MassSearch( BaseSearch ):
         """
         """
         ml = []
-        for ide in ides:
-            for expt in Experiment.objects.filter( ion__idestimate = ide, **kwargs ):# ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ):
-                    for ds in Dataset.objects.filter( ion__idestimate = ide, experiment = expt ).order_by( 'rank' ):
-                        if user.has_perm( 'view_dataset', ds ):
-                            for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide, peptoprot__peptide__idestimate__ion__dataset = ds ): 
-                                p2p = PepToProt.objects.get( peptide = ide.peptide, protein = protein )
-                                ml.append( { 'ide': ide, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
-                            break
+        #for ide in ides:
+        for expt in Experiment.objects.filter( ion__idestimate__in = ides, **kwargs ).distinct():# ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ):
+            peptides = Peptide.objects.filter( idestimate__in = ides, idestimate__ion__experiment = expt ).distinct()
+            ml += self.get_peptide_array_expt_restricted( ides, peptides, expt, user, cutoffs = True )
 	return ml
 
     def find_hirank_peptide(self, peptide, ):
