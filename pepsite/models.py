@@ -24,7 +24,7 @@ class Gene(models.Model):
 	return self.name + '|Class-' + str(self.gene_class)
 
 class Allele(models.Model):
-    gene = models.ForeignKey( Gene, null = True )
+    gene = models.ForeignKey( Gene, null = True, blank = True )
     code = models.CharField(max_length=200)
     #dna_type = models.CharField(max_length=200)
     #ser_type = models.CharField(max_length=200)
@@ -85,7 +85,7 @@ class CellLine(models.Model):
     #infecteds = models.ManyToManyField( Organism, related_name = 'Infections' )
     individuals = models.ManyToManyField( Individual )
     alleles = models.ManyToManyField( Allele, through='Expression' )
-    parent = models.ForeignKey( 'self', null = True )
+    parent = models.ForeignKey( 'self', null = True, blank = True )
     #antibodies = models.ManyToManyField( Antibody )
 
     class Meta:
@@ -183,7 +183,7 @@ class Antibody(models.Model):
 class Ptm(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField( default = '' )
-    mass_change = models.FloatField(null=True)
+    mass_change = models.FloatField(null=True, blank=True)
 
     def fname(self):
         """docstring for fname"""
@@ -218,12 +218,20 @@ class Protein(models.Model):
 
 class Peptide(models.Model):
     sequence = models.CharField(max_length=200)
-    mass = models.FloatField( null=True )
+    mass = models.FloatField( null=True, blank=True )
     proteins = models.ManyToManyField( Protein, through='PepToProt' )
     #ptms = models.ManyToManyField( Ptm )
 
     def __str__(self):
 	return self.sequence
+
+    def get_ptms(self):
+        """docstring for get_ptms"""
+        return Ptm.objects.filter( idestimate__peptide = self ).distinct() 
+
+    def get_proteins(self):
+        """docstring for get_ptms"""
+        return Protein.objects.filter( peptoprot__peptide = self ).distinct() 
 
 
 class Position(models.Model):
@@ -325,18 +333,18 @@ class Instrument(models.Model):
 class Dataset(models.Model):
     """docstring for Dataset"""
     title = models.CharField(max_length=300, unique=True )
-    rank = models.IntegerField( null=True )
-    datetime = models.DateTimeField( null=True )
-    data = models.FileField()
-    gradient_min = models.FloatField(null=True)
-    gradient_max = models.FloatField(null=True)
-    gradient_duration = models.FloatField(null=True)
+    rank = models.IntegerField( null=True, blank=True )
+    datetime = models.DateTimeField( null=True, blank=True )
+    data = models.FileField( blank = True )
+    gradient_min = models.FloatField(null=True, blank=True)
+    gradient_max = models.FloatField(null=True, blank=True)
+    gradient_duration = models.FloatField(null=True, blank=True)
     instrument = models.ForeignKey(Instrument)
     lodgement = models.ForeignKey(Lodgement)
     experiment = models.ForeignKey(Experiment)
-    notes = models.TextField( default = '' )
-    confidence_cutoff = models.FloatField( null=True )
-    dmass_cutoff = models.FloatField( null=True )
+    notes = models.TextField( default = '', blank = True )
+    confidence_cutoff = models.FloatField( null=True, blank=True )
+    dmass_cutoff = models.FloatField( null=True, blank=True )
 
     class Meta:
         permissions = (
@@ -379,7 +387,7 @@ class LookupCode(models.Model):
     """docstring for Code"""
     code = models.CharField(max_length=200)
     externaldb = models.ForeignKey( ExternalDb )
-    protein = models.ForeignKey( Protein, null=True )
+    protein = models.ForeignKey( Protein, null=True, blank=True )
     cell_lines = models.ManyToManyField( CellLine )
 
     def __str__(self):
@@ -394,7 +402,7 @@ class Publication(models.Model):
     display = models.TextField()
     lodgements = models.ManyToManyField( Lodgement )
     cell_lines = models.ManyToManyField( CellLine )
-    lookupcode = models.OneToOneField( LookupCode, null=True )
+    lookupcode = models.OneToOneField( LookupCode, null=True, blank=True )
 
     def __str__(self):
         """docstring for _"""

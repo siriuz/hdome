@@ -79,17 +79,23 @@ def cell_line_tissue_browse( request ):
 
 @login_required
 def model_info( request, model_type, model_id ):
+        context = {}
 	module = 'pepsite.models'
         if model_type == 'Serotype':
             model_type = 'Allele'
-        if model_type == 'Organism':
+        elif model_type == 'Organism':
             model_type = 'Entity'
 	model = getattr(sys.modules[ module ], model_type  )
 	instance = get_object_or_404( model, id = model_id )
+        if model_type == 'Peptide':
+            context['pep_ptms'] = instance.get_ptms
+            context['pep_prots'] = instance.get_proteins
 	def get_class2( obj ):
 	    return obj.__class__
 	instance.get_class2 = get_class2
-	context = { 'model_type' : model_type, 'instance' : instance, 'model_id' : model_id }
+	context['model_type'] = model_type
+        context['instance'] = instance
+        context['model_id'] = model_id 
 	return render( request, 'pepsite/model_info.html', context)
 
 @login_required
@@ -374,16 +380,17 @@ def entity_expts( request, entity_id ):
 @login_required
 def peptide_expts( request, peptide_id ):
     peptide = get_object_or_404( Peptide, id = peptide_id )
+    ptms = peptide.get_ptms()
     text_input = peptide.sequence
-    expts = Experiment.objects.filter( ion__peptides = peptide )
-    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Peptide', 'query_obj' : peptide  }
+    expts = Experiment.objects.filter( ion__peptides = peptide ).distinct()
+    context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Peptide', 'query_obj' : peptide, 'pep_ptms' : ptms  }
     return render( request, 'pepsite/searched_expts.html', context)
 
 @login_required
 def antibody_expts( request, antibody_id ):
     ab1 = get_object_or_404( Antibody, id = antibody_id )
     text_input = ab1.name
-    expts = Experiment.objects.filter( antibody = ab1 )
+    expts = Experiment.objects.filter( antibody = ab1 ).distinct()
     context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Antibody', 'query_obj' : ab1  }
     return render( request, 'pepsite/searched_expts.html', context)
 
