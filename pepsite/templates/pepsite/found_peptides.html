@@ -160,9 +160,9 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
                {{ row.peptoprot.get_positions }}
 	   </td>
 	   <td>
-	   {% if row.ide.ptm %}
-	       <a href="{% url 'pepsite:ptm_peptides' row.ide.ptm.id %}" class="link">{{row.ide.ptm.description}}</a>
-	   {% endif %}
+	   {% for ptm in row.ptms %}
+	       <a href="{% url 'pepsite:ptm_peptides' ptm.id %}" class="link">{{ptm.description}}</a>
+	   {% endfor %}
 	   </td>
 	   <td>
 	   {{ row.ide.delta_mass }}
