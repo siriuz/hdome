@@ -3,6 +3,7 @@ uploads and db updates required by 'hdome.pepsite'
 
 
 """
+from guardian.shortcuts import assign_perm
 from db_ops import dbtools
 from pepsite.models import *
 import datetime
@@ -107,8 +108,9 @@ class Uploads(dbtools.DBTools):
             self.lodgement_title = '%s Lodgement for %s' % ( self.nowstring, self.expt_title )
         self.dataset_title = 'Combined dataset for Lodgement: %s' % ( self.lodgement_title )
         try:
-            cleaned_data[ 'rel' ]
+            a = cleaned_data[ 'rel' ]
             self.public = True
+            print 'made public'
         except:
             pass
 
@@ -232,6 +234,13 @@ class Uploads(dbtools.DBTools):
                     datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title ), 
                     dmass_cutoff = self.cutoff_mappings[dsno]['dm_cutoff'], confidence_cutoff = self.cutoff_mappings[dsno]['cf_cutoff'] )
             ds.save()
+            assign_perm('view_dataset', self.user, ds)
+            for group in self.user.groups.all():
+                assign_perm('view_dataset', group, ds)
+            if self.public:
+                assign_perm('view_dataset', User.objects.get( id = -1 ), ds)
+
+
             self.datasets.append( ds )
 
     def get_protein_metadata( self ):
@@ -264,6 +273,14 @@ class Uploads(dbtools.DBTools):
             dataset = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
                     datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title )  )
             dataset.save()
+            ## object permissions:
+            assign_perm('view_dataset', self.user, dataset)
+            for group in self.user.groups.all():
+                assign_perm('view_dataset', group, dataset)
+            if self.public:
+                assign_perm('view_dataset', User.objects.get( id = -1 ), dataset)
+            
+            ##
             ion = self.get_model_object( Ion,  charge_state = local['charge'], precursor_mass = local['precursor_mass'],
                     retention_time = local['retention_time'], experiment = self.expt, dataset = dataset )
             ion.save()

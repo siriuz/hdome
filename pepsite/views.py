@@ -22,16 +22,16 @@ import re
 
 import pickle
 
-@login_required
+#@login_required
 def index( request ):
 	return render( request, 'pepsite/index.html', {})
 
-@login_required
+#@login_required
 def formdump( request ):
         context = { 'post' : request.POST.dict() }
 	return render( request, 'pepsite/formdump.html', context )
 
-@login_required
+#@login_required
 def comp_results( request ):
         post = request.POST.dict()
         newdic = {}
@@ -53,31 +53,31 @@ def comp_results( request ):
 
 
 
-@login_required
+#@login_required
 def allele_browse( request ):
 	alleles = Allele.objects.all().distinct()
 	context = { 'alleles' : alleles }
 	return render( request, 'pepsite/allele_browse.html', context)
 
-@login_required
+#@login_required
 def protein_browse( request ):
 	proteins = Protein.objects.all().distinct()
 	context = { 'proteins' : proteins }
 	return render( request, 'pepsite/protein_browse.html', context)
 
-@login_required
+#@login_required
 def cell_line_browse( request ):
 	cell_lines = CellLine.objects.all().distinct()
 	context = { 'cell_lines' : cell_lines }
 	return render( request, 'pepsite/cell_line_browse.html', context)
 
-@login_required
+#@login_required
 def cell_line_tissue_browse( request ):
 	cell_lines = CellLine.objects.all(  ).distinct().order_by( 'tissue_type' )
 	context = { 'cell_lines' : cell_lines }
 	return render( request, 'pepsite/cell_line_tissue_browse.html', context)
 
-@login_required
+#@login_required
 def model_info( request, model_type, model_id ):
         context = {}
 	module = 'pepsite.models'
@@ -98,7 +98,7 @@ def model_info( request, model_type, model_id ):
         context['model_id'] = model_id 
 	return render( request, 'pepsite/model_info.html', context)
 
-@login_required
+#@login_required
 def composite_search( request ):
     if request.method == 'POST': # If the form has been submitted...
         form = TextOnlyForm(request.POST) # A form bound to the POST data
@@ -131,7 +131,7 @@ def upload_ss_form( request ):
 	    ul.preview_ss_simple( formdata )
 	    ul.preprocess_ss_simple( ss )
             #request.session['ss'] = ss
-            upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications,
+            upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
                     'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id }
             request.session['ul'] = ul.uldict
@@ -147,7 +147,7 @@ def upload_ss_form( request ):
 	    ul.preview_ss_simple( formdata )
 	    ul.preprocess_ss_simple( ss )
             #request.session['ss'] = ss
-            upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications,
+            upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
                     'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id }
             request.session['ul'] = ul.uldict
@@ -161,7 +161,7 @@ def upload_ss_form( request ):
         context = { 'textform' : textform }
         return render( request, 'pepsite/upload_ss_form.html', context)
 
-@login_required
+#@login_required
 def compare_expt_form( request ):
     user = request.user
     if request.method == 'POST': # If the form has been submitted...
@@ -172,14 +172,16 @@ def compare_expt_form( request ):
             context = { 'exptz' : exptz, 'expt1' : expt1  }
             proteins = list(set(Protein.objects.filter( peptide__ion__experiment__id = expt1)))
             expt = get_object_or_404( Experiment, id = expt1 )
-            publications = expt.get_publications()
+            all_exp = [ expt ]
+            #publications = expt.get_publications()
             lodgements = Lodgement.objects.filter( dataset__experiment = expt )
             comp_exz = {}
             for ex in exptz:
                 ex_obj = get_object_or_404( Experiment, id = ex )
                 comp_exz[ ex_obj ] = []
-                publications.append( ex_obj.get_publications() )
-            #publications = set( publications )
+                all_exp.append( ex_obj )
+                #publications.append( ex_obj.get_publications() )
+            publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
             compare_ds = []
             for exp_cm in comp_exz:
                 for ds in exp_cm.dataset_set.all().distinct().order_by('title'):
@@ -220,7 +222,7 @@ def commit_upload_ss( request ):
         return render( request, 'pepsite/upload_ss_form.html', context)
 
 
-@login_required
+#@login_required
 def cell_line_search( request ):
     if request.method == 'POST': # If the form has been submitted...
         form = TextOnlyForm(request.POST) # A form bound to the POST data
@@ -240,7 +242,7 @@ def cell_line_search( request ):
         context = { 'textform' : textform }
         return render( request, 'pepsite/cell_line_search.html', context)
 
-@login_required
+#@login_required
 def protein_search( request ):
     if request.method == 'POST': # If the form has been submitted...
         form = TextOnlyForm(request.POST) # A form bound to the POST data
@@ -260,7 +262,7 @@ def protein_search( request ):
         context = { 'textform' : textform }
         return render( request, 'pepsite/protein_search.html', context)
 
-@login_required
+#@login_required
 def cell_line_tissue_search( request ):
     if request.method == 'POST': # If the form has been submitted...
         form = TextOnlyForm(request.POST) # A form bound to the POST data
@@ -280,7 +282,7 @@ def cell_line_tissue_search( request ):
         context = { 'textform' : textform }
         return render( request, 'pepsite/cell_line_tissue_search.html', context)
 
-@login_required
+#@login_required
 def mass_search( request ):
     user = request.user
     if request.GET.items(): # If the form has been submitted...
@@ -320,7 +322,7 @@ def mass_search( request ):
         context = { 'massform' : textform }
         return render( request, 'pepsite/mass_search.html', context)
 
-@login_required
+#@login_required
 def allele_search( request ):
     if request.method == 'POST': # If the form has been submitted...
         form = TextOnlyForm(request.POST) # A form bound to the POST data
@@ -340,17 +342,17 @@ def allele_search( request ):
         context = { 'textform' : textform }
         return render( request, 'pepsite/allele_search.html', context)
 
-@login_required
+#@login_required
 def allele_results( request ):
 	context = { 'msg' : 'goodbye' }
 	return render( request, 'pepsite/allele_results.html', context)
 
-@login_required
+#@login_required
 def trial_table( request ):
 	context = { 'msg' : 'goodbye' }
 	return render( request, 'pepsite/eg_tablesort.html', context)
 
-@login_required
+#@login_required
 def cell_line_expts( request, cell_line_id ):
 	cl1 = CellLine.objects.get( id = cell_line_id )
 	text_input = cl1.name
@@ -358,7 +360,7 @@ def cell_line_expts( request, cell_line_id ):
         context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'query_obj' : cl1  }
 	return render( request, 'pepsite/searched_expts.html', context)
 
-@login_required
+#@login_required
 def gene_expts( request, gene_id ):
 	g1 = Gene.objects.get( id = gene_id )
 	text_input = g1.name
@@ -366,7 +368,7 @@ def gene_expts( request, gene_id ):
         context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Gene', 'query_obj' : g1  }
 	return render( request, 'pepsite/searched_expts.html', context)
 
-@login_required
+#@login_required
 def entity_expts( request, entity_id ):
 	en1 = Entity.objects.get( id = entity_id )
 	text_input = en1.common_name
@@ -377,7 +379,7 @@ def entity_expts( request, entity_id ):
 	return render( request, 'pepsite/searched_expts.html', context)
 
 
-@login_required
+#@login_required
 def peptide_expts( request, peptide_id ):
     peptide = get_object_or_404( Peptide, id = peptide_id )
     ptms = peptide.get_ptms()
@@ -386,7 +388,7 @@ def peptide_expts( request, peptide_id ):
     context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Peptide', 'query_obj' : peptide, 'pep_ptms' : ptms  }
     return render( request, 'pepsite/searched_expts.html', context)
 
-@login_required
+#@login_required
 def antibody_expts( request, antibody_id ):
     ab1 = get_object_or_404( Antibody, id = antibody_id )
     text_input = ab1.name
@@ -394,7 +396,7 @@ def antibody_expts( request, antibody_id ):
     context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Antibody', 'query_obj' : ab1  }
     return render( request, 'pepsite/searched_expts.html', context)
 
-@login_required
+#@login_required
 def ptm_expts( request, ptm_id ):
     ptm1 = get_object_or_404( Ptm, id = ptm_id )
     text_input = ptm1.description
@@ -402,7 +404,7 @@ def ptm_expts( request, ptm_id ):
     context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Ptm', 'query_obj' : ptm1 }
     return render( request, 'pepsite/searched_expts.html', context)
 
-@login_required
+#@login_required
 def ptm_peptides( request, ptm_id ):
     user = request.user
     ptm1 = get_object_or_404( Ptm, id = ptm_id )
@@ -412,7 +414,7 @@ def ptm_peptides( request, ptm_id ):
     context = { 'text_input' : text_input, 'query_on' : 'Ptm', 'query_obj' : ptm1, 'rows' : ides, 'search' : False }
     return render( request, 'pepsite/found_peptides.html', context)
 
-@login_required
+#@login_required
 def protein_peptides( request, protein_id ):
     user = request.user
     prot1 = get_object_or_404( Protein, id = protein_id )
@@ -422,7 +424,7 @@ def protein_peptides( request, protein_id ):
     context = { 'text_input' : text_input, 'query_on' : 'Protein', 'query_obj' : prot1, 'rows' : ides, 'search' : False }
     return render( request, 'pepsite/found_peptides.html', context)
 
-@login_required
+#@login_required
 def peptide_peptides( request, peptide_id ):
     user = request.user
     pep = get_object_or_404( Peptide, id = peptide_id )
@@ -432,7 +434,7 @@ def peptide_peptides( request, peptide_id ):
     context = { 'text_input' : text_input, 'query_on' : 'Peptide', 'query_obj' : pep, 'rows' : ides }
     return render( request, 'pepsite/found_peptides.html', context)
 
-@login_required
+#@login_required
 def allele_expts( request, allele_id ):
     al1 = get_object_or_404( Allele, id = allele_id )
     text_input = al1.code
@@ -442,7 +444,7 @@ def allele_expts( request, allele_id ):
 	context['query_on'] = 'Serotype'
     return render( request, 'pepsite/searched_expts.html', context)
 
-@login_required
+#@login_required
 def protein_full_listing( request, protein_id ):
     prot = get_object_or_404( Protein, id = protein_id )
     s1 = ProteinSearch()
@@ -450,7 +452,7 @@ def protein_full_listing( request, protein_id ):
     context = { 'msg' : expts, 'protein' : prot }
     return render( request, 'pepsite/protein_full_listing.html', context)
 
-@login_required
+#@login_required
 def expt( request, expt_id ):
     expt = get_object_or_404( Experiment, id = expt_id )
     s1 = ExptAssemble()
@@ -460,7 +462,7 @@ def expt( request, expt_id ):
     return render( request, 'pepsite/expt.html', context)
 
 
-@login_required
+#@login_required
 def expt3( request, expt_id ):
     proteins = set(Protein.objects.filter( peptide__ion__experiments__id = expt_id))
 
@@ -469,7 +471,7 @@ def expt3( request, expt_id ):
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
-@login_required
+#@login_required
 def expt2( request, expt_id ):
   user = request.user
   if not ( request.POST.has_key( 'full_list' ) and request.POST['full_list'] ):
@@ -506,7 +508,7 @@ def expt2( request, expt_id ):
 
 
 
-@login_required
+#@login_required
 def expt2_alternate( request, expt_id ):
     proteins = list(set(Protein.objects.filter( peptide__ion__experiments__id = expt_id)))
     expt = get_object_or_404( Experiment, id = expt_id )
@@ -532,7 +534,7 @@ def expt2_alternate( request, expt_id ):
     return render( request, 'pepsite/new_expt2.html', {"proteins": proteins, 'entries' : entries, 'expt' : expt })
 
 
-@login_required
+#@login_required
 def send_expt_csv(request, expt_id ):
 
     expt = get_object_or_404( Experiment, id = expt_id )
@@ -560,14 +562,14 @@ def send_expt_csv(request, expt_id ):
         return response
 
 
-@login_required
+#@login_required
 def footer( request ):
     return render( request, 'pepsite/footer.html', {})
 
-@login_required
+#@login_required
 def nav_buttons_allele( request ):
     return render( request, 'pepsite/nav_buttons_allele.html', {})
 
-@login_required
+#@login_required
 def nav_buttons( request  ):
     return render( request, 'pepsite/nav_buttons.html', {})

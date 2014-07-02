@@ -210,7 +210,7 @@ class BackgroundImports(dbtools.DBTools):
         """docstring for insert_alleles"""
         keys = rowdic.keys()
         for k in keys:
-            if k in self.alleles or k in self.serotypes:
+            if k in self.alleles or k in self.serotypes and bool(k.strip()):
                 g1, a1 = k.split()
                 gene = self.get_model_object( Gene, name = g1 )
                 gene.save()
