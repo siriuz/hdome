@@ -17,8 +17,8 @@ def yello():
 
 class Gene(models.Model):
     name = models.CharField(max_length=200)
-    gene_class = models.IntegerField( null = True )
-    description = models.TextField( default = '' )
+    gene_class = models.IntegerField( null = True, blank = True )
+    description = models.TextField( default = '' , blank = True )
 
     def __str__(self):
 	return self.name + '|Class-' + str(self.gene_class)
@@ -29,7 +29,7 @@ class Allele(models.Model):
     #dna_type = models.CharField(max_length=200)
     #ser_type = models.CharField(max_length=200)
     isSer = models.BooleanField( default = False )
-    description = models.TextField( default = '' )
+    description = models.TextField( default = '' , blank = True )
 
     def get_summary( self ):
 	pass
@@ -51,7 +51,7 @@ class Allele(models.Model):
 class Entity(models.Model):
     common_name = models.CharField(max_length=200)
     sci_name = models.CharField(max_length=200 )
-    description = models.TextField( default = '' )
+    description = models.TextField( default = '', blank = True  )
     isOrganism = models.BooleanField( default = False )
 
     def __str__(self):
@@ -63,12 +63,12 @@ class Entity(models.Model):
 
 class Individual(models.Model):
     identifier = models.CharField(max_length=200, unique = True )
-    description = models.TextField( default = '' )
+    description = models.TextField( default = '' , blank = True )
     nation_origin = models.CharField(max_length=200 )
     entity = models.ForeignKey( Entity, blank=True, null=True )
     isHost = models.BooleanField( default = False )
     isAnonymous = models.BooleanField( default = True )
-    web_ref = models.CharField(max_length=200 )
+    web_ref = models.CharField(max_length=200, default = '', null = True )
 
 
 
