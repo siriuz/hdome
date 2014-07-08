@@ -4,7 +4,7 @@ uploads and db updates required by 'hdome.pepsite'
 
 """
 from guardian.shortcuts import assign_perm
-from db_ops import dbtools
+import dbtools
 from pepsite.models import *
 import datetime
 from django.utils.timezone import utc

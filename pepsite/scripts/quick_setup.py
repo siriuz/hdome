@@ -3,7 +3,7 @@ import sys
 import datetime
 from django.utils.timezone import utc
 from django.db.models import Q
-from db_ops import dbtools
+import pepsite.dbtools
 
 PROJ_NAME = 'hdome'
 APP_NAME = 'pepsite'

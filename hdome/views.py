@@ -39,6 +39,7 @@ def logout_page(request):
     Log users out and re-direct them to the main page.
     """
     logout(request)
+    #return render( request, 'home.html', { 'home_active' : True } )
     return HttpResponseRedirect('/')
 
 def publications( request ):
