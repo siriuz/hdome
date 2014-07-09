@@ -9,6 +9,7 @@ from pepsite.models import *
 import datetime
 from django.utils.timezone import utc
 import uniprot
+from django.db.models import Count
 
 
 class Uploads(dbtools.DBTools):
@@ -235,6 +236,7 @@ class Uploads(dbtools.DBTools):
                     dmass_cutoff = self.cutoff_mappings[dsno]['dm_cutoff'], confidence_cutoff = self.cutoff_mappings[dsno]['cf_cutoff'] )
             ds.save()
             assign_perm('view_dataset', self.user, ds)
+            assign_perm('edit_dataset', self.user, ds)
             for group in self.user.groups.all():
                 assign_perm('view_dataset', group, ds)
             if self.public:
@@ -275,6 +277,7 @@ class Uploads(dbtools.DBTools):
             dataset.save()
             ## object permissions:
             assign_perm('view_dataset', self.user, dataset)
+            assign_perm('edit_lodgement', self.user, self.lodgement)
             for group in self.user.groups.all():
                 assign_perm('view_dataset', group, dataset)
             if self.public:
@@ -295,6 +298,75 @@ class Uploads(dbtools.DBTools):
 
 
  
+class Curate( Uploads ):
 
+
+    def __init__(self, *args, **kwargs):
+        super( Curate, self).__init__( *args, **kwargs )
+        self.lodgements = []
+        self.lodgement_ids = []
+
+
+    def setup_curation(self, cleaned_data, fileobj):
+        """docstring for preview_ss_simple"""
+        #if int(
+        for ldg_id in cleaned_data.getlist( 'ldg'):
+            ldg_obj = self.get_model_object( Lodgement, id = ldg_id ) 
+            self.lodgements.append( ldg_obj )
+            self.lodgement_ids.append( ldg_id )
+        self.preprocess_ss_simple( fileobj )
+
+    def auto_curation(self):
+        for ldg_obj in self.lodgements:
+            self.curation_simple( ldg_obj )
+
+    def curation_simple( self, ldg_obj ):
+        """None -> None
+        """
+        for k in self.uldict.keys():
+            local = self.uldict[k]
+            pep = self.get_model_object( Peptide, sequence = local['peptide_sequence'] )
+            #pep.save()
+            proteins = []
+            ptms = []
+            #for prt, unp in zip( local['proteins'], local['uniprot_ids'] ):
+            #    pr1 = self.get_model_object( Protein,  prot_id = unp, description = prt, name = prt )
+            #    try:
+            #        sequence = self.uniprot_data[ unp ]['sequence']
+            #        pr1.sequence = sequence
+            #        pr1.save()
+            #    except:
+            #        pr1.save()
+            #    proteins.append( pr1 )
+            for ptm_desc in local['ptms']:
+                ptm = self.get_model_object( Ptm, description = ptm_desc, name = ptm_desc )
+                #ptm.save()
+                ptms.append( ptm )
+            dsno = local['dataset']
+            if True:
+                dataset = self.get_model_object( Dataset, lodgement = ldg_obj,
+                    title = 'Dataset #%s from %s' % ( dsno, ldg_obj.title )  )
+                ion = self.get_model_object( Ion,  charge_state = local['charge'], precursor_mass = local['precursor_mass'],
+                    retention_time = local['retention_time'], dataset = dataset )
+                #ion.save()
+                td = []
+                count = 0
+                if not ptms:
+                    td = [ {'ptms__isnull' : True}, {'peptide' : pep }, {'ion' : ion } ]
+                else:
+                    for ptm in ptms:
+                        td.append( { 'ptms__id' : ptm.id } )
+                    td += [ {'peptide' : pep }, {'ion' : ion } ]
+                a = IdEstimate.objects.all().annotate( count = Count('ptms'))
+                for dic in td:
+                    a = a.filter( **dic )
+                try:
+                    ide = a.filter(count = len(ptms)).distinct()[0]
+                    ide.isRemoved = True
+                    ide.save()
+                except:
+                    pass
+            else:
+                pass
 
 

@@ -134,8 +134,11 @@ class Lodgement(models.Model):
     class Meta:
         permissions = (
                 ( 'view_lodgement', 'can view lodgement' ),
+                ( 'edit_lodgement', 'can edit lodgement' ),
                 )
 
+    def get_experiment(self):
+        return Experiment.objects.filter( dataset__lodgement = self ).distinct()[0]
 
 class Experiment( models.Model ):
     title = models.CharField(max_length=200)
@@ -349,6 +352,7 @@ class Dataset(models.Model):
     class Meta:
         permissions = (
                 ( 'view_dataset', 'can view dataset' ),
+                ( 'edit_dataset', 'can edit dataset' ),
                 )
 
 

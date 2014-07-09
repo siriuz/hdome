@@ -221,6 +221,7 @@ class ExptArrayAssemble( BaseSearch ):
                 a = IdEstimate.objects.all().annotate( count = Count('ptms'))
                 for dic in td:
                     a = a.filter( **dic )
+                a = a.filter( isRemoved = False )
                 ideref = a.filter(count = len(ptmcon)).distinct()
                 print 'ideref', [b.id for b in ideref]
                 entry = self.best_entries( ideref, ptmcon, expt, user, cutoffs = cutoffs ) 

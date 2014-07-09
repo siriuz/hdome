@@ -1,0 +1,163 @@
+{% extends 'pepsite/base.html' %}
+
+{% load staticfiles %}
+
+{% block headline %}
+
+<style>
+
+
+.div-1 {
+    position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    z-index: -200;
+}
+.center {
+    width: 80%;
+    height: 80%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    
+}
+
+</style>
+
+
+<script>
+
+
+$(document).ready(function() {
+
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+var csrftoken = getCookie('csrftoken');
+
+$('#id_expt').click( function() {
+    var selected = $('#id_expt option:selected').val();
+    //if ( selected === "-1" ) {
+    //    $("label[for='id_expt2']").show();
+    //    $("#id_expt2").show();
+        //$('#res1').html( '<h1>NEW</h1>' );
+    //}
+    //else {
+    //    $("label[for='id_expt2']").hide();
+    //    $("#id_expt2").hide();
+        //$('#res1').html( '<h1>' + selected + '</h1>' );
+    //}
+    
+});
+
+$('#loader').hide();
+
+
+$('#ssupload').click( function () {
+    $('.div-1').css(( "z-index" ), 10 );
+    $('#loader').show();
+    var resultdiv = "#resultdiv";
+    var datain = new FormData($('#ssform').get(0));
+
+    //var option=$('#ssform').serialize();
+                                //$( resultdiv ).html( option );
+
+                    //var input_string = $("#" + textfield_id ).val();
+                    $.ajax({
+                            url: $(this).attr('action'),
+                            type: $(this).attr('method'),
+                        //url : "upload_ss_form", 
+                        //type : "POST",
+                        //dataType: "html", 
+                            cache: false,
+    //processData: false,
+    contentType: false,
+                        data : {
+                            client_response : datain,
+                            csrfmiddlewaretoken: csrftoken
+                            },
+                            success : function(retdat) {
+                                $( resultdiv ).html( "DONE AGAIN" );
+                                //$( resultdiv ).html( datain );
+                            },
+                            error : function(xhr,errmsg,err) {
+                                alert(xhr.status + ": " + xhr.responseText);
+                            }
+                    });
+                    return false;
+            });
+
+
+
+});
+
+</script>
+
+
+</head>
+
+
+<h1>Upload a <span class="text-primary">Curation Spreadsheet</span></h1>
+<p class="text-info">Upload text-only data, which will be removed from viewing</p>
+
+
+{% endblock %}
+{% block content %}
+
+<div class="div-1">
+<img id="loader" class="center" src="{% static 'animations/ajax_loader_blue_512.gif' %}"/>
+</div>
+
+{% if ldz %}
+
+<h2 class="text-primary">Please enter curation details...</h2>
+<form enctype="multipart/form-data" action="{% url 'pepsite:upload_manual_curations' %}" method="post" id="ssform">
+
+    {% csrf_token %}
+    {% for field in textform %}
+        <div class="fieldWrapper">
+            {{ field.errors }}
+            {{ field.label_tag }} {{ field }}
+            {{ field.help_text }}
+            {{ field.urlstr }}
+            {{ field.crap }}
+        </div>
+    {% endfor %}
+    <br>
+
+
+<button id="ssupload" class="btn btn-lg btn-success" value="Upload">Curate Lodgement(s)</button>
+</form>
+<hr>
+<br>
+
+{% else %}
+
+<h2 class = "text-primary">No Lodgements are available for editing for this user</h1>
+
+{% endif %}
+
+<div id="resultdiv"></div>
+
+
+
+
+{% endblock %}

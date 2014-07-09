@@ -1,7 +1,9 @@
 
+{% load template_filter %}
+
 
 $(document).ready(function() {
-    $('#banner').load( "/banner" );
+    //$('#banner').load( "{% url 'pepsite:banner' %}" );
     
 });
 

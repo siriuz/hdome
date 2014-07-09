@@ -1,5 +1,5 @@
 from django import forms
-from pepsite.models import Experiment, Antibody, CellLine, Publication, Instrument
+from pepsite.models import Experiment, Antibody, CellLine, Publication, Instrument, Lodgement
 import os, sys
 from django.forms.util import ValidationError as FormValidationError
 
@@ -147,6 +147,17 @@ class UploadSSForm(forms.Form):
     rel = forms.BooleanField( label = 'Data publically available?' )
     ldg = forms.CharField( label = 'Name for this Lodgement' )
     ss = forms.FileField( label = 'Spreadsheet for upload' )
+
+class CurationForm(forms.Form):
+    #def __init__(self,*args,**kwargs):
+    #    self.user = kwargs.pop('user')
+    #    super(CurationForm, self).__init__(*args,**kwargs)
+    #    self.fields['ldg'].choices = [ [b.id, '%s from Experiment: %s' %( b.title, b.get_experiment().title )] for b in Lodgement.objects.all() if self.user.has_perm( 'edit_lodgement', b )]
+    ldg = forms.ChoiceField( label = 'Select Lodgement(s)', widget = forms.SelectMultiple, choices = [ [b.id, '%s from Experiment: %s' %( b.title, b.get_experiment().title )] for b in Lodgement.objects.all()] )
+    cur = forms.FileField( label = 'Spreadsheet of peptides to be curated out' )
+
+
+    # code...
 
 class CompareExptForm( forms.Form ):
     expt1 = forms.ChoiceField( label = 'Select an existing Experiment', choices = [ [b.id, b.title] for b in Experiment.objects.all()] )
