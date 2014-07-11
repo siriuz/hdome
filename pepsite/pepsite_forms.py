@@ -148,6 +148,21 @@ class UploadSSForm(forms.Form):
     ldg = forms.CharField( label = 'Name for this Lodgement' )
     ss = forms.FileField( label = 'Spreadsheet for upload' )
 
+class UploadMultipleSSForm(forms.Form):
+    #expt1 = forms.ChoiceField( label = 'Select an existing Experiment', choices = [[-1, u'ADD NEW EXPERIMENT']] + [ [b.id, b.title] for b in Experiment.objects.all()] )
+    expt1 = append_choicefield( label = 'Select an existing Experiment', choices = [[-1, u'ADD NEW EXPERIMENT']] + [ [b.id, b.title] for b in Experiment.objects.all()], urltext = 'Need a different experiment?', urlstr = 'pepsite:cell_line_search' )
+    #expt1.urltest = 'Need a different experiment?'
+    #expt1.urlstr = 'pepsite:cell_line_search' 
+    expt2 = forms.CharField( label = 'New Experiment Name' )
+    #expt2 = LinkField( label = 'New Experiment Name' )
+    ab1 = forms.ChoiceField( label = 'Select existing Antibody(ies)', widget = forms.SelectMultiple, choices = [ [b.id, b.name] for b in Antibody.objects.all()] )
+    cl1 = forms.ChoiceField( label = 'Select an existing Cell Line', choices = [ [b.id, b.name] for b in CellLine.objects.all()] )
+    inst = forms.ChoiceField( label = 'Select an existing Instrument', choices = [ [b.id, b.name] for b in Instrument.objects.all()] )
+    pl1 = forms.ChoiceField( label = 'Select Publication(s)', widget = forms.SelectMultiple, choices = [ [b.id, b.display] for b in Publication.objects.all()] )
+    rel = forms.BooleanField( label = 'Data publically available?' )
+    ldg = forms.CharField( label = 'Name for this Lodgement' )
+    #ss = forms.FileField( label = 'Spreadsheet for upload' )
+
 class CurationForm(forms.Form):
     #def __init__(self,*args,**kwargs):
     #    self.user = kwargs.pop('user')

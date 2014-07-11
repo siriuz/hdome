@@ -43,6 +43,7 @@ class Uploads(dbtools.DBTools):
         self.nowstring = self.now.strftime('%H:%M:%S.%f %d %B %Y %Z')
         self.delim = '\t'
         self.indexmap = []
+        self.allstr = ''
         self.uldict = None
         self.valid = False
         self.match_dict = {
@@ -139,6 +140,103 @@ class Uploads(dbtools.DBTools):
             if len( headerdic[k] ) != 1:
                 valid = False
         self.valid = valid
+
+    def preprocess_multiple_simple(self, filelist):
+        """docstring for preprocess_multiple_simple"""
+        allstr = '<table id=\"cssTable\" class=\"table table-striped tablesorter\">'
+        headers = filelist[0].readline().split( self.delim )
+        self.translate_headers( headers )
+        self.counter = 0
+        for i, k, m in self.indexmap:
+           allstr += '<th>' + self.match_dict[m]['display'] + '</th>'
+        
+        allstr += '<th>Lodgement</th></tr></thead><tbody>'
+        self.allstr = allstr
+        for i in range(len(filelist)):
+            fileobj = filelist[i]
+            uldict = {}
+            ldg_name = 'Auto Lodgement #%d from Bulk Lodgement: %s, filename: %s' % ( i, self.lodgement_title, fileobj.__str__() )
+            self.preprocess_ss_from_bulk( fileobj, ldg_name )
+
+    def preprocess_ss_from_bulk( self, fileobj, ldg_name ):
+        #with open( ss_files
+        #allstr = '<table id=\"cssTable\" class=\"table table-striped tablesorter\">'
+        #headers = fileobj.readline().split( self.delim )
+        #self.translate_headers( headers )
+        #allstr += '<thead><tr>'
+        #for i, k, m in self.indexmap:
+        #   allstr += '<th>' + self.match_dict[m]['display'] + '</th>'
+        #allstr += '</tr></thead><tbody>'
+        j = self.counter
+        lc = 0
+        uldict = {}
+        allstr = self.allstr
+        fileobj.readline()
+
+        for line in fileobj:
+            if lc:
+                uldict[j] = {}
+                elements = line.split(self.delim )
+                allstr += '<tr>'
+                for i, k, m in self.indexmap:
+                    if ';' not in elements[k]:
+                        if m == 'dataset_id':
+                            ds_no = elements[k].split('.')[0]
+                            uldict[j][ 'spectrum' ] = elements[k]
+                            uldict[j][ 'dataset' ] = ds_no
+                            uldict[j][ 'ldg_name' ] = ldg_name
+                            allstr += '<td>' + ds_no + '</td>'
+                            if ds_no not in self.dataset_nos:
+                                self.dataset_nos.append( ds_no )
+
+
+                        elif m == 'uniprot_ids':
+                            print elements[k]
+          
+                            allstr += '<td><a href=\"http://www.uniprot.org/uniprot/' + elements[k].split('|')[1] + '\" target=\"_blank\">' + elements[k].split('|')[1] + '</a></td>'
+                            uldict[j]['uniprot_ids'] = [ elements[k].split('|')[1] ]
+                            if elements[k].split('|')[1] not in self.uniprot_ids:
+                                self.uniprot_ids.append( elements[k].split('|')[1] )
+                        elif m in ( 'proteins', 'ptms' ):
+                            if not elements[k]:
+                                uldict[j][m] = []
+                                allstr += '<td/>'
+                            else:
+                                uldict[j][m] = [ elements[k] ]
+                                allstr += '<td>%s</td>' % ( elements[k] )
+                        else:
+                            allstr += '<td>' + elements[k] + '</td>'
+                            uldict[j][m] = elements[k]
+                    else:
+                        entries = []
+                        allstr += '<td>'
+                        loclist = [ b.strip() for b in elements[k].split(';') ]
+                        for subel in loclist:
+                            if m == 'uniprot_ids':
+                                allstr += ' <a href=\"http://www.uniprot.org/uniprot/' + subel.split('|')[1] + '\" target=\"_blank\">' + subel.split('|')[1] + '</a> '
+                                entries.append( subel.split('|')[1] )
+                                if subel.split('|')[1] not in self.uniprot_ids:
+                                    self.uniprot_ids.append( subel.split('|')[1] ) 
+                                #allstr += ' %u ' % ( u'{\% url \'http://www.uniprot.org/uniprot/%u\' \%}' % ( subel.split('|')[1] ) )
+                            elif m in ( 'proteins', 'ptms' ):
+                                if subel:
+                                    entries.append( subel )
+                                    allstr += ' %s ' % ( subel )
+
+                            else:
+                                allstr += ' %s ' % ( loclist[0] )
+                                entries.append( loclist[0] )
+                        allstr += '</td>'
+                        uldict[j][m] = entries
+                allstr += '<td>%s</td>' % ( ldg_name )
+                allstr += '</tr>'
+            j += 1
+            lc += 1
+            self.counter = j
+        allstr += '</tbody></table>'
+        self.allstr += allstr
+        self.uldict = uldict
+        self.dataset_nos = sorted( self.dataset_nos )
 
     def preprocess_ss_simple( self, fileobj ):
         #with open( ss_files

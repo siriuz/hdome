@@ -162,6 +162,52 @@ def upload_ss_form( request ):
         return render( request, 'pepsite/upload_ss_form.html', context)
 
 @login_required
+def upload_multiple_ss_form( request ):
+    user = request.user
+    if request.method == 'POST': # If the form has been submitted...
+        form = UploadMultipleSSForm(request.POST, request.FILES) # A form bound to the POST data
+        if form.is_valid(): # All validation rules pass
+            ul = pepsite.uploaders.Uploads( user = user )
+            ss = request.FILES
+            formdata = form.cleaned_data
+	    #ul.upload_ss_simple( form.cleaned_data.dict() )
+	    ul.preview_ss_simple( formdata )
+	    ul.preprocess_multiple_ss_simple( ss )
+            #request.session['ss'] = ss
+            upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
+                    'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
+                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id }
+            request.session['ul'] = ul.uldict
+            request.session['proteins'] = ul.uniprot_ids
+            #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Cell Line'  }
+            #return render( request, 'pepsite/upload_preview.html', { 'upload' : ul, 'ss' : ss, 'formdata' : formdata, 'filled_form' : form } ) # Redirect after POST
+            return render( request, 'pepsite/upload_preview.html', { 'upload' : ul, 'ss' : ss, 'formdata' : formdata, 'filled_form' : form, 'ul_supp' : upload_dict }  ) # Redirect after POST
+	else:
+            ul = pepsite.uploaders.Uploads( user = user )
+            ss = request.FILES.getlist('mfiles')
+            formdata = request.POST
+	    ul.preview_ss_simple( formdata )
+	    ul.preprocess_multiple_simple( ss )
+            #return render( request, 'pepsite/formdump.html', { 'ul' : ul, 'ss' : ss, 'formdata' : formdata } )
+	    #ul.upload_ss_simple( form.cleaned_data.dict() )
+	    #ul.preview_ss_simple( formdata )
+	    #ul.preprocess_multiple_simple( ss )
+            #request.session['ss'] = ss
+            upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
+                    'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
+                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id }
+            request.session['ul'] = ul.uldict
+            request.session['proteins'] = ul.uniprot_ids
+            request.session['ul_supp'] = upload_dict
+            #return HttpResponse( 'poo' )
+            return render( request, 'pepsite/upload_preview.html', { 'upload' : ul, 'ss' : ss, 'formdata' : formdata, 'filled_form' : form, 'ul_supp' : upload_dict }  ) # Redirect after POST
+ 
+    else:
+        textform = UploadMultipleSSForm()
+        context = { 'textform' : textform }
+        return render( request, 'pepsite/multiple_upload.html', context)
+
+@login_required
 def upload_manual_curations( request ):
     user = request.user
     if request.method == 'POST': # If the form has been submitted...

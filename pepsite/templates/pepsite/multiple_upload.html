@@ -1,0 +1,115 @@
+{% extends 'pepsite/base.html' %}
+
+{% block headline %}
+<style>
+
+                    #yourform {
+                        border : none;
+  }
+</style>
+
+<script>
+
+
+    $(document).ready(function() {
+
+
+
+
+
+
+$('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+
+            $("#add").click(function() {
+        var intId = $("#buildyourform div").length + 1;
+        var fieldWrapper = $("<div class=\"fieldwrapper\" id=\"field" + intId + "\"/>");
+        var fName = $("<input type=\"file\" class=\"fieldname\" />");
+        //var fType1 = $("<select class=\"fieldtype1\"><option value=\"ex_title\">Experiment title</option><option value=\"pr_name\">Protein name</option><option value=\"tissue\">Tissue type</option><option value=\"allele\">Allele / Serotype</option><option value=\"cell_line\">Cell Line</option></select>");
+        //var fType2 = $("<select class=\"fieldtype2\"><option value=\"checkbox\">Checked</option><option value=\"textbox\">Text</option><option value=\"textarea\">Paragraph</option></select>");
+        var removeButton = $("<input type=\"button\" class=\"remove btn btn-danger\" value=\"Remove this file\" />");
+        removeButton.click(function() {
+            $(this).parent().remove();
+        });
+        //fieldWrapper.append(fType1);
+        fieldWrapper.append(fName);
+        //fieldWrapper.append(fType1);
+        //fieldWrapper.append(fType2);
+        fieldWrapper.append(removeButton);
+        $("#buildyourform").append(fieldWrapper);
+    });
+    $("#preview").click(function() {
+        $("#yourform").remove();
+        var fieldSet = $("<fieldset id=\"yourform\" hidden><legend></legend></fieldset>");
+        $("#buildyourform div").each(function() {
+            var id = "input_" + $(this).attr("id").replace("field","");
+            //var label = $("<label for=\"" + id + "\">" + $(this).find("input.fieldname").first().val() + "</label>");
+            var value = $(this).find("input.fieldname").first().val() ;
+            var filobj = $(this).find("input.fieldname").get(0).files[0] ;
+            var input1;
+            var input2;
+                    input1 = $("<input type=\"hidden\" id=\"checkbox" + id + "\" name=\"" + id + "_1\" value=\"ex_title\"/>");
+                    input2 = $("<input type=\"hidden\" id=\"file" + id + "\" name=\"" + id + "_2\" value=\"" + filobj + "\" />");
+                    input2.files = filobj;
+
+            fieldSet.append(input1);
+            fieldSet.append(input2);
+        });
+
+    $("#formloc").append(fieldSet);
+    $("#formloc").submit();
+
+    });
+
+});
+
+</script>
+
+
+</head>
+
+
+<h1>Create a <span class="text-primary">composite</span> search</h1>
+<p class="text-info">Search for an <strong>Experiment</strong> by multiple terms</p>
+
+
+{% endblock %}
+
+{% block content %}
+
+
+
+
+<h2 class="text-primary">Please enter upload details...</h2>
+<form enctype="multipart/form-data" action="{% url 'pepsite:upload_multiple_ss_form' %}" method="post" id="formloc">
+
+    {% csrf_token %}
+    {% for field in textform %}
+        <div class="fieldWrapper">
+            {{ field.errors }}
+            {{ field.label_tag }} {{ field }}
+            {{ field.help_text }}
+            {{ field.urlstr }}
+            {{ field.crap }}
+        </div>
+    {% endfor %}
+    <input id="multifile" name="mfiles" type="file" multiple="multiple"/>
+
+    <br>
+
+
+</form>
+
+
+<fieldset id="buildyourform">
+</fieldset>
+<input type="button" class="btn btn-info" value="Add a field" class="add" id="add" />
+<input type="button" class="btn btn-lg btn-success" value="Preview Uploads" class="add" id="preview" />
+
+<button id="ssupload" class="btn btn-lg btn-success" value="Upload">Proceed to Upload Preview</button>
+
+<div id="footer"></div>
+
+</div>
+{% endblock %}
