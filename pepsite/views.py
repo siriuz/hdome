@@ -195,12 +195,13 @@ def upload_multiple_ss_form( request ):
             #request.session['ss'] = ss
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
-                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id }
+                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'ldg_details' : ul.ldg_details,
+                    'ldg_ds_mappings' : ul.ldg_ds_mappings }
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
             request.session['ul_supp'] = upload_dict
             #return HttpResponse( 'poo' )
-            return render( request, 'pepsite/upload_preview.html', { 'upload' : ul, 'ss' : ss, 'formdata' : formdata, 'filled_form' : form, 'ul_supp' : upload_dict }  ) # Redirect after POST
+            return render( request, 'pepsite/upload_preview_multiple.html', { 'upload' : ul, 'ss' : ss, 'formdata' : formdata, 'filled_form' : form, 'ul_supp' : upload_dict }  ) # Redirect after POST
  
     else:
         textform = UploadMultipleSSForm()
@@ -298,6 +299,29 @@ def commit_upload_ss( request ):
         ul.get_protein_metadata(  )
         ul.prepare_upload_simple( )
         ul.upload_simple()
+        return render( request, 'pepsite/ss_uploading.html', context)
+    else:
+        textform = UploadSSForm()
+        context = { 'textform' : textform }
+        return render( request, 'pepsite/upload_ss_form.html', context)
+
+@login_required
+def commit_upload_multiple_ss( request ):
+    """
+    """
+    user = request.user
+    elems = request.session['ul_supp']
+    if request.method == 'POST':
+        keys = request.POST.keys()
+        ul = pepsite.uploaders.Uploads( user = user )
+        ul.repopulate( elems )
+        ul.add_cutoff_mappings_multiple( request.POST )
+        #with open( '/home/rimmer/praccie/hdome/background/trial_ul_01.pickle', 'wb' ) as f:
+        #    pickle.dump( ul, f )
+        context = { 'data' : request.POST['data'], 'ul' : ul, 'keys' : keys }
+        ul.get_protein_metadata(  )
+        ul.prepare_upload_simple_multiple( )
+        ul.upload_simple_multiple()
         return render( request, 'pepsite/ss_uploading.html', context)
     else:
         textform = UploadSSForm()

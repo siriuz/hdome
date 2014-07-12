@@ -21,10 +21,12 @@ class Uploads(dbtools.DBTools):
         self.success = False
         self.data = None
         self.cell_line = None
+        self.multiple = False
         self.antibodies = []
         self.antibody_ids = []
         self.publications = []
         self.dataset_nos = []
+        self.ldg_details = []
         self.datasets = []
         self.uniprot_ids = []
         self.ptms = []
@@ -36,6 +38,7 @@ class Uploads(dbtools.DBTools):
         self.cell_line = None
         self.cell_line_id = None
         self.lodgement = None
+        self.ldg_ds_mappings = {}
         self.lodgement_title = None
         self.public = False
         self.create_expt = True
@@ -76,6 +79,19 @@ class Uploads(dbtools.DBTools):
                 if k == dm_prefix + no:
                     mdic[no]['dm_cutoff'] = post_dic[k]
                 elif k == cf_prefix + no:
+                    mdic[no]['cf_cutoff'] = post_dic[k]
+        self.cutoff_mappings = mdic
+    
+    def add_cutoff_mappings_multiple( self, post_dic, dm_prefix = 'dm_', cf_prefix = 'cf_' ):
+        """docstring for add_cutoffs"""
+        mdic = {}
+        for no, name in self.ldg_details:
+            mdic[no] = {}
+        for k in post_dic.keys():
+            for no, name in self.ldg_details:
+                if k == dm_prefix + str(no):
+                    mdic[no]['dm_cutoff'] = post_dic[k]
+                elif k == cf_prefix + str(no):
                     mdic[no]['cf_cutoff'] = post_dic[k]
         self.cutoff_mappings = mdic
 
@@ -143,10 +159,12 @@ class Uploads(dbtools.DBTools):
 
     def preprocess_multiple_simple(self, filelist):
         """docstring for preprocess_multiple_simple"""
+        self.uldict = {}
         allstr = '<table id=\"cssTable\" class=\"table table-striped tablesorter\">'
         headers = filelist[0].readline().split( self.delim )
         self.translate_headers( headers )
         self.counter = 0
+        allstr += '<thead><tr>'
         for i, k, m in self.indexmap:
            allstr += '<th>' + self.match_dict[m]['display'] + '</th>'
         
@@ -154,11 +172,13 @@ class Uploads(dbtools.DBTools):
         self.allstr = allstr
         for i in range(len(filelist)):
             fileobj = filelist[i]
-            uldict = {}
-            ldg_name = 'Auto Lodgement #%d from Bulk Lodgement: %s, filename: %s' % ( i, self.lodgement_title, fileobj.__str__() )
-            self.preprocess_ss_from_bulk( fileobj, ldg_name )
+            ldg_name = 'Auto Lodgement #%d from Bulk Lodgement: %s, filename: %s' % ( i + 1, self.lodgement_title, fileobj.__str__() )
+            ldg_no = i
+            self.ldg_details.append( [ ldg_no, ldg_name ] )
+            self.preprocess_ss_from_bulk( fileobj, ldg_name, ldg_no )
+        self.allstr += '</tbody></table>'
 
-    def preprocess_ss_from_bulk( self, fileobj, ldg_name ):
+    def preprocess_ss_from_bulk( self, fileobj, ldg_name, ldg_no ):
         #with open( ss_files
         #allstr = '<table id=\"cssTable\" class=\"table table-striped tablesorter\">'
         #headers = fileobj.readline().split( self.delim )
@@ -172,6 +192,7 @@ class Uploads(dbtools.DBTools):
         uldict = {}
         allstr = self.allstr
         fileobj.readline()
+        self.ldg_ds_mappings[ ldg_no ] = []
 
         for line in fileobj:
             if lc:
@@ -185,9 +206,11 @@ class Uploads(dbtools.DBTools):
                             uldict[j][ 'spectrum' ] = elements[k]
                             uldict[j][ 'dataset' ] = ds_no
                             uldict[j][ 'ldg_name' ] = ldg_name
+                            uldict[j][ 'ldg_no' ] = ldg_no
                             allstr += '<td>' + ds_no + '</td>'
                             if ds_no not in self.dataset_nos:
                                 self.dataset_nos.append( ds_no )
+                                self.ldg_ds_mappings[ldg_no].append( ds_no )
 
 
                         elif m == 'uniprot_ids':
@@ -233,8 +256,8 @@ class Uploads(dbtools.DBTools):
             j += 1
             lc += 1
             self.counter = j
-        allstr += '</tbody></table>'
-        self.allstr += allstr
+        #allstr += '</tbody></table>'
+        self.allstr = allstr
         self.uldict = uldict
         self.dataset_nos = sorted( self.dataset_nos )
 
@@ -342,6 +365,46 @@ class Uploads(dbtools.DBTools):
 
 
             self.datasets.append( ds )
+            
+
+    def prepare_upload_simple_multiple(self ):
+        for ldg_no, ldg_name in self.ldg_details:
+            self.prepare_ind_lodgement( ldg_no, ldg_name )
+
+    def prepare_ind_lodgement(self, ldg_no, ldg_name ):
+        """docstring for fname(self, cleaned_data"""
+        self.instrument = self.get_model_object( Instrument, id = self.instrument_id )
+        self.cell_line = self.get_model_object( CellLine, id = self.cell_line_id )
+        if not self.expt_id:
+            self.expt = self.get_model_object( Experiment, cell_line = self.cell_line, title = self.expt_title )
+            self.expt.save()
+        else:
+            self.expt = self.get_model_object( Experiment, id = self.expt_id )
+            self.expt.save()
+        for ab in self.antibodies:
+                self.add_if_not_already(  ab, self.expt.antibody_set )
+        #if not self.lodgement:
+        lodgement = self.get_model_object( Lodgement, user = self.user, title = ldg_name, datetime = self.now )
+        lodgement.save()
+        if self.publications:
+            for pl in self.publications:
+                    pbln = self.get_model_object( Publication, id=pl )
+                    self.add_if_not_already(  pl, lodgement.publication_set )
+        print self.ldg_ds_mappings
+        for dsno in self.ldg_ds_mappings[str(ldg_no)]:
+            ds = self.get_model_object( Dataset, instrument = self.instrument, lodgement = lodgement, experiment = self.expt,
+                    datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, ldg_name ), 
+                    dmass_cutoff = self.cutoff_mappings[ldg_no]['dm_cutoff'], confidence_cutoff = self.cutoff_mappings[ldg_no]['cf_cutoff'] )
+            ds.save()
+            assign_perm('view_dataset', self.user, ds)
+            assign_perm('edit_dataset', self.user, ds)
+            for group in self.user.groups.all():
+                assign_perm('view_dataset', group, ds)
+            if self.public:
+                assign_perm('view_dataset', User.objects.get( id = -1 ), ds)
+
+
+            self.datasets.append( ds )
 
     def get_protein_metadata( self ):
         self.uniprot_data = uniprot.batch_uniprot_metadata( self.uniprot_ids )
@@ -376,6 +439,55 @@ class Uploads(dbtools.DBTools):
             ## object permissions:
             assign_perm('view_dataset', self.user, dataset)
             assign_perm('edit_lodgement', self.user, self.lodgement)
+            for group in self.user.groups.all():
+                assign_perm('view_dataset', group, dataset)
+            if self.public:
+                assign_perm('view_dataset', User.objects.get( id = -1 ), dataset)
+            
+            ##
+            ion = self.get_model_object( Ion,  charge_state = local['charge'], precursor_mass = local['precursor_mass'],
+                    retention_time = local['retention_time'], experiment = self.expt, dataset = dataset )
+            ion.save()
+            ide = self.get_model_object( IdEstimate, ion = ion, peptide = pep, confidence = local['confidence'], delta_mass = local['delta_mass'] )
+            ide.save()
+            for ptm in ptms:
+                self.add_if_not_already( ptm, ide.ptms )
+                #ide.save()
+            for protein in proteins:
+                p2p = self.get_model_object( PepToProt, peptide = pep, protein = protein )
+                p2p.save()
+
+    def upload_simple_multiple( self ):
+        """None -> None
+        """
+        for k in self.uldict.keys():
+            local = self.uldict[k]
+            pep = self.get_model_object( Peptide, sequence = local['peptide_sequence'] )
+            pep.save()
+            proteins = []
+            ptms = []
+            for prt, unp in zip( local['proteins'], local['uniprot_ids'] ):
+                pr1 = self.get_model_object( Protein,  prot_id = unp, description = prt, name = prt )
+                try:
+                    sequence = self.uniprot_data[ unp ]['sequence']
+                    pr1.sequence = sequence
+                    pr1.save()
+                except:
+                    pr1.save()
+                proteins.append( pr1 )
+            for ptm_desc in local['ptms']:
+                ptm = self.get_model_object( Ptm, description = ptm_desc, name = ptm_desc )
+                ptm.save()
+                ptms.append( ptm )
+            dsno = local['dataset']
+            lodgement = self.get_model_object( Lodgement, user = self.user, title = local['ldg_name'], datetime = self.now )
+
+            dataset = self.get_model_object( Dataset, instrument = self.instrument, lodgement = lodgement, experiment = self.expt,
+                    datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, lodgement.title )  )
+            dataset.save()
+            ## object permissions:
+            assign_perm('view_dataset', self.user, dataset)
+            assign_perm('edit_lodgement', self.user, lodgement)
             for group in self.user.groups.all():
                 assign_perm('view_dataset', group, dataset)
             if self.public:

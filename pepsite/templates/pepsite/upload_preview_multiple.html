@@ -1,0 +1,248 @@
+{% extends 'pepsite/base.html' %}
+
+{% load staticfiles %}
+
+{% block headline %}
+
+<script>
+
+
+$(document).ready(function() {
+    
+    $('#loader').hide();
+
+    $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+    //var prw = "{{upload.allstr|escapejs}}";
+    //$('#peptides').html( prw );
+
+    $("#cssTable").tablesorter({ 
+        // pass the headers argument and assing a object 
+        headers: { 
+            // assign the secound column (we start counting zero) 
+            //1: { 
+                // disable it by setting the property sorter to false 
+            //    sorter: false 
+            //}, 
+            // assign the third column (we start counting zero) 
+            //2: { 
+            //    // disable it by setting the property sorter to false 
+            //    sorter: false 
+            //} 
+        } 
+    });
+    
+    $('#commit_upload').click( function () {
+        $('.div-1').css(( "z-index" ), 10 );
+        $('#loader').show();
+    });
+
+});
+
+</script>
+
+<style>
+
+#loader
+{
+z-index:10;
+}
+
+.div-1 {
+    position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    z-index: -200;
+}
+.center {
+    width: 80%;
+    height: 80%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    
+}
+
+#cssTable td 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+#cssTable th, .peptabhead 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+
+.hilite:hover
+{
+background-color:yellow;
+}
+.hilite
+{
+cursor:pointer;
+}
+
+.table_body
+{
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+
+
+</style>
+
+</head>
+
+
+<h1 class="text-primary">Upload preview</h1>
+<p class="text-info">How upload will look if committed</p>
+
+
+{% endblock %}
+{% block content %}
+{% load template_filter %}
+
+<h1 class="text-primary">Details for data to be uploaded</h1>
+
+Public = {{ul_supp.public}}
+
+<br>
+
+<table class="table table-striped">
+    <tbody>
+        <tr>
+            <th>
+                Experiment Title
+            </th>
+            <td>
+                {% if upload.expt %}
+                    {{upload.expt.title}}
+                {% else %}
+                    {{upload.expt_title}}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Stump Name for this Lodgement Series
+            </th>
+            <td>
+                {{upload.lodgement_title}}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Antibodies
+            </th>
+            <td>
+                {% if upload.expt %}
+                    {% for ab in upload.expt.antibody_set.all %}
+                        {{ab.name}}
+                    {% endfor %}
+                {% else %}
+                    {% for ab in upload.antibodies %}
+                        {{ab.name}}
+                    {% endfor %}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Cell Line
+            </th>
+            <td>
+                {% if upload.expt %}
+                    {{upload.expt.cell_line.name}}
+                {% else %}
+                    {{upload.cell_line.name}}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Common Alleles
+            </th>
+            <td>
+                {% query_alleles_putative cell_line=upload.cell_line antibodies=upload.antibodies as alleles %}
+                {% for al in alleles %}
+                    {{al.code}}
+                {% endfor %}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Publications (including existing associations)
+            </th>
+            <td>
+                {% if upload.expt %}
+                    {% for pl_existing in upload.expt.publications %}
+                        {% if pl_existing not in upload.publications %}
+                            {{pl_existing.display}}
+                        {% endif %}
+                    {% endfor %}
+                    {% for pl in upload.publications %}
+                        {{pl.display}}
+                    {% endfor %}
+                {% else %}
+                    {% for pl in upload.publications %}
+                        {{pl.display}}
+                    {% endfor %}
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Data security
+            </th>
+            <td>
+                {% if upload.public %}
+                    <strong class='text-success'>Will be available to public</strong>
+                {% else %}
+                    <strong class="text-danger">Restricted access</strong> Purcell group members only
+                {% endif %}
+             </td>
+        </tr>
+    </tbody>
+</table>
+
+<hr>
+<br>
+
+{{ul.items}}
+
+{{ul_supp.ldg_details}}
+
+<h2 class="text-primary">Please set cutoffs for your Datasets...</h2>
+<form action="{% url 'pepsite:commit_upload_multiple_ss' %}" method='post'>
+    {% csrf_token %}
+    {% for ldg_no, ldg_name in ul_supp.ldg_details %}
+    Confidence cutoff for Dataset #{{ldg_name}}<input type="number" label="Confidence cutoff for Lodgement: {{ldg_name}}" name="cf_{{ldg_no}}" value="99.0"/><br>
+    Delta Mass cutoff for Dataset #{{ldg_name}}<input type="number" label="Delta Mass cutoff for Lodgement: {{ldg_name}}" name="dm_{{ldg_no}}" value="0.05"/><br>
+    {% endfor %}
+
+<div class="div-1">
+<img id="loader" class="center" src="{% static 'animations/ajax_loader_blue_512.gif' %}"/>
+</div>
+
+    <input type="hidden" name="data" value="{{upload.uldict}}"/>
+    <input id="commit_upload" class="btn btn-lg btn-primary" type="submit" value="Commit upload"/>
+</form>
+
+</div> <!--  -->
+
+<br>
+
+
+
+
+<br>
+
+<h2 class="text-primary peptabhead">Data Preview</h2>
+
+<div id="peptides">{{upload.allstr|safe}}</div>
+
+
+{% endblock %}
