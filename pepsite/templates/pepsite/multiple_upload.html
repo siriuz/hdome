@@ -1,4 +1,4 @@
-{% extends 'pepsite/base.html' %}
+{% extends 'base.html' %}
 
 {% block headline %}
 <style>
@@ -70,8 +70,8 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 </head>
 
 
-<h1>Create a <span class="text-primary">composite</span> search</h1>
-<p class="text-info">Search for an <strong>Experiment</strong> by multiple terms</p>
+<h1>Upload <span class="text-primary">multiple</span> spreadsheets</h1>
+<p class="text-info">Upload Multiple <strong>ProteinPilot</strong> Peptide summary spreadsheets</p>
 
 
 {% endblock %}
@@ -104,10 +104,8 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 <fieldset id="buildyourform">
 </fieldset>
-<input type="button" class="btn btn-info" value="Add a field" class="add" id="add" />
-<input type="button" class="btn btn-lg btn-success" value="Preview Uploads" class="add" id="preview" />
+<input type="button" class="btn btn-lg btn-success" value="Preview Upload(s)" class="add" id="preview" />
 
-<button id="ssupload" class="btn btn-lg btn-success" value="Upload">Proceed to Upload Preview</button>
 
 <div id="footer"></div>
 

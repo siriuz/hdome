@@ -127,6 +127,29 @@ class CellLineTissueSearch( BaseSearch ):
 	expts = set( Experiment.objects.filter( cell_line__name__icontains = cl_term ) )
 	return expts
 
+class PtmSearch( BaseSearch ):
+    """
+
+
+    """
+    def get_experiments_basic( self, ptm_term ):
+	expts = set( Experiment.objects.filter( ion__idestimate__ptms__description__iexact = ptm_term ) )
+	if len( expts ):
+	    return expts
+        else:
+	    return self.get_experiments_startswith( ptm_term )
+
+    def get_experiments_startswith( self, ptm_term ):
+	expts = set( Experiment.objects.filter( ion__idestimate__ptms__description__istartswith = ptm_term ) )
+	if len( expts ):
+	    return expts
+        else:
+	    return self.get_experiments_contains( ptm_term )
+
+    def get_experiments_contains( self, ptm_term ):
+	expts = set( Experiment.objects.filter( ion__idestimate__ptms__description__icontains = ptm_term ) )
+	return expts
+
 class AlleleSearch( BaseSearch ):
     """
 
@@ -428,6 +451,9 @@ class CompositeSearch( BaseSearch ):
                 expts.append( set( ex.get_experiments_basic( dic[k]['qstring'] ) ) )
             elif dic[k]['qtype'] == 'allele':
                 al = AlleleSearch()
+                expts.append( set( al.get_experiments_basic( dic[k]['qstring'] ) ) )
+            elif dic[k]['qtype'] == 'ptm':
+                al = PtmSearch()
                 expts.append( set( al.get_experiments_basic( dic[k]['qstring'] ) ) )
         return list( set.intersection( *expts ) )
 

@@ -1,4 +1,4 @@
-{% extends 'pepsite/base.html' %}
+{% extends 'base.html' %}
 
 {% block headline %}
 <style>
@@ -26,7 +26,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
         var intId = $("#buildyourform div").length + 1;
         var fieldWrapper = $("<div class=\"fieldwrapper\" id=\"field" + intId + "\"/>");
         var fName = $("<input type=\"text\" class=\"fieldname\" />");
-        var fType1 = $("<select class=\"fieldtype1\"><option value=\"ex_title\">Experiment title</option><option value=\"pr_name\">Protein name</option><option value=\"tissue\">Tissue type</option><option value=\"allele\">Allele / Serotype</option><option value=\"cell_line\">Cell Line</option></select>");
+        var fType1 = $("<select class=\"fieldtype1\"><option value=\"ex_title\">Experiment title</option><option value=\"pr_name\">Protein name</option><option value=\"tissue\">Tissue type</option><option value=\"allele\">Allele / Serotype</option><option value=\"cell_line\">Cell Line</option><option value=\"ptm\">PTM</option></select>");
         var fType2 = $("<select class=\"fieldtype2\"><option value=\"checkbox\">Checked</option><option value=\"textbox\">Text</option><option value=\"textarea\">Paragraph</option></select>");
         var removeButton = $("<input type=\"button\" class=\"remove btn btn-danger\" value=\"Remove this term\" />");
         removeButton.click(function() {
@@ -67,6 +67,10 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
                     break;    
                 case "allele":
                     input1 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_1\" value=\"allele\"/>");
+                    input2 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_2\" value=\"" + value + "\" />");
+                    break;    
+                case "ptm":
+                    input1 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_1\" value=\"ptm\"/>");
                     input2 = $("<input type=\"hidden\" id=\"text" + id + "\" name=\"" + id + "_2\" value=\"" + value + "\" />");
                     break;    
                 }

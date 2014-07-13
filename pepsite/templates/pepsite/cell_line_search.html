@@ -1,4 +1,4 @@
-{% extends 'pepsite/base.html' %}
+{% extends 'base.html' %}
 
 {% block headline %}
 
@@ -24,13 +24,13 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 {% endblock %}
 {% block content %}
 
-<form action="{% url 'pepsite:cell_line_search' %}" method="post">
+<form action="{% url 'pepsite:ptm_search' %}" method="post">
 
         {% csrf_token %}
 
     <div class="fieldWrapper">
         {{ textform.subject.errors }}
-        <label for="id_subject">Enter Cell Line name:</label>
+        <label for="id_subject">Enter PTM description or part thereof:</label>
         {{ textform.text_input }}
     </div>
 <input class="btn btn-lg btn-success" type="submit" value="Search"></input>
