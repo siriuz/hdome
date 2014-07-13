@@ -94,6 +94,7 @@ class Uploads(dbtools.DBTools):
                 elif k == cf_prefix + str(no):
                     mdic[no]['cf_cutoff'] = post_dic[k]
         self.cutoff_mappings = mdic
+        print 'post_dic', post_dic, 'cutoff_mappings', self.cutoff_mappings
 
 
 
@@ -208,7 +209,7 @@ class Uploads(dbtools.DBTools):
                             uldict[j][ 'ldg_name' ] = ldg_name
                             uldict[j][ 'ldg_no' ] = ldg_no
                             allstr += '<td>' + ds_no + '</td>'
-                            if ds_no not in self.dataset_nos:
+                            if ds_no not in self.ldg_ds_mappings[ldg_no]:
                                 self.dataset_nos.append( ds_no )
                                 self.ldg_ds_mappings[ldg_no].append( ds_no )
 
@@ -390,12 +391,13 @@ class Uploads(dbtools.DBTools):
             for pl in self.publications:
                     pbln = self.get_model_object( Publication, id=pl )
                     self.add_if_not_already(  pl, lodgement.publication_set )
-        print self.ldg_ds_mappings
+        print 'ldg_ds_mappings here:', self.ldg_ds_mappings
         for dsno in self.ldg_ds_mappings[str(ldg_no)]:
             ds = self.get_model_object( Dataset, instrument = self.instrument, lodgement = lodgement, experiment = self.expt,
                     datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, ldg_name ), 
                     dmass_cutoff = self.cutoff_mappings[ldg_no]['dm_cutoff'], confidence_cutoff = self.cutoff_mappings[ldg_no]['cf_cutoff'] )
             ds.save()
+            print 'cutoffs here for dataset: %s, in lodgement %s, dm cutoff: %s, cf cutoff: %s' % ( ds.title, lodgement.title, ds.dmass_cutoff, ds.confidence_cutoff ) 
             assign_perm('view_dataset', self.user, ds)
             assign_perm('edit_dataset', self.user, ds)
             for group in self.user.groups.all():

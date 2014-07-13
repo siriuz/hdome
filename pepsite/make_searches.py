@@ -278,6 +278,8 @@ class ExptArrayAssemble( BaseSearch ):
                             return( { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
                         elif not cutoffs:
                             return( { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
+                        else:
+                            print 'missed out:', ide, ptms, ds, 'actual dmass =', ide.delta_mass, 'dmass_cutoff =', ds.dmass_cutoff, 'actual confidence =', ide.confidence, 'confidence cutoff =', ds.confidence_cutoff, 'cutoff status:', cutoffs
 
     def best_entries_comparison(self, ideref, ptmcon, expt, exptz, user, cutoffs = False):
         """docstring for best_entry"""
