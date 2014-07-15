@@ -136,6 +136,7 @@ $('#ssupload').click( function () {
 
 {% endif %}
 
+<!--
 <h2 class="text-primary">Please select and initiate comparison...</h2>
 <form enctype="multipart/form-data" action="{% url 'pepsite:compare_expt_form' %}" method="post" id="ssform">
 
@@ -156,6 +157,38 @@ $('#ssupload').click( function () {
 </form>
 <hr>
 <br>
+
+-->
+
+<form id="ssform" class="form-horizontal" method="post" action="{% url 'pepsite:compare_expt_form' %}">{% csrf_token %}
+    <fieldset>
+        <legend>{{ title }}</legend>
+        {% for field in compare_form %}
+            {% if False %}
+                <div class="control-group error">
+                    <label class="control-label">{{ field.label }}</label> 
+                    <div class="controls">{{ field }}
+                        <span class="help-inline">
+                            {% for error in  field.errors %}{{ error }}{% endfor %}
+                        </span>
+                    </div>
+                </div>
+            {% else %}
+                <div class="control-group">
+                    <label class="control-label">{{ field.label }}</label> 
+                    <div class="controls">{{ field }}
+                        {% if field.help_text %}
+                            <p class="help-inline"><small>{{ field.help_text }}</small></p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </fieldset>
+    <div class="form-actions">
+        <button id="ssupload" class="btn btn-lg btn-success" >Compare Experiments</button>
+    </div>
+</form>
 
 
 

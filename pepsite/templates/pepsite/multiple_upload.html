@@ -1,6 +1,33 @@
 {% extends 'base.html' %}
+{% load staticfiles %}
 
 {% block headline %}
+
+<style>
+
+#loader
+{
+z-index:10;
+}
+
+.div-1 {
+    position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    z-index: -200;
+}
+.center {
+    width: 80%;
+    height: 80%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    
+}
+
+</style>
 <style>
 
                     #yourform {
@@ -13,54 +40,19 @@
 
     $(document).ready(function() {
 
-
-
-
-
-
 $('#header').load( "{% url 'pepsite:nav_buttons' %}" );
 $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 
-            $("#add").click(function() {
-        var intId = $("#buildyourform div").length + 1;
-        var fieldWrapper = $("<div class=\"fieldwrapper\" id=\"field" + intId + "\"/>");
-        var fName = $("<input type=\"file\" class=\"fieldname\" />");
-        //var fType1 = $("<select class=\"fieldtype1\"><option value=\"ex_title\">Experiment title</option><option value=\"pr_name\">Protein name</option><option value=\"tissue\">Tissue type</option><option value=\"allele\">Allele / Serotype</option><option value=\"cell_line\">Cell Line</option></select>");
-        //var fType2 = $("<select class=\"fieldtype2\"><option value=\"checkbox\">Checked</option><option value=\"textbox\">Text</option><option value=\"textarea\">Paragraph</option></select>");
-        var removeButton = $("<input type=\"button\" class=\"remove btn btn-danger\" value=\"Remove this file\" />");
-        removeButton.click(function() {
-            $(this).parent().remove();
-        });
-        //fieldWrapper.append(fType1);
-        fieldWrapper.append(fName);
-        //fieldWrapper.append(fType1);
-        //fieldWrapper.append(fType2);
-        fieldWrapper.append(removeButton);
-        $("#buildyourform").append(fieldWrapper);
-    });
-    $("#preview").click(function() {
-        $("#yourform").remove();
-        var fieldSet = $("<fieldset id=\"yourform\" hidden><legend></legend></fieldset>");
-        $("#buildyourform div").each(function() {
-            var id = "input_" + $(this).attr("id").replace("field","");
-            //var label = $("<label for=\"" + id + "\">" + $(this).find("input.fieldname").first().val() + "</label>");
-            var value = $(this).find("input.fieldname").first().val() ;
-            var filobj = $(this).find("input.fieldname").get(0).files[0] ;
-            var input1;
-            var input2;
-                    input1 = $("<input type=\"hidden\" id=\"checkbox" + id + "\" name=\"" + id + "_1\" value=\"ex_title\"/>");
-                    input2 = $("<input type=\"hidden\" id=\"file" + id + "\" name=\"" + id + "_2\" value=\"" + filobj + "\" />");
-                    input2.files = filobj;
+$('#loader').hide();
 
-            fieldSet.append(input1);
-            fieldSet.append(input2);
-        });
 
-    $("#formloc").append(fieldSet);
-    $("#formloc").submit();
+$('#ssupload').click( function () {
+    $('.div-1').css(( "z-index" ), 10 );
+    $('#loader').show();
 
-    });
+});
+
 
 });
 
@@ -78,7 +70,11 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 {% block content %}
 
+<div class="div-1">
+<img id="loader" class="center" src="{% static 'animations/ajax_loader_blue_512.gif' %}"/>
+</div>
 
+<!--
 
 
 <h2 class="text-primary">Please enter upload details...</h2>
@@ -106,6 +102,49 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 </fieldset>
 <input type="button" class="btn btn-lg btn-success" value="Preview Upload(s)" class="add" id="preview" />
 
+-->
+
+
+<form id="formloc" class="form-horizontal" method="post" enctype="multipart/form-data" action="{% url 'pepsite:upload_multiple_ss_form' %}">{% csrf_token %}
+    <fieldset>
+        <legend>{{ title }}</legend>
+        {% for field in textform %}
+            {% if False %}
+                <div class="control-group error">
+                    <label class="control-label">{{ field.label }}</label> 
+                    <div class="controls">{{ field }}
+                        <span class="help-inline">
+                            {% for error in  field.errors %}{{ error }}{% endfor %}
+                        </span>
+                    </div>
+                </div>
+            {% else %}
+                <div class="control-group">
+                    <label class="control-label">{{ field.label }}</label> 
+                    <div class="controls">{{ field }}
+                        {% if field.help_text %}
+                            <p class="help-inline"><small>{{ field.help_text }}</small></p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+        <div class="control-group">
+        <label class="control-label">Please select spreadsheets to upload</label>
+        <div class="controls">
+        <input id="multifile" name="mfiles" type="file" multiple="multiple"/>
+        </div>
+        </div>
+
+
+
+        <br>
+
+    </fieldset>
+    <div class="form-actions">
+        <button id="preview" class="btn btn-lg btn-success" >Preview</button>
+    </div>
+</form>
 
 <div id="footer"></div>
 

@@ -522,7 +522,8 @@ class Curate( Uploads ):
     def setup_curation(self, cleaned_data, fileobj):
         """docstring for preview_ss_simple"""
         #if int(
-        for ldg_id in cleaned_data.getlist( 'ldg'):
+        #for ldg_id in cleaned_data.getlist( 'ldg'):
+        for ldg_id in cleaned_data[ 'ldg' ]:
             ldg_obj = self.get_model_object( Lodgement, id = ldg_id ) 
             self.lodgements.append( ldg_obj )
             self.lodgement_ids.append( ldg_id )

@@ -126,6 +126,15 @@ def append_choicefield( **kwargs ):
 from hdome import settings
 from django.core.urlresolvers import reverse
 
+
+def get_my_cell_lines():
+    """docstring for get_my_cell_line"""
+    return [ [b.id, b.name] for b in CellLine.objects.all()]
+
+def get_my_lodgements():
+    """docstring for get_my_cell_line"""
+    return [ [b.id, b.title] for b in Lodgement.objects.all()]
+
 class TextOnlyForm(forms.Form):
     text_input = forms.CharField()
 
@@ -134,6 +143,9 @@ class MassSearchForm(forms.Form):
     tolerance = forms.FloatField(label = 'Tolerance for mass search (Da)', initial = 0.1 )
 
 class UploadSSForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super(UploadSSForm, self).__init__(*args, **kwargs)
+        self.fields['cl1'] = forms.ChoiceField( choices=get_my_cell_lines(), label = 'Select an existing Cell Line' )
     #expt1 = forms.ChoiceField( label = 'Select an existing Experiment', choices = [[-1, u'ADD NEW EXPERIMENT']] + [ [b.id, b.title] for b in Experiment.objects.all()] )
     expt1 = append_choicefield( label = 'Select an existing Experiment', choices = [[-1, u'ADD NEW EXPERIMENT']] + [ [b.id, b.title] for b in Experiment.objects.all()], urltext = 'Need a different experiment?', urlstr = 'pepsite:cell_line_search' )
     #expt1.urltest = 'Need a different experiment?'
@@ -143,7 +155,7 @@ class UploadSSForm(forms.Form):
     ab1 = forms.ChoiceField( label = 'Select existing Antibody(ies)', widget = forms.SelectMultiple, choices = [ [b.id, b.name] for b in Antibody.objects.all()] )
     cl1 = forms.ChoiceField( label = 'Select an existing Cell Line', choices = [ [b.id, b.name] for b in CellLine.objects.all()] )
     inst = forms.ChoiceField( label = 'Select an existing Instrument', choices = [ [b.id, b.name] for b in Instrument.objects.all()] )
-    pl1 = forms.ChoiceField( label = 'Select Publication(s)', widget = forms.SelectMultiple, choices = [ [b.id, b.display] for b in Publication.objects.all()] )
+    pl1 = forms.MultipleChoiceField( label = 'Select Publication(s)', widget = forms.SelectMultiple, choices = [ [b.id, b.display] for b in Publication.objects.all()] )
     rel = forms.BooleanField( label = 'Data publically available?' )
     ldg = forms.CharField( label = 'Name for this Lodgement' )
     ss = forms.FileField( label = 'Spreadsheet for upload' )
@@ -164,11 +176,15 @@ class UploadMultipleSSForm(forms.Form):
     #ss = forms.FileField( label = 'Spreadsheet for upload' )
 
 class CurationForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super(CurationForm, self).__init__(*args, **kwargs)
+        self.fields['ldg'] = forms.MultipleChoiceField( choices=get_my_lodgements(), label = 'Select Lodgement(s)' )
+        self.fields['ldg'].widget.attrs.update({'class' : 'niceMultiple'})
     #def __init__(self,*args,**kwargs):
     #    self.user = kwargs.pop('user')
     #    super(CurationForm, self).__init__(*args,**kwargs)
     #    self.fields['ldg'].choices = [ [b.id, '%s from Experiment: %s' %( b.title, b.get_experiment().title )] for b in Lodgement.objects.all() if self.user.has_perm( 'edit_lodgement', b )]
-    ldg = forms.ChoiceField( label = 'Select Lodgement(s)', widget = forms.SelectMultiple, choices = [ [b.id, '%s from Experiment: %s' %( b.title, b.get_experiment().title )] for b in Lodgement.objects.all()] )
+    ldg = forms.MultipleChoiceField( label = 'Select Lodgement(s)', widget = forms.SelectMultiple, choices = [ [b.id, '%s from Experiment: %s' %( b.title, b.get_experiment().title )] for b in Lodgement.objects.all()] )
     cur = forms.FileField( label = 'Spreadsheet of peptides to be curated out' )
 
 
