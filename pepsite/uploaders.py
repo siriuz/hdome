@@ -72,14 +72,20 @@ class Uploads(dbtools.DBTools):
     def add_cutoff_mappings( self, post_dic, dm_prefix = 'dm_', cf_prefix = 'cf_' ):
         """docstring for add_cutoffs"""
         mdic = {}
-        for no in self.dataset_nos:
-            mdic[no] = {}
+        #for no in self.dataset_nos:
+        #    mdic[no] = {}
+        #for k in post_dic.keys():
+        #    for no in self.dataset_nos:
+        #        if k == dm_prefix + no:
+        #            mdic[no]['dm_cutoff'] = post_dic[k]
+        #        elif k == cf_prefix + no:
+        #            mdic[no]['cf_cutoff'] = post_dic[k]
         for k in post_dic.keys():
-            for no in self.dataset_nos:
-                if k == dm_prefix + no:
-                    mdic[no]['dm_cutoff'] = post_dic[k]
-                elif k == cf_prefix + no:
-                    mdic[no]['cf_cutoff'] = post_dic[k]
+            if k == dm_prefix:
+                pass
+                #mdic['dm_cutoff'] = post_dic[k]
+            elif k == cf_prefix:
+                mdic['cf_cutoff'] = post_dic[k]
         self.cutoff_mappings = mdic
     
     def add_cutoff_mappings_multiple( self, post_dic, dm_prefix = 'dm_', cf_prefix = 'cf_' ):
@@ -90,7 +96,8 @@ class Uploads(dbtools.DBTools):
         for k in post_dic.keys():
             for no, name in self.ldg_details:
                 if k == dm_prefix + str(no):
-                    mdic[no]['dm_cutoff'] = post_dic[k]
+                    pass
+                    #mdic[no]['dm_cutoff'] = post_dic[k]
                 elif k == cf_prefix + str(no):
                     mdic[no]['cf_cutoff'] = post_dic[k]
         self.cutoff_mappings = mdic
@@ -115,12 +122,15 @@ class Uploads(dbtools.DBTools):
             self.instrument_id = cleaned_data[ 'inst' ] 
             self.cell_line = self.get_model_object( CellLine, id = cleaned_data[ 'cl1' ] )
             self.instrument = self.get_model_object( Instrument, id = cleaned_data[ 'inst' ] )
-        for ab in cleaned_data.getlist( 'ab1'):
-            ab_obj = self.get_model_object( Antibody, id = ab ) 
-            self.antibodies.append( ab_obj )
-            self.antibody_ids.append( ab )
-        for pl in cleaned_data.getlist( 'pl1' ):
-            self.publications.append( pl )
+            #for ab in cleaned_data.getlist( 'ab1'):
+            for ab in cleaned_data[ 'ab1' ]:
+                ab_obj = self.get_model_object( Antibody, id = ab ) 
+                self.antibodies.append( ab_obj )
+                self.antibody_ids.append( ab )
+        if 'pl1' in cleaned_data.keys():
+            #for pl in cleaned_data.getlist( 'pl1' ):
+            for pl in cleaned_data[ 'pl1' ]:
+                self.publications.append( pl )
         try:
             self.lodgement_title = cleaned_data[ 'ldg' ]
         except:
@@ -355,7 +365,8 @@ class Uploads(dbtools.DBTools):
         for dsno in self.dataset_nos:
             ds = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
                     datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title ), 
-                    dmass_cutoff = self.cutoff_mappings[dsno]['dm_cutoff'], confidence_cutoff = self.cutoff_mappings[dsno]['cf_cutoff'] )
+                    #dmass_cutoff = self.cutoff_mappings['dm_cutoff'], 
+                    confidence_cutoff = self.cutoff_mappings['cf_cutoff'] )
             ds.save()
             assign_perm('view_dataset', self.user, ds)
             assign_perm('edit_dataset', self.user, ds)
@@ -395,7 +406,8 @@ class Uploads(dbtools.DBTools):
         for dsno in self.ldg_ds_mappings[str(ldg_no)]:
             ds = self.get_model_object( Dataset, instrument = self.instrument, lodgement = lodgement, experiment = self.expt,
                     datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, ldg_name ), 
-                    dmass_cutoff = self.cutoff_mappings[ldg_no]['dm_cutoff'], confidence_cutoff = self.cutoff_mappings[ldg_no]['cf_cutoff'] )
+                    #dmass_cutoff = self.cutoff_mappings[ldg_no]['dm_cutoff'], 
+                    confidence_cutoff = self.cutoff_mappings[ldg_no]['cf_cutoff'] )
             ds.save()
             print 'cutoffs here for dataset: %s, in lodgement %s, dm cutoff: %s, cf cutoff: %s' % ( ds.title, lodgement.title, ds.dmass_cutoff, ds.confidence_cutoff ) 
             assign_perm('view_dataset', self.user, ds)

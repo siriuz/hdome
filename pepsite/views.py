@@ -168,11 +168,20 @@ def upload_multiple_ss_form( request ):
         form = UploadMultipleSSForm(request.POST, request.FILES) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
             ul = pepsite.uploaders.Uploads( user = user )
-            ss = request.FILES
+            ss = request.FILES.getlist( 'mfiles' )
             formdata = form.cleaned_data
 	    #ul.upload_ss_simple( form.cleaned_data.dict() )
 	    ul.preview_ss_simple( formdata )
-	    ul.preprocess_multiple_ss_simple( ss )
+	    ul.preprocess_multiple_simple( ss )
+            upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
+                    'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
+                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'ldg_details' : ul.ldg_details,
+                    'ldg_ds_mappings' : ul.ldg_ds_mappings }
+            request.session['ul'] = ul.uldict
+            request.session['proteins'] = ul.uniprot_ids
+            request.session['ul_supp'] = upload_dict
+            #return HttpResponse( 'poo' )
+            return render( request, 'pepsite/upload_preview_multiple.html', { 'upload' : ul, 'ss' : ss, 'formdata' : formdata, 'filled_form' : form, 'ul_supp' : upload_dict }  ) # Redirect after POST
             #request.session['ss'] = ss
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
@@ -212,7 +221,7 @@ def upload_multiple_ss_form( request ):
 def upload_manual_curations( request ):
     user = request.user
     if request.method == 'POST': # If the form has been submitted...
-        form = CurationForm(request.POST, request.FILES) # A form bound to the POST data
+        form = CurationForm(request.POST, request.FILES,user=user) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
             ul = pepsite.uploaders.Curate( user = user )
             cur = request.FILES['cur']
@@ -237,7 +246,7 @@ def upload_manual_curations( request ):
             return render( request, 'pepsite/curation_outcome.html', { 'upload' : ul }  ) # Redirect after POST
  
     else:
-        textform = CurationForm()
+        textform = CurationForm(user=user)
         lodgements_avail = True
         textform.fields['ldg'].choices = [ [b.id, '%s from Experiment: %s' %( b.title, b.get_experiment().title )] for b in Lodgement.objects.all() if user.has_perm( 'edit_lodgement', b )]
         if not textform.fields['ldg'].choices:

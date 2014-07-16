@@ -215,12 +215,11 @@ Public = {{ul_supp.public}}
 
 {{ul_supp.ldg_details}}
 
-<h2 class="text-primary">Please set cutoffs for your Datasets...</h2>
+<h2 class="text-primary">Please set cutoffs for your Lodgements...</h2>
 <form action="{% url 'pepsite:commit_upload_multiple_ss' %}" method='post'>
     {% csrf_token %}
     {% for ldg_no, ldg_name in ul_supp.ldg_details %}
-    Confidence cutoff for Dataset #{{ldg_name}}<input type="number" label="Confidence cutoff for Lodgement: {{ldg_name}}" name="cf_{{ldg_no}}" value="99.0"/><br>
-    Delta Mass cutoff for Dataset #{{ldg_name}}<input type="number" label="Delta Mass cutoff for Lodgement: {{ldg_name}}" name="dm_{{ldg_no}}" value="0.05"/><br>
+    Confidence cutoff for Lodgement {{ldg_name}}<input type="number" label="Confidence cutoff for Lodgement: {{ldg_name}}" name="cf_{{ldg_no}}" value="99.0"/><br>
     {% endfor %}
 
 <div class="div-1">

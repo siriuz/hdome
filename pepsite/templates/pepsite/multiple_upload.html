@@ -40,6 +40,26 @@ z-index:10;
 
     $(document).ready(function() {
 
+$('#id_expt1').click( function() {
+    var selected = $('#id_expt1 option:selected').val();
+    if ( selected === "-1" ) {
+        $("label[for='id_expt2']").show();
+        $("#wrapper_id_expt2").show();
+        $("#wrapper_id_ab1").show();
+        $("#wrapper_id_cl1").show();
+        //$('#res1').html( '<h1>NEW</h1>' );
+    }
+    else {
+        $("label[for='id_expt2']").hide();
+        $("#wrapper_id_expt2").hide();
+        $("#wrapper_id_ab1").hide();
+        $("#wrapper_id_cl1").hide();
+        //$('#res1').html( '<h1>' + selected + '</h1>' );
+    }
+    
+});
+
+
 $('#header').load( "{% url 'pepsite:nav_buttons' %}" );
 $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
@@ -73,6 +93,8 @@ $('#ssupload').click( function () {
 <div class="div-1">
 <img id="loader" class="center" src="{% static 'animations/ajax_loader_blue_512.gif' %}"/>
 </div>
+
+<h2 class="text-primary">Please enter upload details...</h2>
 
 <!--
 
@@ -119,11 +141,12 @@ $('#ssupload').click( function () {
                     </div>
                 </div>
             {% else %}
-                <div class="control-group">
+            <div id="wrapper_{{field.auto_id}}" class="control-group">
                     <label class="control-label">{{ field.label }}</label> 
                     <div class="controls">{{ field }}
                         {% if field.help_text %}
                             <p class="help-inline"><small>{{ field.help_text }}</small></p>
+                            <br>
                         {% endif %}
                     </div>
                 </div>
@@ -142,7 +165,7 @@ $('#ssupload').click( function () {
 
     </fieldset>
     <div class="form-actions">
-        <button id="preview" class="btn btn-lg btn-success" >Preview</button>
+        <button id="ssupload" class="btn btn-lg btn-success" >Preview</button>
     </div>
 </form>
 

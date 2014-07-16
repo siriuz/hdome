@@ -61,12 +61,16 @@ $('#id_expt1').click( function() {
     var selected = $('#id_expt1 option:selected').val();
     if ( selected === "-1" ) {
         $("label[for='id_expt2']").show();
-        $("#id_expt2").show();
+        $("#wrapper_id_expt2").show();
+        $("#wrapper_id_ab1").show();
+        $("#wrapper_id_cl1").show();
         //$('#res1').html( '<h1>NEW</h1>' );
     }
     else {
         $("label[for='id_expt2']").hide();
-        $("#id_expt2").hide();
+        $("#wrapper_id_expt2").hide();
+        $("#wrapper_id_ab1").hide();
+        $("#wrapper_id_cl1").hide();
         //$('#res1').html( '<h1>' + selected + '</h1>' );
     }
     
@@ -120,7 +124,7 @@ $('#ssupload').click( function () {
 
 
 <h1>Upload a <span class="text-primary">Spreadsheet</span></h1>
-<p class="text-info">Upload text-only data</p>
+<p class="text-info">Upload a <strong>ProteinPilot</strong> Peptide summary spreadsheet</p>
 
 
 {% endblock %}
@@ -131,6 +135,9 @@ $('#ssupload').click( function () {
 </div>
 
 <h2 class="text-primary">Please enter upload details...</h2>
+
+<!--
+
 <form enctype="multipart/form-data" action="{% url 'pepsite:upload_ss_form' %}" method="post" id="ssform">
 
     {% csrf_token %}
@@ -150,7 +157,43 @@ $('#ssupload').click( function () {
 </form>
 <hr>
 <br>
+-->
 
+
+<form id="formloc" class="form-horizontal" method="post" enctype="multipart/form-data" action="{% url 'pepsite:upload_ss_form' %}">{% csrf_token %}
+    <fieldset>
+        <legend>{{ title }}</legend>
+        {% for field in textform %}
+            {% if False %}
+                <div class="control-group error">
+                    <label class="control-label">{{ field.label }}</label> 
+                    <div class="controls">{{ field }}
+                        <span class="help-inline">
+                            {% for error in  field.errors %}{{ error }}{% endfor %}
+                        </span>
+                    </div>
+                </div>
+            {% else %}
+            <div id="wrapper_{{field.auto_id}}" class="control-group">
+                    <label class="control-label">{{ field.label }}</label> 
+                    <div class="controls">{{ field }}
+                        {% if field.help_text %}
+                            <p class="help-inline"><small>{{ field.help_text }}</small></p>
+                            <br>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+
+
+        <br>
+
+    </fieldset>
+    <div class="form-actions">
+        <button id="ssupload" class="btn btn-lg btn-success" >Preview</button>
+    </div>
+</form>
 
 
 <div id="resultdiv"></div>
