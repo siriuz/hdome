@@ -118,3 +118,4 @@ SHELL_PLUS_PRE_IMPORTS = (
     #'module.submodule4'
     )
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.file'

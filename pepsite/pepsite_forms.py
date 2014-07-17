@@ -149,7 +149,7 @@ def get_my_experiments():
 
 def get_my_lodgements(user):
     """docstring for get_my_cell_line"""
-    return [ [b.id, b.title] for b in Lodgement.objects.all() if user.has_perm('edit_lodgement', b )]
+    return [ [b.id, '%s, source file = %s' % ( b.title, b.datafilename ) ] for b in Lodgement.objects.all() if user.has_perm('edit_lodgement', b )]
 
 class TextOnlyForm(forms.Form):
     text_input = forms.CharField()
@@ -157,6 +157,13 @@ class TextOnlyForm(forms.Form):
 class MassSearchForm(forms.Form):
     target_input = forms.FloatField( label = 'Enter a mass (Da)')
     tolerance = forms.FloatField(label = 'Tolerance for mass search (Da)', initial = 0.1 )
+
+class MzSearchForm(forms.Form):
+    target_input = forms.FloatField( label = 'Enter m/z')
+    tolerance = forms.FloatField(label = 'Tolerance for mass search (Da)', initial = 0.1 )
+
+class SequenceSearchForm(forms.Form):
+    target_input = forms.CharField( label = 'Enter a peptide sequence')
 
 class UploadSSForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -178,6 +185,7 @@ class UploadSSForm(forms.Form):
     #expt1.urltest = 'Need a different experiment?'
     #expt1.urlstr = 'pepsite:cell_line_search' 
     expt2 = forms.CharField( label = 'New Experiment Name' )
+    expt2_desc = forms.CharField( label = 'New Experiment Description', widget = forms.Textarea )
     #expt2 = LinkField( label = 'New Experiment Name' )
     ab1 = forms.ChoiceField( label = 'Select existing Antibody(ies)', widget = forms.SelectMultiple, choices = [ [b.id, b.name] for b in Antibody.objects.all()] )
     cl1 = forms.ChoiceField( label = 'Select an existing Cell Line', choices = [ [b.id, b.name] for b in CellLine.objects.all()] )
@@ -207,6 +215,7 @@ class UploadMultipleSSForm(forms.Form):
     #expt1.urltest = 'Need a different experiment?'
     #expt1.urlstr = 'pepsite:cell_line_search' 
     expt2 = forms.CharField( label = 'New Experiment Name' )
+    expt2_desc = forms.CharField( label = 'New Experiment Description', widget = forms.Textarea )
     #expt2 = LinkField( label = 'New Experiment Name' )
     ab1 = forms.ChoiceField( label = 'Select existing Antibody(ies)', widget = forms.SelectMultiple, choices = [ [b.id, b.name] for b in Antibody.objects.all()] )
     cl1 = forms.ChoiceField( label = 'Select an existing Cell Line', choices = [ [b.id, b.name] for b in CellLine.objects.all()] )

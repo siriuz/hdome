@@ -3,7 +3,6 @@ import sys
 import datetime
 from django.utils.timezone import utc
 from django.db.models import Q
-import pepsite.dbtools
 
 PROJ_NAME = 'hdome'
 APP_NAME = 'pepsite'
@@ -21,6 +20,7 @@ django.setup() #required
 
 from django.contrib.auth.models import User
 from pepsite.models import *
+from pepsite import dbtools
 
 
 BGFILE = os.path.join( CURDIR, '../../background/qupload.csv' )

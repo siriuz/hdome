@@ -45,6 +45,7 @@ $('#id_expt1').click( function() {
     if ( selected === "-1" ) {
         $("label[for='id_expt2']").show();
         $("#wrapper_id_expt2").show();
+        $("#wrapper_id_expt2_desc").show();
         $("#wrapper_id_ab1").show();
         $("#wrapper_id_cl1").show();
         //$('#res1').html( '<h1>NEW</h1>' );
@@ -52,6 +53,7 @@ $('#id_expt1').click( function() {
     else {
         $("label[for='id_expt2']").hide();
         $("#wrapper_id_expt2").hide();
+        $("#wrapper_id_expt2_desc").hide();
         $("#wrapper_id_ab1").hide();
         $("#wrapper_id_cl1").hide();
         //$('#res1').html( '<h1>' + selected + '</h1>' );

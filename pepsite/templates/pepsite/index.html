@@ -107,9 +107,19 @@ $('#footer').load( "{% url 'pepsite:footer' %}" );
 
 <p>
 
-<a href="{% url 'pepsite:compare_expt_form' %}" class="btn btn-lg btn-primary">Compare Experiments</a>
+<a href="{% url 'pepsite:compare_expt_form' %}" class="btn btn-lg btn-primary">Compare Experiments (all data)</a>
 
 </p>
+
+<p>
+
+<a href="{% url 'pepsite:clean_compare_expt_form' %}" class="btn btn-lg btn-primary">Compare Experiments (only 5% FDR data)</a>
+
+</p>
+
+
+<hr>
+<br>
 
 <p>
 

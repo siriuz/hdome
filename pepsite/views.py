@@ -133,7 +133,7 @@ def upload_ss_form( request ):
             #request.session['ss'] = ss
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
-                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id }
+                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'lodgement_filename' : ul.lodgement_filename, 'expt_desc' : ul.expt_desc }
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
             #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Cell Line'  }
@@ -149,7 +149,7 @@ def upload_ss_form( request ):
             #request.session['ss'] = ss
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
-                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id }
+                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'lodgement_filename' : ul.lodgement_filename, 'expt_desc' : ul.expt_desc  }
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
             request.session['ul_supp'] = upload_dict
@@ -176,7 +176,7 @@ def upload_multiple_ss_form( request ):
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
                     'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'ldg_details' : ul.ldg_details,
-                    'ldg_ds_mappings' : ul.ldg_ds_mappings }
+                    'ldg_ds_mappings' : ul.ldg_ds_mappings, 'expt_desc' : ul.expt_desc }
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
             request.session['ul_supp'] = upload_dict
@@ -205,7 +205,7 @@ def upload_multiple_ss_form( request ):
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
                     'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'ldg_details' : ul.ldg_details,
-                    'ldg_ds_mappings' : ul.ldg_ds_mappings }
+                    'ldg_ds_mappings' : ul.ldg_ds_mappings, 'expt_desc' : ul.expt_desc }
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
             request.session['ul_supp'] = upload_dict
@@ -256,6 +256,42 @@ def upload_manual_curations( request ):
 
 #@login_required
 def compare_expt_form( request ):
+    user = request.user
+    if request.method == 'POST': # If the form has been submitted...
+            form = CompareExptForm(request.POST) # A form bound to the POST data
+            expt1 = request.POST['expt1']
+            exptz = request.POST.getlist('exptz' )
+            #exptz = formdata['exptz']
+            context = { 'exptz' : exptz, 'expt1' : expt1  }
+            proteins = list(set(Protein.objects.filter( peptide__ion__experiment__id = expt1)))
+            expt = get_object_or_404( Experiment, id = expt1 )
+            all_exp = [ expt ]
+            #publications = expt.get_publications()
+            lodgements = Lodgement.objects.filter( dataset__experiment = expt )
+            comp_exz = {}
+            for ex in exptz:
+                ex_obj = get_object_or_404( Experiment, id = ex )
+                comp_exz[ ex_obj ] = []
+                all_exp.append( ex_obj )
+                #publications.append( ex_obj.get_publications() )
+            publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
+            compare_ds = []
+            for exp_cm in comp_exz:
+                for ds in exp_cm.dataset_set.all().distinct().order_by('title'):
+                    if user.has_perm( 'view_dataset', ds ):
+                        compare_ds.append( ds )
+                        comp_exz[ exp_cm ].append( ds )
+            if not( len(lodgements)):
+                lodgements = False
+            s1 = ExptArrayAssemble()
+            rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user, compare = True, comparators = compare_ds, cutoffs=True )
+            return render( request, 'pepsite/compare_expt_results.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False, 'expt_cm' : comp_exz, 'compare_ds' : compare_ds  })
+    else:
+        compare_form = CompareExptForm()
+        context = { 'compare_form' : compare_form }
+        return render( request, 'pepsite/compare_expt_form.html', context)
+
+def clean_compare_expt_form( request ):
     user = request.user
     if request.method == 'POST': # If the form has been submitted...
             form = CompareExptForm(request.POST) # A form bound to the POST data
@@ -457,6 +493,84 @@ def mass_search( request ):
         context = { 'massform' : textform }
         return render( request, 'pepsite/mass_search.html', context)
 
+def mz_search( request ):
+    user = request.user
+    if request.GET.items(): # If the form has been submitted...
+        form = MzSearchForm(request.GET) # A form bound to the POST data
+        if form.is_valid(): # All validation rules pass
+	    target_input = form.cleaned_data['target_input'] 
+	    tolerance = form.cleaned_data['tolerance'] 
+            context = { 'target_input' : target_input, 'tolerance' : tolerance }
+	    s1 = MassSearch()
+	    ides = s1.get_unique_peptide_ides_from_mz( float(target_input), float(tolerance), user )
+	    #ides = s1.get_ides_from_mass( target_input, tolerance )
+            desc = u'm/z %s \u00B1 %s' % ( target_input, tolerance ) 
+            context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
+	    #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele', 'search' : True }
+            return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
+	else:
+            context = {}
+            for f in form.fields.keys():
+                if f in form.data.keys():
+                    context[f] = form.data[f]
+                else:
+                    context[f] = form.fields[f].initial
+	    target_input = context['target_input']
+	    tolerance = context['tolerance'] 
+            context = { 'target_input' : target_input, 'tolerance' : tolerance }
+	    s1 = MassSearch()
+	    ides = s1.get_unique_peptide_ides_from_mz( float(target_input), float(tolerance), user )
+	    #ides = s1.get_ides_from_mass( target_input, tolerance )
+            desc = u'm/z %s \u00B1 %s' % ( target_input, tolerance ) 
+            context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
+	    #target = request.get['target_input']
+	    #context = { 'msg' : text_input }
+            return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
+
+    else:
+        textform = MzSearchForm()
+        context = { 'massform' : textform }
+        return render( request, 'pepsite/mz_search.html', context)
+
+def sequence_search( request ):
+    user = request.user
+    if request.GET.items(): # If the form has been submitted...
+        form = SequenceSearchForm(request.GET) # A form bound to the POST data
+        if form.is_valid(): # All validation rules pass
+	    target_input = form.cleaned_data['target_input'] 
+	    #tolerance = form.cleaned_data['tolerance'] 
+            context = { 'target_input' : target_input } #, 'tolerance' : tolerance }
+	    s1 = MassSearch()
+	    ides = s1.get_unique_peptide_ides_from_sequence( target_input, user )
+	    #ides = s1.get_ides_from_mass( target_input, tolerance )
+            desc = u'sequence %s' % ( target_input.upper() ) 
+            context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
+	    #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele', 'search' : True }
+            return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
+	else:
+            context = {}
+            for f in form.fields.keys():
+                if f in form.data.keys():
+                    context[f] = form.data[f]
+                else:
+                    context[f] = form.fields[f].initial
+	    target_input = context['target_input']
+	    #tolerance = context['tolerance'] 
+            context = { 'target_input' : target_input } #, 'tolerance' : tolerance }
+	    s1 = MassSearch()
+	    ides = s1.get_unique_peptide_ides_from_mz( target_input, user )
+	    #ides = s1.get_ides_from_mass( target_input, tolerance )
+            desc = u'sequence %s' % ( target_input.upper() ) 
+            context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
+	    #target = request.get['target_input']
+	    #context = { 'msg' : text_input }
+            return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
+
+    else:
+        textform = SequenceSearchForm()
+        context = { 'massform' : textform }
+        return render( request, 'pepsite/sequence_search.html', context)
+
 #@login_required
 def allele_search( request ):
     if request.method == 'POST': # If the form has been submitted...
@@ -535,7 +649,7 @@ def antibody_expts( request, antibody_id ):
 def ptm_expts( request, ptm_id ):
     ptm1 = get_object_or_404( Ptm, id = ptm_id )
     text_input = ptm1.description
-    expts = Experiment.objects.filter( ion__idestimate__ptm = ptm1 ).distinct()
+    expts = Experiment.objects.filter( ion__idestimate__ptms = ptm1 ).distinct()
     context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Ptm', 'query_obj' : ptm1 }
     return render( request, 'pepsite/searched_expts.html', context)
 

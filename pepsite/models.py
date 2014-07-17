@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 import datetime
 from django.utils.timezone import utc
 import re
+import os
 
 NOW = models.DateTimeField( default = datetime.datetime.utcnow().replace(tzinfo=utc) )
 
@@ -29,7 +30,7 @@ class Allele(models.Model):
     #dna_type = models.CharField(max_length=200)
     #ser_type = models.CharField(max_length=200)
     isSer = models.BooleanField( default = False )
-    description = models.TextField( default = '' , blank = True )
+    description = models.TextField( default = '' , blank = True, null=True )
 
     def get_summary( self ):
 	pass
@@ -50,8 +51,8 @@ class Allele(models.Model):
 
 class Entity(models.Model):
     common_name = models.CharField(max_length=200)
-    sci_name = models.CharField(max_length=200 )
-    description = models.TextField( default = '', blank = True  )
+    sci_name = models.CharField(max_length=200, blank=True, null=True )
+    description = models.TextField( default = '', blank = True, null=True  )
     isOrganism = models.BooleanField( default = False )
 
     def __str__(self):
@@ -63,12 +64,12 @@ class Entity(models.Model):
 
 class Individual(models.Model):
     identifier = models.CharField(max_length=200, unique = True )
-    description = models.TextField( default = '' , blank = True )
-    nation_origin = models.CharField(max_length=200 )
+    description = models.TextField( default = '' , blank = True, null=True )
+    nation_origin = models.CharField(max_length=200, blank=True, null=True )
     entity = models.ForeignKey( Entity, blank=True, null=True )
     isHost = models.BooleanField( default = False )
     isAnonymous = models.BooleanField( default = True )
-    web_ref = models.CharField(max_length=200, default = '', null = True )
+    web_ref = models.CharField(max_length=200, default = '', null = True, blank=True )
 
 
 
@@ -78,9 +79,9 @@ class Individual(models.Model):
 
 class CellLine(models.Model):
     name = models.CharField(max_length=200)
-    tissue_type = models.CharField(max_length=200)
+    tissue_type = models.CharField(max_length=200, blank=True, null=True)
     isTissue = models.BooleanField(default=False)
-    description = models.TextField( default = '' )
+    description = models.TextField( default = '',blank=True, null=True )
     #host = models.ForeignKey( Organism, related_name = 'HostCell' )
     #infecteds = models.ManyToManyField( Organism, related_name = 'Infections' )
     individuals = models.ManyToManyField( Individual )
@@ -126,10 +127,14 @@ class Lodgement(models.Model):
     datetime = models.DateTimeField( )
     title = models.CharField( max_length = 300, unique = True )
     user = models.ForeignKey(User)
+    datafilename = models.CharField(max_length=400,blank=True, null=True)
     isFree = models.BooleanField( default = False )
 
     def __str__(self):
         return self.datetime.strftime("%Y-%m-%d %H:%M:%S")
+
+    def filename(self):
+        return os.path.basename(self.datafile.name)
 
     class Meta:
         permissions = (
@@ -142,12 +147,12 @@ class Lodgement(models.Model):
 
 class Experiment( models.Model ):
     title = models.CharField(max_length=200)
-    description = models.TextField( default = '' )
+    description = models.TextField( default = '',blank=True, null=True )
     #date_time = models.DateTimeField('date run')
     #data = models.FileField()
     cell_line = models.ForeignKey( CellLine )
     #lodgement = models.ForeignKey( Lodgement )
-    notes = models.TextField( default = '' )
+    notes = models.TextField( default = '',blank=True, null=True )
 
     def __str__(self):
 	return self.title
@@ -173,7 +178,7 @@ class Experiment( models.Model ):
 
 class Antibody(models.Model):
     name = models.CharField(max_length=200, unique = True )
-    description = models.TextField( default = '' )
+    description = models.TextField( default = '',blank=True, null=True )
     alleles = models.ManyToManyField( Allele )
     experiments = models.ManyToManyField( Experiment )
 
@@ -185,7 +190,7 @@ class Antibody(models.Model):
 
 class Ptm(models.Model):
     name = models.CharField(max_length=200)
-    description = models.TextField( default = '' )
+    description = models.TextField( default = '',blank=True, null=True )
     mass_change = models.FloatField(null=True, blank=True)
 
     def fname(self):
@@ -199,8 +204,8 @@ class Ptm(models.Model):
 class Protein(models.Model):
     prot_id = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
-    description = models.TextField( default = '' )
-    sequence = models.TextField( default = '' )
+    description = models.TextField( default = '',blank=True, null=True )
+    sequence = models.TextField( default = '',blank=True, null=True )
 
     def get_uniprot_link(self):
         """docstring for get_uniprot_code"""
@@ -270,16 +275,18 @@ class PepToProt(models.Model):
 
 class Ion(models.Model):
     precursor_mass = models.FloatField()
+    mz = models.FloatField()
     charge_state = models.IntegerField()
     retention_time = models.FloatField()
     experiment = models.ForeignKey(Experiment)
+    spectrum = models.CharField( default = '',max_length=200, blank=True, null=True)
     dataset = models.ForeignKey('Dataset')
     peptides = models.ManyToManyField( Peptide, through='IdEstimate')
     #antibodies = models.ManyToManyField( Antibody )
     #cell_lines = models.ManyToManyField( CellLine )
 
     def __str__(self):
-	return str(self.precursor_mass) + '|' + str(self.charge_state)
+	return str(self.precursor_mass) + '|' + str(self.charge_state) + '|' + str(self.mz)
 
 
 class IdEstimate(models.Model):
@@ -290,9 +297,9 @@ class IdEstimate(models.Model):
     delta_mass = models.FloatField()
     confidence = models.FloatField()
     isValid = models.BooleanField( default = False )
-    isRedundent = models.BooleanField( default = False )
+    #isRedundent = models.BooleanField( default = False )
     isRemoved = models.BooleanField( default = False )
-    reason = models.TextField( default = '' )
+    reason = models.TextField( default = '', blank=True, null=True )
 
     def check_ptm(self):
         """docstring for check_ptm"""
@@ -325,8 +332,8 @@ class Manufacturer(models.Model):
 class Instrument(models.Model):
     """docstring for Instrument"""
     name = models.CharField(max_length=200)
-    description = models.TextField()
-    manufacturer = models.ForeignKey(Manufacturer)
+    description = models.TextField(blank=True,null=True)
+    manufacturer = models.ForeignKey(Manufacturer,blank=True, null=True)
 
     def __str__(self):
         """docstring for __str__"""
@@ -338,14 +345,14 @@ class Dataset(models.Model):
     title = models.CharField(max_length=300, unique=True )
     rank = models.IntegerField( null=True, blank=True )
     datetime = models.DateTimeField( null=True, blank=True )
-    data = models.FileField( blank = True )
+    data = models.FileField( blank = True, null=True )
     gradient_min = models.FloatField(null=True, blank=True)
     gradient_max = models.FloatField(null=True, blank=True)
     gradient_duration = models.FloatField(null=True, blank=True)
     instrument = models.ForeignKey(Instrument)
     lodgement = models.ForeignKey(Lodgement)
     experiment = models.ForeignKey(Experiment)
-    notes = models.TextField( default = '', blank = True )
+    notes = models.TextField( default = '', blank = True, null=True )
     confidence_cutoff = models.FloatField( null=True, blank=True )
     dmass_cutoff = models.FloatField( null=True, blank=True )
 
@@ -380,7 +387,7 @@ class ExternalDb(models.Model):
     """docstring for ExternalDb"""
     db_name = models.CharField(max_length=200)
     url_stump = models.CharField(max_length=400)
-    url_suffix = models.CharField(max_length=400)
+    url_suffix = models.CharField(max_length=400, blank=True, null=True)
 
     def __str__(self):
         """docstring for __str__"""
@@ -401,9 +408,9 @@ class LookupCode(models.Model):
 
 class Publication(models.Model):
     """docstring for Publication"""
-    title = models.TextField()
-    journal = models.TextField()
-    display = models.TextField()
+    title = models.TextField(blank=True, null=True)
+    journal = models.TextField(blank=True, null=True)
+    display = models.TextField(default='',blank=True, null=True)
     lodgements = models.ManyToManyField( Lodgement )
     cell_lines = models.ManyToManyField( CellLine )
     lookupcode = models.OneToOneField( LookupCode, null=True, blank=True )

@@ -61,18 +61,12 @@ $('#id_expt1').click( function() {
     var selected = $('#id_expt1 option:selected').val();
     if ( selected === "-1" ) {
         $("label[for='id_expt2']").show();
-        $("#wrapper_id_expt2").show();
-        $("#wrapper_id_expt2_desc").show();
-        $("#wrapper_id_ab1").show();
-        $("#wrapper_id_cl1").show();
+        $("#id_expt2").show();
         //$('#res1').html( '<h1>NEW</h1>' );
     }
     else {
         $("label[for='id_expt2']").hide();
-        $("#wrapper_id_expt2").hide();
-        $("#wrapper_id_expt2_desc").hide();
-        $("#wrapper_id_ab1").hide();
-        $("#wrapper_id_cl1").hide();
+        $("#id_expt2").hide();
         //$('#res1').html( '<h1>' + selected + '</h1>' );
     }
     
@@ -125,8 +119,8 @@ $('#ssupload').click( function () {
 </head>
 
 
-<h1>Upload a <span class="text-primary">Spreadsheet</span></h1>
-<p class="text-info">Upload a <strong>ProteinPilot</strong> Peptide summary spreadsheet</p>
+<h1>Compare <span class="text-primary">Experiments</span></h1>
+<p class="text-info">Select Experiments for comparison, only 5% FDR data will be used</p>
 
 
 {% endblock %}
@@ -136,14 +130,18 @@ $('#ssupload').click( function () {
 <img id="loader" class="center" src="{% static 'animations/ajax_loader_blue_512.gif' %}"/>
 </div>
 
-<h2 class="text-primary">Please enter upload details...</h2>
+{% if invalid %}
+
+<h2>Invalid input, please try again</h2>
+
+{% endif %}
 
 <!--
-
-<form enctype="multipart/form-data" action="{% url 'pepsite:upload_ss_form' %}" method="post" id="ssform">
+<h2 class="text-primary">Please select and initiate comparison...</h2>
+<form enctype="multipart/form-data" action="{% url 'pepsite:clean_compare_expt_form' %}" method="post" id="ssform">
 
     {% csrf_token %}
-    {% for field in textform %}
+    {% for field in compare_form %}
         <div class="fieldWrapper">
             {{ field.errors }}
             {{ field.label_tag }} {{ field }}
@@ -155,17 +153,17 @@ $('#ssupload').click( function () {
     <br>
 
 
-<button id="ssupload" class="btn btn-lg btn-success" value="Upload">Proceed to Upload Preview</button>
+<input id="ssupload" type="submit" class="btn btn-lg btn-success" value="Compare Experiments"/>
 </form>
 <hr>
 <br>
+
 -->
 
-
-<form id="formloc" class="form-horizontal" method="post" enctype="multipart/form-data" action="{% url 'pepsite:upload_ss_form' %}">{% csrf_token %}
+<form id="ssform" class="form-horizontal" method="post" action="{% url 'pepsite:clean_compare_expt_form' %}">{% csrf_token %}
     <fieldset>
         <legend>{{ title }}</legend>
-        {% for field in textform %}
+        {% for field in compare_form %}
             {% if False %}
                 <div class="control-group error">
                     <label class="control-label">{{ field.label }}</label> 
@@ -176,26 +174,22 @@ $('#ssupload').click( function () {
                     </div>
                 </div>
             {% else %}
-            <div id="wrapper_{{field.auto_id}}" class="control-group">
+                <div class="control-group">
                     <label class="control-label">{{ field.label }}</label> 
                     <div class="controls">{{ field }}
                         {% if field.help_text %}
                             <p class="help-inline"><small>{{ field.help_text }}</small></p>
-                            <br>
                         {% endif %}
                     </div>
                 </div>
             {% endif %}
         {% endfor %}
-
-
-        <br>
-
     </fieldset>
     <div class="form-actions">
-        <button id="ssupload" class="btn btn-lg btn-success" >Preview</button>
+        <button id="ssupload" class="btn btn-lg btn-success" >Compare Experiments</button>
     </div>
 </form>
+
 
 
 <div id="resultdiv"></div>

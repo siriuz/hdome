@@ -57,9 +57,10 @@ class Uploads(dbtools.DBTools):
                 'confidence' : { 'matches' : [ 'confidence', 'Conf' ], 'order' : 4, 'display' : 'Confidence' },
                 'charge' : { 'matches' : [ 'Theor z', 'charge' ], 'order' : 5, 'display' : 'Charge State' },
                 'delta_mass' : { 'matches' : [ 'dMass' ], 'order' : 6, 'display' : 'Delta Mass (Da)' },
-                'precursor_mass' : { 'matches' : [ 'Prec MW' ], 'order' : 7, 'display' : 'Precursor Mass (Da)' },
-                'dataset_id' : { 'matches' : [ 'Spectrum' ], 'order' : 8, 'display' : 'Dataset' },
-                'retention_time' : { 'matches' : [ 'Time'], 'order' : 9, 'display' : 'Restention Time (min)' },
+                'precursor_mass' : { 'matches' : [ 'Prec MW' ], 'order' : 8, 'display' : 'Precursor Mass (Da)' },
+                'mz' : { 'matches' : [ 'Prec m/z' ], 'order' : 7, 'display' : 'Precursor m/z' },
+                'dataset_id' : { 'matches' : [ 'Spectrum' ], 'order' : 9, 'display' : 'Dataset' },
+                'retention_time' : { 'matches' : [ 'Time'], 'order' : 10, 'display' : 'Restention Time (min)' },
                 }
         if 'user' in kwargs.keys():
             self.user = kwargs['user']
@@ -91,10 +92,10 @@ class Uploads(dbtools.DBTools):
     def add_cutoff_mappings_multiple( self, post_dic, dm_prefix = 'dm_', cf_prefix = 'cf_' ):
         """docstring for add_cutoffs"""
         mdic = {}
-        for no, name in self.ldg_details:
+        for no, name, filename in self.ldg_details:
             mdic[no] = {}
         for k in post_dic.keys():
-            for no, name in self.ldg_details:
+            for no, name, filename in self.ldg_details:
                 if k == dm_prefix + str(no):
                     pass
                     #mdic[no]['dm_cutoff'] = post_dic[k]
@@ -109,6 +110,7 @@ class Uploads(dbtools.DBTools):
         """docstring for preview_ss_simple"""
         if int(cleaned_data[ 'expt1' ]) != -1: 
 	    self.expt = self.get_model_object( Experiment, id = cleaned_data[ 'expt1' ] )
+	    self.expt_desc = self.expt.description
             self.expt_title = self.expt.title
             self.expt_id = cleaned_data[ 'expt1' ] 
             self.instrument_id = cleaned_data[ 'inst' ] 
@@ -117,6 +119,10 @@ class Uploads(dbtools.DBTools):
             self.cell_line_id = self.expt.cell_line.id
         elif cleaned_data[ 'expt2' ].strip() != '':
             self.expt_title = cleaned_data[ 'expt2' ]
+            if 'expt2_desc' in cleaned_data.keys():
+                self.expt_desc = cleaned_data['expt2_desc']
+            else:
+                self.expt_desc = ''
             self.create_expt = True
             self.cell_line_id = cleaned_data[ 'cl1' ] 
             self.instrument_id = cleaned_data[ 'inst' ] 
@@ -183,9 +189,9 @@ class Uploads(dbtools.DBTools):
         self.allstr = allstr
         for i in range(len(filelist)):
             fileobj = filelist[i]
-            ldg_name = 'Auto Lodgement #%d from Bulk Lodgement: %s, filename: %s' % ( i + 1, self.lodgement_title, fileobj.__str__() )
+            ldg_name = 'Auto Lodgement #%d from Bulk Lodgement: %s' % ( i + 1, self.lodgement_title )
             ldg_no = i
-            self.ldg_details.append( [ ldg_no, ldg_name ] )
+            self.ldg_details.append( [ ldg_no, ldg_name, fileobj.__str__() ] )
             self.preprocess_ss_from_bulk( fileobj, ldg_name, ldg_no )
         self.allstr += '</tbody></table>'
 
@@ -274,6 +280,7 @@ class Uploads(dbtools.DBTools):
 
     def preprocess_ss_simple( self, fileobj ):
         #with open( ss_files
+        self.lodgement_filename = fileobj.__str__()
         allstr = '<table id=\"cssTable\" class=\"table table-striped tablesorter\">'
         headers = fileobj.readline().split( self.delim )
         self.translate_headers( headers )
@@ -348,7 +355,7 @@ class Uploads(dbtools.DBTools):
         self.instrument = self.get_model_object( Instrument, id = self.instrument_id )
         self.cell_line = self.get_model_object( CellLine, id = self.cell_line_id )
         if not self.expt_id:
-            self.expt = self.get_model_object( Experiment, cell_line = self.cell_line, title = self.expt_title )
+            self.expt = self.get_model_object( Experiment, cell_line = self.cell_line, title = self.expt_title, description = self.expt_desc )
             self.expt.save()
         else:
             self.expt = self.get_model_object( Experiment, id = self.expt_id )
@@ -356,7 +363,7 @@ class Uploads(dbtools.DBTools):
         for ab in self.antibodies:
                 self.add_if_not_already(  ab, self.expt.antibody_set )
         if not self.lodgement:
-            self.lodgement = self.get_model_object( Lodgement, user = self.user, title = self.lodgement_title, datetime = self.now )
+            self.lodgement = self.get_model_object( Lodgement, user = self.user, title = self.lodgement_title, datetime = self.now, datafilename=self.lodgement_filename )
             self.lodgement.save()
             if self.publications:
                 for pl in self.publications:
@@ -380,15 +387,15 @@ class Uploads(dbtools.DBTools):
             
 
     def prepare_upload_simple_multiple(self ):
-        for ldg_no, ldg_name in self.ldg_details:
-            self.prepare_ind_lodgement( ldg_no, ldg_name )
+        for ldg_no, ldg_name, filename in self.ldg_details:
+            self.prepare_ind_lodgement( ldg_no, ldg_name, filename )
 
-    def prepare_ind_lodgement(self, ldg_no, ldg_name ):
+    def prepare_ind_lodgement(self, ldg_no, ldg_name, filename ):
         """docstring for fname(self, cleaned_data"""
         self.instrument = self.get_model_object( Instrument, id = self.instrument_id )
         self.cell_line = self.get_model_object( CellLine, id = self.cell_line_id )
         if not self.expt_id:
-            self.expt = self.get_model_object( Experiment, cell_line = self.cell_line, title = self.expt_title )
+            self.expt = self.get_model_object( Experiment, cell_line = self.cell_line, title = self.expt_title, description = self.expt_desc )
             self.expt.save()
         else:
             self.expt = self.get_model_object( Experiment, id = self.expt_id )
@@ -396,7 +403,7 @@ class Uploads(dbtools.DBTools):
         for ab in self.antibodies:
                 self.add_if_not_already(  ab, self.expt.antibody_set )
         #if not self.lodgement:
-        lodgement = self.get_model_object( Lodgement, user = self.user, title = ldg_name, datetime = self.now )
+        lodgement = self.get_model_object( Lodgement, user = self.user, title = ldg_name, datetime = self.now, datafilename=filename )
         lodgement.save()
         if self.publications:
             for pl in self.publications:
@@ -460,7 +467,7 @@ class Uploads(dbtools.DBTools):
             
             ##
             ion = self.get_model_object( Ion,  charge_state = local['charge'], precursor_mass = local['precursor_mass'],
-                    retention_time = local['retention_time'], experiment = self.expt, dataset = dataset )
+                    retention_time = local['retention_time'], mz = local['mz'], experiment = self.expt, dataset = dataset, spectrum = local['spectrum'] )
             ion.save()
             ide = self.get_model_object( IdEstimate, ion = ion, peptide = pep, confidence = local['confidence'], delta_mass = local['delta_mass'] )
             ide.save()
@@ -509,7 +516,7 @@ class Uploads(dbtools.DBTools):
             
             ##
             ion = self.get_model_object( Ion,  charge_state = local['charge'], precursor_mass = local['precursor_mass'],
-                    retention_time = local['retention_time'], experiment = self.expt, dataset = dataset )
+                    retention_time = local['retention_time'], mz = local['mz'], experiment = self.expt, dataset = dataset, spectrum = local['spectrum'] )
             ion.save()
             ide = self.get_model_object( IdEstimate, ion = ion, peptide = pep, confidence = local['confidence'], delta_mass = local['delta_mass'] )
             ide.save()
