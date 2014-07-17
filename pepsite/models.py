@@ -179,8 +179,8 @@ class Experiment( models.Model ):
 class Antibody(models.Model):
     name = models.CharField(max_length=200, unique = True )
     description = models.TextField( default = '',blank=True, null=True )
-    alleles = models.ManyToManyField( Allele )
-    experiments = models.ManyToManyField( Experiment )
+    alleles = models.ManyToManyField( Allele, blank=True, null=True )
+    experiments = models.ManyToManyField( Experiment, blank=True, null=True)
 
     def __str__(self):
 	return self.name
