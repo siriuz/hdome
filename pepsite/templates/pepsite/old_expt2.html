@@ -142,7 +142,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
-        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
+        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
     </thead>
     <tbody>
     {% for row in rows %}
@@ -151,7 +151,9 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
             </td>
             <td>
-                <a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">UniProt Entry</a>
+            <form action="{{ row.protein.get_uniprot_link }}" target="_blank">
+        <input class="btn btn-primary" type="submit" value="UniProt entry">
+	</form>
             </td>
             <td>
 	        <a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a>
@@ -172,9 +174,6 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 	   </td>
 	   <td>
 	   {{ row.ide.confidence }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.mz }}
 	   </td>
 	   <td>
 	   {{ row.ide.ion.charge_state }}

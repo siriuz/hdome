@@ -84,7 +84,19 @@ $('#footer').load( "{% url 'pepsite:footer' %}" );
 
 <p>
 
-<a href="{% url 'pepsite:mass_search' %}" class="btn btn-lg btn-primary">Search by Mass</a>
+<a href="{% url 'pepsite:mass_search' %}" class="btn btn-lg btn-primary">Search by Precursor Mass</a>
+
+</p>
+
+<p>
+
+<a href="{% url 'pepsite:mz_search' %}" class="btn btn-lg btn-primary">Search by m/z</a>
+
+</p>
+
+<p>
+
+<a href="{% url 'pepsite:sequence_search' %}" class="btn btn-lg btn-primary">Search by Peptide sequence</a>
 
 </p>
 
