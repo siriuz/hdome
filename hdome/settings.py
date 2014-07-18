@@ -43,6 +43,7 @@ INSTALLED_APPS = (
     'pepsite',
     'django_extensions',
     'guardian',
+    'news',
 )
 
 MIDDLEWARE_CLASSES = (

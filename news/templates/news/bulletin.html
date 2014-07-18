@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% load staticfiles %}
+
+{% block headline %}
+
+<h1><strong class="text-primary">Haplodome </strong>news</h1>
+<p class="text-info">Latest News from the group / field</p>
+
+
+
+{% endblock %}
+
+{% block content %}
+
+{% for article in articles %}
+
+<h2> <span class="text-primary">{{article.title}}</span>
+    {% if article.author.first_name and article.author.last_name %}
+    <p><small class = "text-info">by {{article.author.first_name}} {{article.author.last_name}}, {{article.created}}</small></p>
+    {% else %}
+    <p><small class = "text-info">by {{article.author.username}}, {{article.created}}</small></p>
+    {% endif %}
+</h2>
+
+<p>{{article.content}}</p>
+
+<hr>
+<br>
+
+{% endfor %}
+
+<div id="footer"></div>
+
+{% endblock %}
