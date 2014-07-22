@@ -61,16 +61,21 @@ class DBTools(object):
 
 
 
-    def read_canonical_spreadsheet(self, csvfile):
+    def read_canonical_spreadsheet(self, csvfile, delimiter = '\t'):
         """docstring for read_canonical_spreadsheet"""
         with open( csvfile, 'rb' ) as f:
-            info = [ b.strip().split(',') for b in f ] 
+            info = [ b.strip().split(delimiter) for b in f ] 
             header = [ b.strip() for b in info[0] ]
+            print len(header)
             mdict = {}
             for i in range(1, len(info)):
                 mdict[i] = {}
+                print i, len( info[i] )
                 for j in range(len(header)):
-                    mdict[i][ header[j] ] = info[ i ][ j ].strip()
+                    try:
+                        mdict[i][ header[j] ] = info[ i ][ j ].strip()
+                    except:
+                        pass
         return mdict
 
 

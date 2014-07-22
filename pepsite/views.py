@@ -59,6 +59,11 @@ def allele_browse( request ):
 	context = { 'alleles' : alleles }
 	return render( request, 'pepsite/allele_browse.html', context)
 
+def experiment_browse( request ):
+	experiments = Experiment.objects.all().distinct()
+	context = { 'experiments' : experiments }
+	return render( request, 'pepsite/experiment_browse.html', context)
+
 #@login_required
 def protein_browse( request ):
 	proteins = Protein.objects.all().distinct()
@@ -754,6 +759,75 @@ def expt2( request, expt_id ):
     s1 = ExptArrayAssemble()
     rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user, cutoffs=True )
     return render( request, 'pepsite/expt2.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False })
+
+def expt2_ajax( request, expt_id ):
+  user = request.user
+  if not request.POST.has_key( 'full_list' ) :
+    proteins = list((Protein.objects.filter( peptide__ion__experiment__id = expt_id).distinct()))
+    expt = get_object_or_404( Experiment, id = expt_id )
+    publications = expt.get_publications()
+    lodgements = Lodgement.objects.filter( dataset__experiment = expt )
+    if not( len(lodgements)):
+        lodgements = False
+    paginator = Paginator(proteins, 25 ) # Show 25 contacts per page
+
+    #page = request.GET.get('page')
+    #try:
+    #    proteins = paginator.page(page)
+    #except PageNotAnInteger:
+    #    # If page is not an integer, deliver first page.
+    #    proteins = paginator.page(1)
+    #except EmptyPage:
+    #    # If page is out of range (e.g. 9999), deliver last page of results.
+    #    proteins = paginator.page(paginator.num_pages)
+    s1 = ExptArrayAssemble()
+    rows = s1.get_peptide_array_from_protein_expt( proteins[:25], expt, user, cutoffs = True )
+    protein_ids = [ b.id for b in proteins ]
+    return render( request, 'pepsite/expt2_ajax.html', {"proteins": proteins, 'protein_ids': protein_ids, 'expt' : expt, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False })
+  else:
+    proteins = list(set(Protein.objects.filter( peptide__ion__experiment__id = expt_id)))
+    expt = get_object_or_404( Experiment, id = expt_id )
+    publications = expt.get_publications()
+    lodgements = Lodgement.objects.filter( dataset__experiment = expt )
+    if not( len(lodgements)):
+        lodgements = False
+    s1 = ExptArrayAssemble()
+    rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user, cutoffs=True )
+    return render( request, 'pepsite/expt2_ajax.html', {"proteins": proteins, 'expt' : expt, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False })
+
+def peptides_render( request, expt_id ):
+  user = request.user
+  #return HttpResponse( 'Hello!' )
+  if request.POST.has_key( 'protein_id_nos[]' ):
+    protein_ids = request.POST.getlist('protein_id_nos[]')
+    print protein_ids
+    proteins = list((Protein.objects.filter( peptide__ion__experiment__id = expt_id).distinct()))
+    expt = get_object_or_404( Experiment, id = expt_id )
+    #publications = expt.get_publications()
+    #lodgements = Lodgement.objects.filter( dataset__experiment = expt )
+    #if not( len(lodgements)):
+    #    lodgements = False
+    #paginator = Paginator(proteins, 25 ) # Show 25 contacts per page
+
+    #page = request.GET.get('page')
+    #try:
+    #    proteins = paginator.page(page)
+    #except PageNotAnInteger:
+    #    # If page is not an integer, deliver first page.
+    #    proteins = paginator.page(1)
+    #except EmptyPage:
+    #    # If page is out of range (e.g. 9999), deliver last page of results.
+    #    proteins = paginator.page(paginator.num_pages)
+    s1 = ExptArrayAssemble()
+    rows = s1.get_peptide_array_from_protein_expt( proteins[:25], expt, user, cutoffs = True )
+    #protein_ids = [ b.id for b in proteins ]
+    return HttpResponse( render( request, 'pepsite/peptides_render.html', { 'expt' : expt, 'rows' : rows }) )
+    return HttpResponse( [ b['expt'].title for b in rows] )
+    return HttpResponse( [ b['expt'].title for b in rows] )
+  else:
+      return HttpResponse( 'Nothing!!!' + str( request.POST.keys() )  )
+
+
 
 
 

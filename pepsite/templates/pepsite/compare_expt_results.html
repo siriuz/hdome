@@ -130,9 +130,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
             </td>
             <td>
-            <form action="{{ row.protein.get_uniprot_link }}" target="_blank">
-        <input class="btn btn-primary" type="submit" value="UniProt entry">
-	</form>
+                <a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">UniProt Entry</a>
             </td>
             <td>
 	        <a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a>

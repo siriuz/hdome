@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block headline %}
+
+
+
+
+<script>
+
+
+$(document).ready(function() {
+
+$('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+$("#cssTable1").tablesorter({
+    //textExtraction : 'complex',
+    sortMultiSortKey: 'none'
+    });
+
+$("#cssTable2").tablesorter({
+    //textExtraction : 'complex',
+    sortMultiSortKey: 'none'
+    });
+
+});
+
+</script>
+
+
+<style>
+.tablesorter td 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+.tablesorter th 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+
+th:hover
+{
+background-color:yellow;
+}
+th
+{
+cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<br>
+
+
+
+<h1>Browse <span class="text-primary">Experiments</span></h1>
+<p class="text-info">Catalogue page</p>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+{% if experiments %}
+    <h3><span class="text-primary">DNA</span> alleles:</h3>
+    </br>
+
+    <table class="table table-striped tablesorter" id="cssTable1">
+    <thead>
+    <tr>
+        <th>Title</th><th>Description</th><th>Cell Line</th><th>Antibody(s)</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for experiment in experiments %}
+        <tr>
+	<td><a href="{% url 'pepsite:expt2_ajax' experiment.id %}">{{ experiment.title }}</a></td>
+	<td><a href="{% url 'pepsite:expt2_ajax' experiment.id %}">{{ experiment.description }}</a></td>
+	<td>
+	    <a href="{% url 'pepsite:cell_line_expts' experiment.cell_line.id %}">{{cell_line.name}}</a> 
+	</td>
+	<td>
+	
+	{% for ab in experiment.antibody_set.all %}
+		<a href="{% url 'pepsite:antibody_expts' ab.id %}">{{ ab.name }}</a>
+	{% endfor %}
+	
+	</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+
+    <br><hr><br>
+
+    <h3><span class="text-primary">Serotypes</span>:</h3>
+    </br>
+
+    <table class="table table-striped" id="cssTable2">
+    <thead>
+    <tr>
+    <th>Serotype</th><th>Cell Lines</th><th>Antibodies</th><th>Experiments</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for allele in alleles %}
+	{% if allele.isSer %}
+        <tr>
+	<td><a href="{% url 'pepsite:allele_expts' allele.id %}">{{ allele.code }}</a></td>
+	<td>
+	{% for cell_line in allele.cellline_set.all %}
+	    <a href="{% url 'pepsite:cell_line_expts' cell_line.id %}">{{cell_line.name}}</a> 
+	{% endfor %}
+	</td>
+	<td>
+	
+	{% for ab in allele.antibody_set.all %}
+		<a href="{% url 'pepsite:antibody_expts' ab.id %}">{{ ab.name }}</a>
+	{% endfor %}
+	
+	</td>
+	<td>
+	{% for expt in allele.get_experiments %}
+		<a href="{% url 'pepsite:expt2' expt.id %}">{{ expt.title }}</a>
+	{% endfor %}
+	
+	</td>
+        </tr>
+	{% endif %}
+    {% endfor %}
+    </tbody>
+    </table>
+
+    <br><hr>
+
+{% else %}
+  <h3 class="text-danger">No Alleles found</h3>
+  <br> 
+{% endif %}
+
+
+
+<br>
+
+{% endblock %}
