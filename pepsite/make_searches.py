@@ -278,10 +278,12 @@ class ExptArrayAssemble( BaseSearch ):
         for i in range( len(datasets)):
             if cutoffs:
                 if IdEstimate.objects.filter( ion__dataset = datasets[i], id__in = ideref, confidence__gte = datasets[i].confidence_cutoff ):
-                    hitlist[i] = True
+                    hitlist[i] = 2
             else:
-                if IdEstimate.objects.filter( ion__dataset = datasets[i], id__in = ideref ):
-                    hitlist[i] = True
+                if IdEstimate.objects.filter( ion__dataset = datasets[i], id__in = ideref, confidence__gte = datasets[i].confidence_cutoff ):
+                    hitlist[i] = 2
+                elif IdEstimate.objects.filter( ion__dataset = datasets[i], id__in = ideref ):
+                    hitlist[i] = 1
 
         return hitlist
 

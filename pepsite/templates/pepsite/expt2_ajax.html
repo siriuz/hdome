@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 
+{% load staticfiles %}
 {% block headline %}
 
 <style>
@@ -29,6 +30,17 @@ cursor:pointer;
     margin-right: 50px;
 }
 
+#loader
+{
+z-index:-10;
+}
+
+.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    
+}
 
 
 </style>
@@ -38,7 +50,8 @@ cursor:pointer;
 
 
 $(document).ready(function() {
-
+    $('.div-1').css(( "z-index" ), 10 );
+    $('#loader').show();
 
     $('#summary').load( "{% url 'pepsite:model_info' 'Experiment' expt.id %}" ); 
 
@@ -79,7 +92,7 @@ function reset_tablesort() {
 
 }
 
-    var protein_ids = {{protein_ids|safe}};
+    var protein_ids = {{protein_ids_total|safe}};
     var protein_ids_initial = {{protein_ids_initial|safe}};
     var expt_id = "{{expt.id}}";
     //var initial_quota = {{initial_quota|safe}};
@@ -104,30 +117,63 @@ function reset_tablesort() {
     */
 
 
-$('#testpoint').html( text );
-reset_tablesort();
+//$('#testpoint').html( text );
+//reset_tablesort();
 
-    for (i = 0; i < protein_ids.length; i++) { 
+function table_exportable() {
+
+// $('table').each(function() {
+    //var $table = $(this);
+    var $table = $('#cssTable');
+ 
+    var $button1 = $("<button type='button' class='btn btn-lg btn-success'>");
+    var $button2 = $("<button type='button' class='btn btn-lg btn-success'>");
+    $button1.text("Export to spreadsheet");
+    $button2.text("Export to spreadsheet");
+    $button1.insertBefore($table);
+    $button2.insertAfter($table);
+ 
+    $button1.click(function() {
+      var csv = $table.table2CSV({delivery:'value'});
+      window.location.href = 'data:text/csv;charset=UTF-8,'
+                            + encodeURIComponent(csv);
+    });
+ 
+    $button2.click(function() {
+      var csv = $table.table2CSV({delivery:'value'});
+      window.location.href = 'data:text/csv;charset=UTF-8,'
+                            + encodeURIComponent(csv);
+    });
+//  });
+}
+
+
+//    for (i = 0; i < protein_ids.length; i++) { 
         $.ajax({
                         url : render_url, 
                         type : "POST",
                         dataType: "html", 
                         data : {
-                            'protein_id_no' : protein_ids[i],
+                            'protein_id_no' : protein_ids,
                             csrfmiddlewaretoken: csrftoken
                             },
                             success : function(retdat) {
                                 //$("#testpoint" ).append( "<br>" + retdat + "<br>" );
-                                $('#cssTable tr:last').after(retdat);
+                                $("#emptyslot" ).append( "<br>" + retdat + "<br>" );
+                                //$('#cssTable tr:last').after(retdat);
+                                reset_tablesort();
+                                table_exportable();
+                                $('.div-1').css(( "z-index" ), -100 );
+                                $('#loader').hide();
                                 //$("#testpoint" ).append( "<br>" + "complete" + "<br>" );
-                                $('.tablesorter').trigger('update'); //this is absolute GOLD!!!
+                                //$('.tablesorter').trigger('update'); //this is absolute GOLD!!!
                                 //reset_tablesort();
                             },
                             error : function(xhr,errmsg,err) {
                                 alert(xhr.status + ": " + xhr.responseText);
                             }
                     });
-    }	
+//    }	
 
 
 
@@ -180,72 +226,14 @@ reset_tablesort();
 
 <div class="table_body">
 
-<h2 class="text-primary">Peptides detected</h2>
 
 {% if not complete %}<p class="text-info">You do not have permission to view some or all of this data {% endif %} </p>
 
-    <table class="table table-striped tablesorter" id="cssTable">
-    <thead>
-        <tr><th class="hilite">Protein</th><th>UniProt id</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
-    </thead>
-    <tbody id="tb">
-    {% for row in rows %}
-        <tr>
-            <td>
-	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
-            </td>
-            <td>
-                <a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">{{row.protein.prot_id}}</a>
-            </td>
-            <td>
-	        <a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a>
-            </td>
-            <td>
-                {{row.ide.peptide.sequence|length}}
-            </td>
-            <td>
-               {{ row.peptoprot.get_positions }}
-	   </td>
-	   <td>
-	   {% for ptm in row.ptms %}
-	       <a href="{% url 'pepsite:ptm_peptides' ptm.id %}" class="link">{{ptm.description}}</a>
-	   {% endfor %}
-	   </td>
-	   <td>
-	   {{ row.ide.delta_mass }}
-	   </td>
-	   <td>
-	   {{ row.ide.confidence }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.mz }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.charge_state }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.retention_time }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.precursor_mass }}
-           </td>
-           <td>
-	       <a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a>
-           </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-    </table>
+<div class="div-1">
+<img id="loader" class="center" src="{% static 'animations/ajax_loader_blue_512.gif' %}"/>
+</div>
 
-
-<br>
-
-<form action="{% url 'pepsite:send_expt_csv' expt.id %}">
-<input class="btn btn-primary" type="submit" value="Download csv">
-</form>
-
-
-
+    <div id="emptyslot"></div>
 
 </div> <!-- table_body -->
 

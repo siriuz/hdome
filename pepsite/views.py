@@ -860,23 +860,23 @@ def expt2_ajax( request, expt_id ):
     #except EmptyPage:
     #    # If page is out of range (e.g. 9999), deliver last page of results.
     #    proteins = paginator.page(paginator.num_pages)
-    s1 = ExptArrayAssemble()
-    rows = s1.get_peptide_array_from_protein_expt( proteins[:initial_quota], expt, user, cutoffs = True )
+    #s1 = ExptArrayAssemble()
+    #rows = s1.get_peptide_array_from_protein_expt( proteins[:initial_quota], expt, user, cutoffs = True )
     protein_ids_total = [ b.id for b in proteins ]
     protein_ids_initial = protein_ids_total[:][:initial_quota] 
-    for pid in protein_ids_total:
-        if pid in protein_ids_initial:
-            protein_ids_total.remove(pid)
+    #for pid in protein_ids_total:
+    #    if pid in protein_ids_initial:
+    #        protein_ids_total.remove(pid)
     protein_ids = protein_ids_total[initial_quota:] 
-    return render( request, 'pepsite/expt2_ajax.html', {"proteins": proteins[initial_quota:], 'initial_quota' : initial_quota, 'protein_ids': protein_ids, 'protein_ids_initial' : protein_ids_initial, 'protein_ids_total' : protein_ids_total, 'expt' : expt, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False })
+    return render( request, 'pepsite/expt2_ajax.html', {"proteins": proteins[initial_quota:], 'initial_quota' : initial_quota, 'protein_ids': protein_ids, 'protein_ids_initial' : protein_ids_initial, 'protein_ids_total' : protein_ids_total, 'expt' : expt, 'lodgements' : lodgements, 'publications' : publications, 'paginate' : False })
 
 def peptides_render( request, expt_id ):
   user = request.user
   #return HttpResponse( 'Hello!' )
-  if request.POST.has_key( 'protein_id_no' ):
-    protein_ids = request.POST.getlist('protein_id_no')
+  if request.POST.has_key( 'protein_id_no[]' ):
+    protein_ids = request.POST.getlist('protein_id_no[]')
     print protein_ids
-    proteins = list((Protein.objects.filter( id = protein_ids[0]).distinct()))
+    proteins = Protein.objects.filter( id__in = protein_ids).distinct()
     expt = get_object_or_404( Experiment, id = expt_id )
     #publications = expt.get_publications()
     #lodgements = Lodgement.objects.filter( dataset__experiment = expt )

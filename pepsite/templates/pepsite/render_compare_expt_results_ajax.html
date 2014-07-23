@@ -30,6 +30,19 @@ cursor:pointer;
     margin-right: 50px;
 }
 
+#loader
+{
+z-index:-10;
+}
+
+.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    
+}
+
+
 
 
 </style>
@@ -86,6 +99,34 @@ function reset_tablesort() {
 //    $('#testpoint').append( 'hello<br>' );
 //reset_tablesort();
 
+function table_exportable() {
+
+// $('table').each(function() {
+    //var $table = $(this);
+    var $table = $('#cssTable');
+ 
+    var $button1 = $("<button type='button' class='btn btn-lg btn-success'>");
+    var $button2 = $("<button type='button' class='btn btn-lg btn-success'>");
+    $button1.text("Export to spreadsheet");
+    $button2.text("Export to spreadsheet");
+    $button1.insertBefore($table);
+    $button2.insertAfter($table);
+ 
+    $button1.click(function() {
+      var csv = $table.table2CSV({delivery:'value'});
+      window.location.href = 'data:text/csv;charset=UTF-8,'
+                            + encodeURIComponent(csv);
+    });
+ 
+    $button2.click(function() {
+      var csv = $table.table2CSV({delivery:'value'});
+      window.location.href = 'data:text/csv;charset=UTF-8,'
+                            + encodeURIComponent(csv);
+    });
+//  });
+}
+
+
 
 //    for (i = 0; i < protein_ids.length; i++) { 
         $.ajax({
@@ -100,6 +141,7 @@ function reset_tablesort() {
                             success : function(retdat) {
                                 $("#emptyslot" ).append( "<br>" + retdat + "<br>" );
                                 reset_tablesort();
+                                table_exportable();
                                 $('.div-1').css(( "z-index" ), -100 );
                                 $('#loader').hide();
                                 //$('#cssTable tr:last').after(retdat);
@@ -156,82 +198,10 @@ function reset_tablesort() {
       {% load guardian_tags %}
 {% query_data_perms user expt as complete %}
 
-<div class="table_body">
 
-    <h2 class="text-primary">Peptides detected</h2>
 
 
 {% if not complete %}<p class="text-info">You do not have permission to view some or all of this data </p>{% endif %}
-
-
-<!--
-    <table class="table table-striped tablesorter" id="cssTable">
-    <thead>
-        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th>
-                {% for ds in compare_ds %}
-                <th><span class="text-primary">{{ds.experiment.title}}</span>
-                    {{ds.title}}</th>
-                {% endfor %}
-
-            
-            
-            </tr>
-    </thead>
-    <tbody>
-    {% for row in rows %}
-        <tr>
-            <td>
-	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
-            </td>
-            <td>
-                <a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">UniProt Entry</a>
-            </td>
-            <td>
-	        <a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a>
-            </td>
-            <td>
-                {{row.ide.peptide.sequence|length}}
-            </td>
-            <td>
-               {{ row.peptoprot.get_positions }}
-	   </td>
-	   <td>
-	   {% for ptm in row.ptms %}
-	       <a href="{% url 'pepsite:ptm_peptides' ptm.id %}" class="link">{{ptm.description}}</a>
-	   {% endfor %}
-	   </td>
-	   <td>
-	   {{ row.ide.delta_mass }}
-	   </td>
-	   <td>
-	   {{ row.ide.confidence }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.charge_state }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.retention_time }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.precursor_mass }}
-           </td>
-           <td>
-	       <a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a>
-           </td>
-           {% for check in row.checkers %}
-           {% if check %}
-           <td>+</td>
-           {% else %}
-           <td></td>
-           {% endif %}
-           {% endfor %}
-
-        </tr>
-    {% endfor %}
-    </tbody>
-    </table>
-
-    -->
 
 
 <br>

@@ -3,10 +3,11 @@
 {% query_data_perms user expt as complete %}
 
 
+<h2 class="text-primary">Peptides detected</h2>
 
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
-        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th>
+        <tr><th class="hilite">Protein</th><th>UniProt code</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th>
                 {% for ds in compare_ds %}
                 <th><span class="text-primary">{{ds.experiment.title}}</span>
                     {{ds.title}}</th>
@@ -19,55 +20,43 @@
     <tbody>
 
     {% for row in rows %}
-        <tr>
-            <td>
-	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
-            </td>
-            <td>
-                <a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">{{row.protein.prot_id}}</a>
-            </td>
-            <td>
-	        <a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a>
-            </td>
-            <td>
-                {{row.ide.peptide.sequence|length}}
-            </td>
-            <td>
-               {{ row.peptoprot.get_positions }}
-	   </td>
-	   <td>
-	   {% for ptm in row.ptms %}
-	       <a href="{% url 'pepsite:ptm_peptides' ptm.id %}" class="link">{{ptm.description}}</a>
-	   {% endfor %}
-	   </td>
-	   <td>
-	   {{ row.ide.delta_mass }}
-	   </td>
-	   <td>
-	   {{ row.ide.confidence }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.charge_state }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.retention_time }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.precursor_mass }}
-           </td>
-           <td>
-	       <a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a>
-           </td>
-           {% for check in row.checkers %}
-           {% if check %}
-           <td>+</td>
-           {% else %}
-           <td></td>
-           {% endif %}
-           {% endfor %}
+    <tr>
 
-        </tr>
-    {% endfor %}
+            <td><a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a></td>
+            
+            <td><a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">{{row.protein.prot_id}}</a></td>
+            
+            <td><a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a></td>
+            
+            <td>{{row.ide.peptide.sequence|length}}</td>
+            
+            <td>{{ row.peptoprot.get_positions }}</td>
+            
+            <td>{% for ptm in row.ptms %}<a href="{% url 'pepsite:ptm_peptides' ptm.id %}" class="link">{{ptm.description}}</a> {% endfor %}</td>
+            
+            <td>{{ row.ide.delta_mass }}</td>
+            
+            <td>{{ row.ide.confidence }}</td>
+            
+            <td>{{ row.ide.ion.charge_state }}</td>
+            
+            <td>{{ row.ide.ion.retention_time }}</td>
+            
+            <td>{{ row.ide.ion.precursor_mass }}</td>
+            
+            <td><a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a></td>
+            
+            {% for check in row.checkers %}
+               {% if check == 2 %}
+                   <td>+</td>
+               {% elif check == 1 %}
+               <td style="color:red">+</td>
+               {% else %}
+               <td/>
+               {% endif %}
+           {% endfor %}
+   </tr>
+  {% endfor %}
     </tbody>
     </table>
 
