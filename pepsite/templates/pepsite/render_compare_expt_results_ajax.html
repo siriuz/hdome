@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 
+{% load staticfiles %}
 {% block headline %}
 
 <style>
@@ -39,8 +40,8 @@ cursor:pointer;
 
 $(document).ready(function() {
 
-
-    $('#summary').load( "{% url 'pepsite:model_info' 'Experiment' expt.id %}" ); 
+    $('.div-1').css(( "z-index" ), 10 );
+    $('#loader').show();
 
 $('#header').load( "{% url 'pepsite:nav_buttons' %}" );
 $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
@@ -63,7 +64,6 @@ function getCookie(name) {
 
 var csrftoken = getCookie('csrftoken');
 
-
 function reset_tablesort() {       
 
     $("#cssTable").tablesorter({ 
@@ -76,65 +76,45 @@ function reset_tablesort() {
             }, 
         } 
     });
-
 }
 
-    var protein_ids = {{protein_ids|safe}};
-    var protein_ids_initial = {{protein_ids_initial|safe}};
-    var expt_id = "{{expt.id}}";
-    //var initial_quota = {{initial_quota|safe}};
-    var render_url = "/pepsite/peptides_render/" + expt_id + "";
+//$('#testpoint').html('Yep<br>');
+    var expt1 = "{{expt1}}";
+    var exptz = {{exptz|safe}};
+    var render_url = "/pepsite/comparison_peptides_render";
 
-    var text = "expt_id = " + expt_id + "<br>render_url = " + render_url + "<br>";
-    text += "initial_ids: " + "{{protein_ids_initial|length}}" + "<br>";
-    text += "later_ids: " + "{{protein_ids|length}}" + "<br>";
-    text += "check later_ids: " + protein_ids.length + "<br>";
-    text += "total_ids: " + "{{protein_ids_total|length}}" + "<br>";
-    /*
-    for (i = 0; i < protein_ids_initial.length; i++) {
-        var b1 = $.inArray(protein_ids_initial[i], protein_ids);
-        if (b1) {
-            text += protein_ids[i] + "<br>";
-        }
-        }
-    text += "later_ids:<br>";
-    for (i = 0; i < protein_ids.length; i++) { 
-    text += protein_ids[i] + "<br>";
-    }
-    */
+//    $('#testpoint').append( 'hello<br>' );
+//reset_tablesort();
 
 
-$('#testpoint').html( text );
-reset_tablesort();
-
-    for (i = 0; i < protein_ids.length; i++) { 
+//    for (i = 0; i < protein_ids.length; i++) { 
         $.ajax({
                         url : render_url, 
                         type : "POST",
                         dataType: "html", 
                         data : {
-                            'protein_id_no' : protein_ids[i],
+                            'exptz' : exptz,
+                            'expt' : expt1,
                             csrfmiddlewaretoken: csrftoken
                             },
                             success : function(retdat) {
-                                //$("#testpoint" ).append( "<br>" + retdat + "<br>" );
-                                $('#cssTable tr:last').after(retdat);
+                                $("#emptyslot" ).append( "<br>" + retdat + "<br>" );
+                                reset_tablesort();
+                                $('.div-1').css(( "z-index" ), -100 );
+                                $('#loader').hide();
+                                //$('#cssTable tr:last').after(retdat);
                                 //$("#testpoint" ).append( "<br>" + "complete" + "<br>" );
-                                $('.tablesorter').trigger('update'); //this is absolute GOLD!!!
+                                //$('.tablesorter').trigger('update'); //this is absolute GOLD!!!
                                 //reset_tablesort();
                             },
                             error : function(xhr,errmsg,err) {
                                 alert(xhr.status + ": " + xhr.responseText);
                             }
                     });
-    }	
-
+//   }	
 
 
 });
-
-
-
 
 </script>
 
@@ -143,7 +123,7 @@ reset_tablesort();
 </head>
 
 
-<h1>Experiment = <span class="text-primary">{{expt.title}}</span></h1>
+<h1>Comparing Experiments</h1>
 
 
 {% endblock %}
@@ -152,7 +132,12 @@ reset_tablesort();
 
 <div id="summary"></div>
 
-{% if publications %}
+
+
+
+<div id="summary"></div>
+
+
 
 <h2 class="text-primary">Please cite the following publications when using this data:</h2>
 <ul>
@@ -162,17 +147,10 @@ reset_tablesort();
 
 {% endfor %}
 
-{% endif %}
-
 </ul>
 
-<div id="testpoint"></div>
-
-
 </div> <!-- container --> 
-
-
-
+<div id="testpoint"></div>
 
 {% load template_filter %}
       {% load guardian_tags %}
@@ -180,22 +158,33 @@ reset_tablesort();
 
 <div class="table_body">
 
-<h2 class="text-primary">Peptides detected</h2>
+    <h2 class="text-primary">Peptides detected</h2>
 
-{% if not complete %}<p class="text-info">You do not have permission to view some or all of this data {% endif %} </p>
 
+{% if not complete %}<p class="text-info">You do not have permission to view some or all of this data </p>{% endif %}
+
+
+<!--
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
-        <tr><th class="hilite">Protein</th><th>UniProt id</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
+        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th>
+                {% for ds in compare_ds %}
+                <th><span class="text-primary">{{ds.experiment.title}}</span>
+                    {{ds.title}}</th>
+                {% endfor %}
+
+            
+            
+            </tr>
     </thead>
-    <tbody id="tb">
+    <tbody>
     {% for row in rows %}
         <tr>
             <td>
 	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
             </td>
             <td>
-                <a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">{{row.protein.prot_id}}</a>
+                <a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">UniProt Entry</a>
             </td>
             <td>
 	        <a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a>
@@ -218,9 +207,6 @@ reset_tablesort();
 	   {{ row.ide.confidence }}
 	   </td>
 	   <td>
-	   {{ row.ide.ion.mz }}
-	   </td>
-	   <td>
 	   {{ row.ide.ion.charge_state }}
 	   </td>
 	   <td>
@@ -232,22 +218,36 @@ reset_tablesort();
            <td>
 	       <a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a>
            </td>
+           {% for check in row.checkers %}
+           {% if check %}
+           <td>+</td>
+           {% else %}
+           <td></td>
+           {% endif %}
+           {% endfor %}
+
         </tr>
     {% endfor %}
     </tbody>
     </table>
 
+    -->
+
 
 <br>
 
-<form action="{% url 'pepsite:send_expt_csv' expt.id %}">
-<input class="btn btn-primary" type="submit" value="Download csv">
-</form>
 
+<div class="table_body">
 
+<div class="div-1">
+<img id="loader" class="center" src="{% static 'animations/ajax_loader_blue_512.gif' %}"/>
+</div>
 
+    <div id="emptyslot"></div>
 
 </div> <!-- table_body -->
+
+
 
 <div class="container">
 

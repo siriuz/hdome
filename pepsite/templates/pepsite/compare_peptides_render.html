@@ -1,8 +1,22 @@
-
-
 {% load template_filter %}
       {% load guardian_tags %}
 {% query_data_perms user expt as complete %}
+
+
+
+    <table class="table table-striped tablesorter" id="cssTable">
+    <thead>
+        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th>
+                {% for ds in compare_ds %}
+                <th><span class="text-primary">{{ds.experiment.title}}</span>
+                    {{ds.title}}</th>
+                {% endfor %}
+
+            
+            
+            </tr>
+    </thead>
+    <tbody>
 
     {% for row in rows %}
         <tr>
@@ -33,9 +47,6 @@
 	   {{ row.ide.confidence }}
 	   </td>
 	   <td>
-	   {{ row.ide.ion.mz }}
-	   </td>
-	   <td>
 	   {{ row.ide.ion.charge_state }}
 	   </td>
 	   <td>
@@ -47,7 +58,16 @@
            <td>
 	       <a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a>
            </td>
+           {% for check in row.checkers %}
+           {% if check %}
+           <td>+</td>
+           {% else %}
+           <td></td>
+           {% endif %}
+           {% endfor %}
+
         </tr>
     {% endfor %}
-
+    </tbody>
+    </table>
 
