@@ -21,9 +21,10 @@ django.setup() #required
 from django.contrib.auth.models import User
 from pepsite.models import *
 from pepsite import dbtools
+import pepsite.uploaders
 
 
-BGFILE = os.path.join( CURDIR, '../../background/newdata.csv' )
+BGFILE = os.path.join( CURDIR, '../../background/newdata_with_files.csv' )
 
 
 class BackgroundImports(dbtools.DBTools):
@@ -167,7 +168,7 @@ class BackgroundImports(dbtools.DBTools):
                     allele.save()
                     expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
                     expr.save()
-            if k.strip().upper() == 'HLA CLASS I' and bool( rowdic[k].strip() ):
+            if k.strip().upper() == 'HLA CLASS I SEROLOGY' and bool( rowdic[k].strip() ):
                 gene = self.get_model_object( Gene, name = 'HLA Class I', gene_class=1, description = 'Human HLA class I'   )
                 gene.save()
                 for code in codes:
@@ -183,7 +184,7 @@ class BackgroundImports(dbtools.DBTools):
                     allele.save()
                     expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
                     expr.save()
-            elif k.strip().upper() == 'HLA CLASS II' and bool( rowdic[k].strip() ):
+            elif k.strip().upper() == 'HLA CLASS II SEROLOGY' and bool( rowdic[k].strip() ):
                 gene = self.get_model_object( Gene, name = 'HLA Class II', gene_class=2, description = 'Human HLA cLass II'  )
                 gene.save()
                 for code in codes:
@@ -199,8 +200,16 @@ class BackgroundImports(dbtools.DBTools):
                     allele.save()
                     expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
                     expr.save()
+            elif k.strip().upper() == 'H2 CLASS II' and bool( rowdic[k].strip() ):
+                gene = self.get_model_object( Gene, name = 'H2 Class I', gene_class=2, description = 'Mouse H2 Class II'  )
+                gene.save()
+                for code in codes:
+                    allele = self.get_model_object( Allele, code = code, gene = gene, isSer = True )
+                    allele.save()
+                    expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
+                    expr.save()
             elif k.strip().upper() == 'H2 D' and bool( rowdic[k].strip() ):
-                gene = self.get_model_object( Gene, name = 'H2 D', description = 'Mouse H2 D'  )
+                gene = self.get_model_object( Gene, name = 'H2 ', description = 'Mouse H2 D'  )
                 gene.save()
                 for code in codes:
                     allele = self.get_model_object( Allele, code = code, gene = gene, isSer = True )
@@ -236,7 +245,7 @@ class BackgroundImports(dbtools.DBTools):
         """docstring for insert_antibodies"""
         ab_name = rowdic['Elution Ab'] #eventually, we could be dealing with plural Abs here
         url = rowdic['Link to Ab info']
-        ab1 = self.get_model_object( Antibody, name = ab_name,link = url )
+        ab1 = self.get_model_object( Antibody, name = ab_name )
         ab1.save()
         print rowdic.keys()
         for allele_code in rowdic['Ab binds in these samples (allele)'].strip().split( delimiter ):
@@ -345,8 +354,35 @@ class BackgroundImports(dbtools.DBTools):
 
 
 
+    def upload_ss_single( self, user_id, fileobj, expt_id, ab_ids, lodgement_title, cf_cutoff = 99.0, publication_objs = [], public = False ):
+        user = self.get_model_object( User, id = user_id )
+        ul = pepsite.uploaders.Uploads( user = user )
+        metadata = { 'expt1' : expt_id, 'expt2' : None, 'pl1' : publication_objs, 'ab1' : ab_ids, 'ldg' : lodgement_title, 'inst' : 1  }
+        if public:
+            metadata['rel'] = True
+        ul = pepsite.uploaders.Uploads( user = user )
+	ul.preview_ss_simple( metadata )
+	ul.preprocess_ss_simple( fileobj )
+        ul.add_cutoff_mappings( {'cf_' : cf_cutoff} )
+        ul.get_protein_metadata(  )
+        print 'preparing upload'
+        ul.prepare_upload_simple( )
+        print 'uploading'
+        ul.upload_simple()
 
-        
+
+    def single_upload_from_ss(self, username, local, lodgement_title):
+        """docstring for single_upload_from_ss"""
+        fileobj = open( os.path.join( datafile_path, local['File name'] + '_PeptideSummary.txt' ), 'rb' )
+        cf_cutoff = float( local['5% FDR'] )
+        expt_obj = self.get_model_object( Experiment, title = local['Experiment name'] )
+        expt_id = expt_obj.id
+        ab_ids = []
+        for ab_name in local['Elution Ab'].strip().split(','):
+            ab_ids.append( self.get_model_object( Antibody, name = ab_name.strip() ).id )
+        user_id = self.get_model_object( User, username = username ).id
+        print 'done', user_id, fileobj, expt_id, ab_ids, lodgement_title, cf_cutoff 
+        self.upload_ss_single( user_id, fileobj, expt_id, ab_ids, lodgement_title, cf_cutoff = cf_cutoff )
 
             
 
@@ -354,17 +390,29 @@ class BackgroundImports(dbtools.DBTools):
 if __name__ == '__main__':
     bi1 = BackgroundImports()
     bi1.create_full_dic( BGFILE )
-    print bi1.mdict
-    #md1 = bi1.read_canonical_spreadsheet( BGFILE )
-    #for k in sorted( bi1.mdict[3].keys(), key = lambda(a) : a ):
-    #    print '                \'' + k + '\',', bi1.mdict[3][k]
     for en in sorted( bi1.mdict.keys(), key = lambda(a) : int(a) ):
-        #ind, ent = bi1.get_host( bi1.mdict[en] )
         bi1.dummy_boilerplate()
         cl = bi1.get_cell_line( bi1.mdict[en] )
         bi1.insert_alleles( bi1.mdict[en], cl_obj = cl )
         bi1.insert_update_antibodies( bi1.mdict[en] )
         bi1.create_experiment( bi1.mdict[en], cl )
+
+    datafile_path = os.path.join( CURDIR, '../../background/Peptide exports for haplodome/' )
+    for en in sorted( bi1.mdict.keys(), key = lambda(a) : int(a) ):
+        #fileobj = open( os.path.join( datafile_path, bi1.mdict[en]['File name'] + '_PeptideSummary.txt' ), 'rb' )
+        #cf_cutoff = float( bi1.mdict[en]['5% FDR'] )
+        #expt_obj = bi1.get_model_object( Experiment, title = bi1.mdict[en]['Experiment name'] )
+        #expt_id = expt_obj.id
+        #ab_ids = []
+        #for ab_name in bi1.mdict[en]['Elution Ab'].strip().split(','):
+        #    ab_ids.append( bi1.get_model_object( Antibody, name = ab_name.strip() ).id )
+        lodgement_title = 'Auto Lodgement for %s' % bi1.mdict[en]['Experiment name'] 
+        print 'WORKING ON:', bi1.mdict[en]['Experiment name'] 
+        #print 'done', 1, fileobj, expt_id, ab_ids, lodgement_title, cf_cutoff 
+        #bi1.upload_ss_single( 1, fileobj, expt_id, ab_ids, lodgement_title, cf_cutoff = cf_cutoff )
+        bi1.single_upload_from_ss( 'nadine', bi1.mdict[en], lodgement_title )
+
+
 
 
 

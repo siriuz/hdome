@@ -434,7 +434,9 @@ class Uploads(dbtools.DBTools):
     def upload_simple( self ):
         """None -> None
         """
+        i = 0
         for k in self.uldict.keys():
+            i += 1
             local = self.uldict[k]
             pep = self.get_model_object( Peptide, sequence = local['peptide_sequence'] )
             pep.save()
@@ -477,6 +479,7 @@ class Uploads(dbtools.DBTools):
             for protein in proteins:
                 p2p = self.get_model_object( PepToProt, peptide = pep, protein = protein )
                 p2p.save()
+            print 'uploaded ion #%d from Experiment: %s, ion: %s' % ( i, self.expt.title, ion.__str__() )
 
     def upload_simple_multiple( self ):
         """None -> None
