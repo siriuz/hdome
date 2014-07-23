@@ -224,14 +224,14 @@ class ExptArrayAssemble( BaseSearch ):
         ml = []
         for pep in peptides.order_by('sequence'):
             ideset = IdEstimate.objects.filter( peptide = pep, id__in = ides ).distinct()
-            print 'ideset', [b.id for b in ideset]
+            #print 'ideset', [b.id for b in ideset]
             ptmz = []
             for ide in ideset:
                 ptmcon = [ b.id for b in ide.ptms.all().order_by( 'id' ) ]
                 if ptmcon not in ptmz:
                     ptmz.append( ptmcon )
             for ptmcon in ptmz:
-                print 'ptmcon', ptmcon
+                #print 'ptmcon', ptmcon
                 #qlist = []
                 td = []
                 count = 0
@@ -246,7 +246,7 @@ class ExptArrayAssemble( BaseSearch ):
                     a = a.filter( **dic )
                 a = a.filter( isRemoved = False )
                 ideref = a.filter(count = len(ptmcon)).distinct()
-                print 'ideref', [b.id for b in ideref]
+                #print 'ideref', [b.id for b in ideref]
                 entry = self.best_entries( ideref, ptmcon, expt, user, cutoffs = cutoffs ) 
                 if compare:
                     if entry is not None:
@@ -278,10 +278,12 @@ class ExptArrayAssemble( BaseSearch ):
         for i in range( len(datasets)):
             if cutoffs:
                 if IdEstimate.objects.filter( ion__dataset = datasets[i], id__in = ideref, confidence__gte = datasets[i].confidence_cutoff ):
-                    hitlist[i] = True
+                    hitlist[i] = 2
             else:
-                if IdEstimate.objects.filter( ion__dataset = datasets[i], id__in = ideref ):
-                    hitlist[i] = True
+                if IdEstimate.objects.filter( ion__dataset = datasets[i], id__in = ideref, confidence__gte = datasets[i].confidence_cutoff ):
+                    hitlist[i] = 2
+                elif IdEstimate.objects.filter( ion__dataset = datasets[i], id__in = ideref ):
+                    hitlist[i] = 1
 
         return hitlist
 
@@ -293,9 +295,9 @@ class ExptArrayAssemble( BaseSearch ):
         """docstring for best_entry"""
         locl = []
         ptms = Ptm.objects.filter( id__in = ptmcon )
-        print 'be_ptms', [ b.id for b in ptms ]
+        #print 'be_ptms', [ b.id for b in ptms ]
         for ide in ideref:
-            print 'individuals', ide.id, [ b.id for b in ptms ]
+            #print 'individuals', ide.id, [ b.id for b in ptms ]
             for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide): # peptoprot__peptide__idestimate__ion__dataset = ds ): 
                 for ds in Dataset.objects.filter( ion__idestimate = ide, experiment = expt ).order_by( 'rank' ):
                     if user.has_perm( 'view_dataset', ds ):
@@ -306,15 +308,16 @@ class ExptArrayAssemble( BaseSearch ):
                         elif not cutoffs:
                             return( { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
                         else:
-                            print 'missed out:', ide, ptms, ds, 'actual dmass =', ide.delta_mass, 'dmass_cutoff =', ds.dmass_cutoff, 'actual confidence =', ide.confidence, 'confidence cutoff =', ds.confidence_cutoff, 'cutoff status:', cutoffs
+                            #print 'missed out:', ide, ptms, ds, 'actual dmass =', ide.delta_mass, 'dmass_cutoff =', ds.dmass_cutoff, 'actual confidence =', ide.confidence, 'confidence cutoff =', ds.confidence_cutoff, 'cutoff status:', cutoffs
+                            pass
 
     def best_entries_comparison(self, ideref, ptmcon, expt, exptz, user, cutoffs = False):
         """docstring for best_entry"""
         locl = []
         ptms = Ptm.objects.filter( id__in = ptmcon )
-        print 'be_ptms', [ b.id for b in ptms ]
+        #print 'be_ptms', [ b.id for b in ptms ]
         for ide in ideref:
-            print 'individuals', ide.id, [ b.id for b in ptms ]
+            #print 'individuals', ide.id, [ b.id for b in ptms ]
             for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide): # peptoprot__peptide__idestimate__ion__dataset = ds ): 
                 for ds in Dataset.objects.filter( ion__idestimate = ide, experiment = expt ).order_by( 'rank' ):
                     if user.has_perm( 'view_dataset', ds ):

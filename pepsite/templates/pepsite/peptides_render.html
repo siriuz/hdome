@@ -2,52 +2,51 @@
 
 {% load template_filter %}
       {% load guardian_tags %}
-{% query_data_perms user expt as complete %}
+
+<h1 class="text-primary center">Peptides detected</h1>
+
+    <table class="table table-striped tablesorter" id="cssTable">
+    <thead>
+        <tr><th class="hilite">Protein</th><th>UniProt id</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
+    </thead>
+    <tbody id="tb">
 
     {% for row in rows %}
         <tr>
-            <td>
-	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
-            </td>
-            <td>
-                <a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">UniProt Entry</a>
-            </td>
-            <td>
-	        <a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a>
-            </td>
-            <td>
-                {{row.ide.peptide.sequence|length}}
-            </td>
-            <td>
-               {{ row.peptoprot.get_positions }}
-	   </td>
-	   <td>
-	   {% for ptm in row.ptms %}
-	       <a href="{% url 'pepsite:ptm_peptides' ptm.id %}" class="link">{{ptm.description}}</a>
-	   {% endfor %}
-	   </td>
-	   <td>
-	   {{ row.ide.delta_mass }}
-	   </td>
-	   <td>
-	   {{ row.ide.confidence }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.mz }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.charge_state }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.retention_time }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.precursor_mass }}
-           </td>
-           <td>
-	       <a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a>
-           </td>
+            <td><a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a></td>
+
+            <td><a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">{{row.protein.prot_id}}</a></td>
+
+            <td><a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a></td>
+            
+            <td>{{row.ide.peptide.sequence|length}}</td>
+            
+            <td>{{ row.peptoprot.get_positions }}</td>
+            
+            <td>{% for ptm in row.ptms %}<a href="{% url 'pepsite:ptm_peptides' ptm.id %}" class="link">{{ptm.description}}</a> {% endfor %}</td>
+            
+            <td>{{ row.ide.delta_mass }}</td>
+            
+            <td>{{ row.ide.confidence }}</td>
+            
+            <td>{{ row.ide.ion.mz }}</td>
+            
+            <td>{{ row.ide.ion.charge_state }}</td>
+            
+            <td>{{ row.ide.ion.retention_time }}</td>
+            
+            <td>{{ row.ide.ion.precursor_mass }}</td>
+            
+            <td><a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a></td>
+        
         </tr>
     {% endfor %}
+    </tbody>
+    </table>
+
+
+<br>
+
+
 
 
