@@ -391,6 +391,7 @@ if __name__ == '__main__':
     bi1 = BackgroundImports()
     bi1.create_full_dic( BGFILE )
     for en in sorted( bi1.mdict.keys(), key = lambda(a) : int(a) ):
+        break
         bi1.dummy_boilerplate()
         cl = bi1.get_cell_line( bi1.mdict[en] )
         bi1.insert_alleles( bi1.mdict[en], cl_obj = cl )
@@ -399,7 +400,9 @@ if __name__ == '__main__':
 
     datafile_path = os.path.join( CURDIR, '../../background/Peptide exports for haplodome/' )
     for en in sorted( bi1.mdict.keys(), key = lambda(a) : int(a) ):
-        #fileobj = open( os.path.join( datafile_path, bi1.mdict[en]['File name'] + '_PeptideSummary.txt' ), 'rb' )
+     if bi1.mdict[en]['Experiment name'].strip() not in ( '9013 Class I', '9013 DR', '9013 DQ' ):
+      try:
+        fileobj = open( os.path.join( datafile_path, bi1.mdict[en]['File name'] + '_PeptideSummary.txt' ), 'rb' )
         #cf_cutoff = float( bi1.mdict[en]['5% FDR'] )
         #expt_obj = bi1.get_model_object( Experiment, title = bi1.mdict[en]['Experiment name'] )
         #expt_id = expt_obj.id
@@ -411,6 +414,8 @@ if __name__ == '__main__':
         #print 'done', 1, fileobj, expt_id, ab_ids, lodgement_title, cf_cutoff 
         #bi1.upload_ss_single( 1, fileobj, expt_id, ab_ids, lodgement_title, cf_cutoff = cf_cutoff )
         bi1.single_upload_from_ss( 'nadine', bi1.mdict[en], lodgement_title )
+      except:
+        print 'FILE MISSING I THINK:', os.path.join( datafile_path, bi1.mdict[en]['File name'] + '_PeptideSummary.txt') 
 
 
 
