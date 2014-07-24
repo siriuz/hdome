@@ -1,7 +1,7 @@
 from pepsite.models import *
-from django.db.models import Q
+from django.db.models import Q, F
 from django.db.models import Count
-
+from django.db.models import Max, Min
 
 def rek(lok):
     a = abs( lok)
@@ -219,44 +219,45 @@ class ExptArrayAssemble( BaseSearch ):
 	return ml
 
     def get_peptide_array_expt_restricted( self, ides, peptides, expt, user, cutoffs = False, compare = False, compare_clean = False, comparators = None, cutoff_list = [0.05, 99.0], **kwargs ):
-        """
-        """
-        ml = []
-        for pep in peptides.order_by('sequence'):
-            ideset = IdEstimate.objects.filter( peptide = pep, id__in = ides ).distinct()
-            #print 'ideset', [b.id for b in ideset]
-            ptmz = []
-            for ide in ideset:
-                ptmcon = [ b.id for b in ide.ptms.all().order_by( 'id' ) ]
-                if ptmcon not in ptmz:
-                    ptmz.append( ptmcon )
-            for ptmcon in ptmz:
-                #print 'ptmcon', ptmcon
-                #qlist = []
-                td = []
-                count = 0
-                if not ptmcon:
-                    td = [ {'ptms__isnull' : True}, {'peptide' : pep }, {'ion__experiment' : expt } ]
-                else:
-                    for ptm in ptmcon:
-                        td.append( { 'ptms__id' : ptm } )
-                    td += [ {'peptide' : pep }, {'ion__experiment' : expt } ]
-                a = IdEstimate.objects.all().annotate( count = Count('ptms'))
-                for dic in td:
-                    a = a.filter( **dic )
-                a = a.filter( isRemoved = False )
-                ideref = a.filter(count = len(ptmcon)).distinct()
-                #print 'ideref', [b.id for b in ideref]
-                entry = self.best_entries( ideref, ptmcon, expt, user, cutoffs = cutoffs ) 
-                if compare:
-                    if entry is not None:
-                        checkers = self.check_datasets( comparators, pep, ptmcon, cutoffs = compare_clean )
-                        entry[ 'checkers' ] = checkers 
-                        ml.append( entry )
-                else:
-                    if entry is not None:
-                        ml.append( entry )
-        return ml
+            """
+            """
+            ml = []
+            ideset = IdEstimate.objects.filter( peptide__in = peptides, id__in = ides, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().annotate( count = Count('ptms'), best = Min('delta_mass')).filter( delta_mass = F('best') )
+            #for pep in peptides.order_by('sequence'):
+            #print pep.sequence
+            #ideset = IdEstimate.objects.filter( peptide = pep, id__in = ides, confidence__gte = ion__dataset__confidence_cutoff ).distinct().annotate( count = Count('ptms')).filter( 
+            #ptmz = []
+            #for ide in ideset:
+            #    ptmcon = [ b.id for b in ide.ptms.all().order_by( 'id' ) ]
+            #    if ptmcon not in ptmz:
+            #        ptmz.append( ptmcon )
+            #for ptmcon in ptmz:
+            #    #print 'ptmcon', ptmcon
+            #    #qlist = []
+            #    td = []
+            #    count = 0
+            #    if not ptmcon:
+            #        td = [ {'ptms__isnull' : True}, {'peptide' : pep }, {'ion__experiment' : expt } ]
+            #    else:
+            #        for ptm in ptmcon:
+            #            td.append( { 'ptms__id' : ptm } )
+            #        td += [ {'peptide' : pep }, {'ion__experiment' : expt } ]
+            #    a = IdEstimate.objects.all().annotate( count = Count('ptms'))
+            #    for dic in td:
+            #        a = a.filter( **dic )
+            #    a = a.filter( isRemoved = False )
+            #    ideref = a.filter(count = len(ptmcon)).distinct()
+            #    #print 'ideref', [b.id for b in ideref]
+            #    entry = self.best_entries( ideref, ptmcon, expt, user, cutoffs = cutoffs ) 
+            #    if compare:
+            #        if entry is not None:
+            #            checkers = self.check_datasets( comparators, pep, ptmcon, cutoffs = compare_clean )
+            #            entry[ 'checkers' ] = checkers 
+            #            ml.append( entry )
+            #    else:
+            #        if entry is not None:
+            #            ml.append( entry )
+            return ml
 
     def check_datasets(self, datasets, peptide, ptmcon, cutoffs = False ):
         """docstring for e"""
