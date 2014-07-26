@@ -222,7 +222,22 @@ class ExptArrayAssemble( BaseSearch ):
             """
             """
             ml = []
-            ideset = IdEstimate.objects.filter( peptide__in = peptides, id__in = ides, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().annotate( count = Count('ptms'), best = Min('delta_mass')).filter( delta_mass = F('best') )
+            ideset = IdEstimate.objects.filter( ion__experiment = expt, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().annotate( count = Count('ptms'), best = IdEstimate.objects.all().aggregate( Min('delta_mass') )).filter( delta_mass = F('best') ).distinct()
+            print len( ideset )
+            i = 0
+            for ide in ideset:
+              i += 1
+              if i < 2001:
+                if not (i % 1000):
+                    print i
+
+                ptms = ide.ptms.all()
+                ds = ide.ion.dataset
+                p2pz = PepToProt.objects.filter( peptide__idestimate = ide ).distinct()
+                for p2p in p2pz:
+                    protein = p2p.protein
+                    ml.append(  { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
+            print 'ide processing done!'
             #for pep in peptides.order_by('sequence'):
             #print pep.sequence
             #ideset = IdEstimate.objects.filter( peptide = pep, id__in = ides, confidence__gte = ion__dataset__confidence_cutoff ).distinct().annotate( count = Count('ptms')).filter( 
