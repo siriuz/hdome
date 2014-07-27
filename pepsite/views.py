@@ -894,7 +894,9 @@ def peptides_render( request, expt_id ):
     #    # If page is out of range (e.g. 9999), deliver last page of results.
     #    proteins = paginator.page(paginator.num_pages)
     s1 = ExptArrayAssemble()
-    rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user, cutoffs = True )
+    #rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user, cutoffs = True )
+    rows = s1.mkiii_expt_query(  expt.id, user.id )
+    print len(rows)
     #protein_ids = [ b.id for b in proteins ]
     return render( request, 'pepsite/peptides_render_rapid.html', { 'expt' : expt, 'rows' : rows }) 
     return HttpResponse( [ b['expt'].title for b in rows] )

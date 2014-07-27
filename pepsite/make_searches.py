@@ -1,7 +1,9 @@
 from pepsite.models import *
+import time
 from django.db.models import Q, F
 from django.db.models import Count
 from django.db.models import Max, Min
+from django.db import connection
 
 def rek(lok):
     a = abs( lok)
@@ -273,6 +275,104 @@ class ExptArrayAssemble( BaseSearch ):
             #        if entry is not None:
             #            ml.append( entry )
             return ml
+
+    def mkii_expt_query(self, exp_id, user_id, perm = False):
+        """docstring for simple_expt_query"""
+        expt = Experiment.objects.get( id = exp_id )
+        print expt.title
+        t0 = time.time()
+        user = User.objects.get( id = user_id )
+        dsets = Dataset.objects.filter( experiment__id = exp_id ).distinct()
+        for ds in Experiment.objects.get( id = exp_id ).dataset_set.all():
+            if not user.has_perm( 'view_dataset', ds ):
+                dsets = dsets.exclude( ds )
+        p1 = Peptide.objects.filter(idestimate__ion__experiment = exp_id, idestimate__ion__dataset__confidence_cutoff__lte = F('idestimate__confidence')).distinct()
+        sql1 = "select ptmstr from pepsite_idestimate t3 left outer join (select t1.id, t1.confidence, \
+                array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),\'+\') as ptmstr from pepsite_idestimate t1 \
+                left outer join pepsite_idestimate_ptms t2 on (t2.idestimate_id = t1.id) group by t1.id) as foo \
+                on(foo.id = t3.id) where t3.id = pepsite_idestimate.id"
+        v1 = IdEstimate.objects.extra( select = { 'ptmstr' :sql1, 'dm' : "abs(delta_mass)" } ).\
+                filter( ion__experiment = exp_id, ion__dataset__confidence_cutoff__lte = F('confidence'), ion__dataset__in = dsets )\
+                .order_by( 'dm' ).values( 'ptmstr', 'peptide', 'id' ).annotate( ptmc = Count('ptms') ).distinct().order_by('-ptmc')\
+                
+        j = v1.count()
+        t1 = time.time()
+        #return (v1, t1 - t0, j, exp_id, user_id, perm)
+        return self.rapid_array( v1, exp_id ) 
+
+    def mkiii_expt_query(self, exp_id, user_id, perm = False):
+        """docstring for simple_expt_query"""
+        t0 = time.time()
+        cursor = connection.cursor()
+        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\"" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\"" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
+        expt = Experiment.objects.get( id = exp_id )
+        print expt.title
+        user = User.objects.get( id = user_id )
+        dsets = Dataset.objects.filter( experiment__id = exp_id ).distinct()
+        for ds in Experiment.objects.get( id = exp_id ).dataset_set.all():
+            if not user.has_perm( 'view_dataset', ds ):
+                dsets = dsets.exclude( ds )
+        qq1 = IdEstimate.objects.filter( ion__dataset__in = dsets, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().query
+        cursor.execute( 'CREATE VIEW \"allowedides\" AS ' + str( qq1 ) )
+        qq2 = "CREATE VIEW suppavail AS SELECT foo.id, foo.peptide_id, foo.ptmstr, abs(delta_mass) AS adm,\
+                min(abs(foo.delta_mass)), max(foo.id) FROM (select t1.id, t1.confidence, t1.peptide_id, \
+                t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM \
+                pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
+                group by t1.id) AS foo GROUP BY foo.id, foo.peptide_id, foo.ptmstr, foo.delta_mass"
+        qq3 = "CREATE VIEW suppcorrect AS SELECT foo.peptide_id, foo.ptmstr, min(abs(foo.delta_mass)), \
+                max(foo.id) FROM (select t1.id, t1.confidence, t1.peptide_id, t1.delta_mass, \
+                array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM pepsite_idestimate \
+                t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) group by t1.id) AS \
+                foo GROUP BY foo.peptide_id, foo.ptmstr"
+        #qq4 = "SELECT DISTINCT t2.id FROM suppcorrect t1 INNER JOIN suppavail t2 ON (t2.adm = t1.min) \
+        #        INNER JOIN allowedides ON (t2.id = allowedides.id)"
+        qq4 = "SELECT DISTINCT allowedides.id FROM suppcorrect t1 \
+                INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
+                INNER JOIN allowedides ON (t2.id = allowedides.id AND t1.min = abs(allowedides.delta_mass))"
+        cursor.execute( qq2 )
+        cursor.execute( qq3 )
+        cursor.execute( qq4 )
+        ides = cursor.fetchall()
+        j = len(ides)
+        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\"" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\"" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
+        cursor.close()
+        t1 = time.time()
+        return self.rapid_array([b[0] for b in ides], exp_id)
+
+    def rapid_array_crap(self, valuz, expt_id):
+        """docstring for rapid_array"""
+        t0 = time.time()
+        expt = Experiment.objects.get( id = expt_id )
+        rows = []
+        #idlist =  [ b['id'] for b in valuz]
+        ides = IdEstimate.objects.filter( id__in = valuz ).distinct()
+        for ide in ides:
+            for prot in Protein.objects.filter( peptoprot__peptide__idestimate = ide ).distinct():
+                p2p = PepToProt.objects.get( peptide = ide.peptide, protein = prot )
+                row = { 'ide': ide, 'ptms' : ide.ptms.all(), 'expt' : expt, 'ds' : ide.ion.dataset, 'protein' : prot, 'peptoprot' : p2p } 
+                rows.append(row)
+        t1 = time.time()
+        return (t1 - t0, len(rows) )
+
+
+    def rapid_array(self, valuz, expt_id):
+        """docstring for rapid_array"""
+        t0 = time.time()
+        expt = Experiment.objects.get( id = expt_id )
+        rows = []
+        #idlist =  [ b['id'] for b in valuz]
+        ides = IdEstimate.objects.filter( id__in = valuz ).distinct()
+        for ide in ides:
+            for prot in Protein.objects.filter( peptoprot__peptide__idestimate = ide ).distinct():
+                p2p = PepToProt.objects.get( peptide = ide.peptide, protein = prot )
+                row = { 'ide': ide, 'ptms' : ide.ptms.all(), 'expt' : expt, 'ds' : ide.ion.dataset, 'protein' : prot, 'peptoprot' : p2p } 
+                rows.append(row)
+        t1 = time.time()
+        return rows
 
     def check_datasets(self, datasets, peptide, ptmcon, cutoffs = False ):
         """docstring for e"""
