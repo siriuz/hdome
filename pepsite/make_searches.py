@@ -224,7 +224,8 @@ class ExptArrayAssemble( BaseSearch ):
             """
             """
             ml = []
-            ideset = IdEstimate.objects.filter( ion__experiment = expt, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().annotate( count = Count('ptms'), best = IdEstimate.objects.all().aggregate( Min('delta_mass') )).filter( delta_mass = F('best') ).distinct()
+            #ideset = IdEstimate.objects.filter( ion__experiment = expt, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().annotate( count = Count('ptms'), best = IdEstimate.objects.all().aggregate( Min('delta_mass') )).filter( delta_mass = F('best') ).distinct()
+            ideset = IdEstimate.objects.filter( ion__experiment = expt, ion__dataset__confidence_cutoff__lte = F('confidence'), id__in = ides ).distinct()
             print len( ideset )
             i = 0
             for ide in ideset:
@@ -316,18 +317,25 @@ class ExptArrayAssemble( BaseSearch ):
                 dsets = dsets.exclude( ds )
         qq1 = IdEstimate.objects.filter( ion__dataset__in = dsets, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().query
         cursor.execute( 'CREATE VIEW \"allowedides\" AS ' + str( qq1 ) )
-        qq2 = "CREATE VIEW suppavail AS SELECT foo.id, foo.peptide_id, foo.ptmstr, abs(delta_mass) AS adm,\
-                min(abs(foo.delta_mass)), max(foo.id) FROM (select t1.id, t1.confidence, t1.peptide_id, \
+        qq2 = "CREATE VIEW suppavail AS SELECT foo.id, foo.ptmstr,\
+                min(abs(foo.delta_mass)) FROM (select t1.id, t1.confidence, t1.peptide_id, \
                 t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM \
                 pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
-                group by t1.id) AS foo GROUP BY foo.id, foo.peptide_id, foo.ptmstr, foo.delta_mass"
-        qq3 = "CREATE VIEW suppcorrect AS SELECT foo.peptide_id, foo.ptmstr, min(abs(foo.delta_mass)), \
-                max(foo.id) FROM (select t1.id, t1.confidence, t1.peptide_id, t1.delta_mass, \
+                \
+                group by t1.id, t1.peptide_id) AS foo \
+                GROUP BY foo.id, foo.ptmstr \
+                "
+        qq2a = "CREATE VIEW sv2 AS SELECT * FROM suppavail WHERE adm = min"
+        qq3 = "CREATE VIEW suppcorrect AS SELECT DISTINCT foo.peptide_id, foo.ptmstr, min(abs(foo.delta_mass)) \
+                FROM (select t1.id, t1.confidence, t1.peptide_id, t1.delta_mass, \
                 array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM pepsite_idestimate \
-                t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) group by t1.id) AS \
+                t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
+                GROUP BY t1.id) AS \
                 foo GROUP BY foo.peptide_id, foo.ptmstr"
-        #qq4 = "SELECT DISTINCT t2.id FROM suppcorrect t1 INNER JOIN suppavail t2 ON (t2.adm = t1.min) \
-        #        INNER JOIN allowedides ON (t2.id = allowedides.id)"
+        sql1 = "select ptmstr from pepsite_idestimate t3 left outer join (select t1.id, t1.confidence, \
+                array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),\'+\') as ptmstr from pepsite_idestimate t1 \
+                left outer join pepsite_idestimate_ptms t2 on (t2.idestimate_id = t1.id) group by t1.id) as foo \
+                on(foo.id = t3.id) where t3.id = pepsite_idestimate.id"
         qq4 = "SELECT DISTINCT allowedides.id FROM suppcorrect t1 \
                 INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
                 INNER JOIN allowedides ON (t2.id = allowedides.id AND t1.min = abs(allowedides.delta_mass))"
@@ -358,8 +366,31 @@ class ExptArrayAssemble( BaseSearch ):
         t1 = time.time()
         return (t1 - t0, len(rows) )
 
-
     def rapid_array(self, valuz, expt_id):
+        """docstring for rapid_array"""
+        t0 = time.time()
+        expt = Experiment.objects.get( id = expt_id )
+        rows = []
+        #idlist =  [ b['id'] for b in valuz]
+        ides = IdEstimate.objects.filter( id__in = valuz ).distinct()
+        ch1 = {}
+        for ide in ides:
+            repstr = '%s+%s' % ( ide.peptide.id, [ b.id for b in ide.ptms.all().order_by('id') ] )
+            try:
+                ch1[repstr]
+                pass
+            except:
+                ch1[repstr] = True
+                for prot in Protein.objects.filter( peptoprot__peptide__idestimate = ide ).distinct():
+                    p2p = PepToProt.objects.get( peptide = ide.peptide, protein = prot )
+                    row = { 'ide': ide, 'ptms' : ide.ptms.all(), 'expt' : expt, 'ds' : ide.ion.dataset, 'protein' : prot, 'peptoprot' : p2p } 
+                    rows.append(row)
+        t1 = time.time()
+        return rows
+
+
+
+    def nother_rapid_array(self, valuz, expt_id):
         """docstring for rapid_array"""
         t0 = time.time()
         expt = Experiment.objects.get( id = expt_id )

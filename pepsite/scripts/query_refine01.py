@@ -176,6 +176,90 @@ class QueryOpt( object ):
         t1 = time.time()
         return (ides, t1 - t0, j, exp_id, user_id, perm)
 
+    def mkiii_compare_query(self, prim_exp_id, other_exp_ids, user_id, perm = False):
+        """docstring for simple_expt_query"""
+        t0 = time.time()
+        cursor = connection.cursor()
+        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\"" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
+        cursor.execute( "DROP VIEW IF EXISTS \"sv2\"" )
+        expt = Experiment.objects.get( id = prim_exp_id )
+        print expt.title
+        user = User.objects.get( id = user_id )
+        dsets = Dataset.objects.filter( experiment__id = exp_id ).distinct()
+        for ds in Experiment.objects.get( id = exp_id ).dataset_set.all():
+            if not user.has_perm( 'view_dataset', ds ):
+                dsets = dsets.exclude( ds )
+        qq1 = IdEstimate.objects.filter( ion__dataset__in = dsets, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().query
+        cursor.execute( 'CREATE VIEW \"allowedides\" AS ' + str( qq1 ) )
+        qq2 = "CREATE VIEW suppavail AS SELECT foo.id, foo.ptmstr,\
+                min(abs(foo.delta_mass)) FROM (select t1.id, t1.confidence, t1.peptide_id, \
+                t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM \
+                pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
+                \
+                group by t1.id, t1.peptide_id) AS foo \
+                GROUP BY foo.id, foo.ptmstr \
+                "
+        qq2a = "CREATE VIEW sv2 AS SELECT * FROM suppavail WHERE adm = min"
+        qq3 = "CREATE VIEW suppcorrect AS SELECT DISTINCT foo.peptide_id, foo.ptmstr, min(abs(foo.delta_mass)) \
+                FROM (select t1.id, t1.confidence, t1.peptide_id, t1.delta_mass, \
+                array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM pepsite_idestimate \
+                t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
+                GROUP BY t1.id) AS \
+                foo GROUP BY foo.peptide_id, foo.ptmstr"
+        qq3a = "CREATE VIEW suppcorrect AS SELECT DISTINCT foo.peptide_id, foo.ptmstr, min(abs(foo.delta_mass)) \
+                FROM (select t1.id, t1.confidence, t1.peptide_id, t1.delta_mass, \
+                array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM pepsite_idestimate \
+                t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
+                GROUP BY t1.id) AS \
+                foo GROUP BY foo.peptide_id, foo.ptmstr"
+        sql1 = "select ptmstr from pepsite_idestimate t3 left outer join (select t1.id, t1.confidence, \
+                array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),\'+\') as ptmstr from pepsite_idestimate t1 \
+                left outer join pepsite_idestimate_ptms t2 on (t2.idestimate_id = t1.id) group by t1.id) as foo \
+                on(foo.id = t3.id) where t3.id = pepsite_idestimate.id"
+        qq4 = "SELECT DISTINCT allowedides.id FROM suppcorrect t1 \
+                INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
+                INNER JOIN allowedides ON (t2.id = allowedides.id AND t1.min = abs(allowedides.delta_mass))"
+        qq5 = "SELECT \
+                "
+        qq4a = "SELECT * FROM \
+                ( \
+                SELECT DISTINCT t1.peptide_id, t1.ptmstr, min(tds.id) as dsmin FROM suppcorrect t1 \
+                INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
+                INNER JOIN allowedides ON (t2.id = allowedides.id AND t1.min = abs(allowedides.delta_mass)) \
+                INNER JOIN pepsite_ion ON (pepsite_ion.id = allowedides.id) \
+                INNER JOIN pepsite_dataset tds \
+                ON ( pepsite_ion.dataset_id = tds.id ) \
+                GROUP BY t1.peptide_id, t1.ptmstr \
+                ) AS perm1\
+                INNER JOIN suppcorrect t3 ON ( t3.ptmstr = perm1.ptmstr ) \
+                "
+        qq4a = "SELECT DISTINCT allowedides.id FROM suppcorrect t1 INNER JOIN \
+                allowedides ON (t1.peptide_id = allowedides. AND t1.min = abs(allowedides.delta_mass))"
+        cursor.execute( qq2 )
+        cursor.execute( 'SELECT COUNT(*) FROM suppavail' )
+        print cursor.fetchall(  )
+        #cursor.execute( 'SELECT COUNT(foo.peptide_id) FROM (SELECT DISTINCT peptide_id, ptmstr FROM suppavail) as foo' )
+        #print cursor.fetchall(  )
+        #cursor.execute( qq2a )
+        #cursor.execute( 'SELECT COUNT(*) FROM sv2' )
+        #print cursor.fetchall(  )
+        cursor.execute( qq3 )
+        cursor.execute( 'SELECT COUNT(*) FROM suppcorrect' )
+        print cursor.fetchall(  )
+        cursor.execute( qq4 )
+        ides = cursor.fetchall()
+        j = len(ides)
+        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\"" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
+        cursor.close()
+        #ideobjs = IdEstimate.objects.filter( id__in = [b[0] for b in ides] ).distinct()
+        #ideobjs = ideobjs.filter( 
+        t1 = time.time()
+        return (ides, t1 - t0, j, exp_id, user_id, perm)
+
     def rapid_array(self, valuz, expt_id):
         """docstring for rapid_array"""
         t0 = time.time()
@@ -183,11 +267,18 @@ class QueryOpt( object ):
         rows = []
         #idlist =  [ b['id'] for b in valuz]
         ides = IdEstimate.objects.filter( id__in = valuz ).distinct()
+        ch1 = {}
         for ide in ides:
-            for prot in Protein.objects.filter( peptoprot__peptide__idestimate = ide ).distinct():
-                p2p = PepToProt.objects.get( peptide = ide.peptide, protein = prot )
-                row = { 'ide': ide, 'ptms' : ide.ptms.all(), 'expt' : expt, 'ds' : ide.ion.dataset, 'protein' : prot, 'peptoprot' : p2p } 
-                rows.append(row)
+            repstr = '%s+%s' % ( ide.peptide.id, [ b.id for b in ide.ptms.all().order_by('id') ] )
+            try:
+                ch1[repstr]
+                pass
+            except:
+                ch1[repstr] = True
+                for prot in Protein.objects.filter( peptoprot__peptide__idestimate = ide ).distinct():
+                    p2p = PepToProt.objects.get( peptide = ide.peptide, protein = prot )
+                    row = { 'ide': ide, 'ptms' : ide.ptms.all(), 'expt' : expt, 'ds' : ide.ion.dataset, 'protein' : prot, 'peptoprot' : p2p } 
+                    rows.append(row)
         t1 = time.time()
         return (t1 - t0, len(rows) )
 
@@ -229,7 +320,7 @@ if __name__=='__main__':
     print '\n\nmkiii_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r\n\n' %  q3r[1:]   #print 'simple_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r' % qo.simple_expt_query( exp_id, user_id, perm = False)
     print q3r[0][:4]
     ar1 = [b[0] for b in q3r[0]][:]
-    #print '\n\nrapid_array ran for %f seconds and returned %d results\n\n' % ( qo.rapid_array(ar1, exp_id)  )
+    print '\n\nrapid_array ran for %f seconds and returned %d results\n\n' % ( qo.rapid_array(ar1, exp_id)  )
     #q2r = qo.make_array_from_ide_vals( ar1, exp_id )
     #print '\n\nassembled array of size %d in %f seconds\n\n' % ( q2r[1].count(), q2r[0] )
     #print q2r[1][:3]
