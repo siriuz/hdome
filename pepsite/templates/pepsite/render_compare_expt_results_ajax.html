@@ -179,7 +179,7 @@ function table_exportable() {
 
 <div id="summary"></div>
 
-
+{% if publications %}
 
 <h2 class="text-primary">Please cite the following publications when using this data:</h2>
 <ul>
@@ -188,6 +188,8 @@ function table_exportable() {
 <li>{{publication.display}}</li>
 
 {% endfor %}
+
+{% endif %}
 
 </ul>
 

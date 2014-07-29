@@ -182,6 +182,8 @@ class QueryOpt( object ):
         cursor = connection.cursor()
         cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"possibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"comparepossibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"cleancomparepossibles\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"ideproduct\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"combinedideproduct\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"ideproduct2\" CASCADE" )
@@ -190,6 +192,7 @@ class QueryOpt( object ):
         cursor.execute( "DROP VIEW IF EXISTS \"cleanidescompare\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"compcorrect\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"sv2\" CASCADE" )
         expt = Experiment.objects.get( id = prim_exp_id )
         exptz = Experiment.objects.filter( id__in = other_exp_ids )
@@ -247,6 +250,14 @@ class QueryOpt( object ):
                 SELECT DISTINCT allowedides.id as id, t2.ptmstr, t1.peptide_id FROM suppcorrect t1 \
                 INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
                 INNER JOIN allowedides ON (t2.id = allowedides.id AND t1.min = abs(allowedides.delta_mass))"
+        qq41 = "CREATE VIEW comparepossibles AS \
+                SELECT DISTINCT allidescompare.id as id, t2.ptmstr, t1.peptide_id FROM suppcorrect t1 \
+                INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
+                INNER JOIN allidescompare ON (t2.id = allidescompare.id)"
+        qq42 = "CREATE VIEW cleancomparepossibles AS \
+                SELECT DISTINCT cleanidescompare.id as id, t2.ptmstr, t1.peptide_id FROM suppcorrect t1 \
+                INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
+                INNER JOIN cleanidescompare ON (t2.id = cleanidescompare.id)"
         qq4a = "CREATE VIEW ideproduct AS \
                 SELECT DISTINCT id FROM \
                 possibles"
@@ -266,7 +277,7 @@ class QueryOpt( object ):
         qq6 = "CREATE VIEW ideproduct2 AS \
                 SELECT * FROM \
                 (SELECT t1.id, t1.peptide_id, t1.ptmstr, array_agg(t6.id) as dsids  FROM \
-                possibles t1 \
+                comparepossibles t1 \
                 INNER JOIN allidescompare t2 ON ( t1.id = t2.id ) \
                 INNER JOIN pepsite_ion t5 ON ( t2.ion_id = t5.id ) \
                 INNER JOIN pepsite_dataset t6 ON ( t5.dataset_id = t6.id )\
@@ -276,7 +287,7 @@ class QueryOpt( object ):
         qq6a = "CREATE VIEW ideproduct3 AS \
                 SELECT * FROM \
                 (SELECT t1.id, t1.peptide_id, t1.ptmstr, array_agg(t6.id) as dsids  FROM \
-                possibles t1 \
+                cleancomparepossibles t1 \
                 INNER JOIN cleanidescompare t2 ON ( t1.id = t2.id ) \
                 INNER JOIN pepsite_ion t5 ON ( t2.ion_id = t5.id ) \
                 INNER JOIN pepsite_dataset t6 ON ( t5.dataset_id = t6.id )\
@@ -287,8 +298,8 @@ class QueryOpt( object ):
                 SELECT * FROM \
                 (SELECT DISTINCT t1.id, t2.dsids, t3.dsids as cleandsz  FROM \
                 possibles t1 \
-                INNER JOIN ideproduct2 t2 ON ( t1.id = t2.id ) \
-                INNER JOIN ideproduct3 t3 ON ( t1.id = t3.id ) \
+                INNER JOIN ideproduct2 t2 ON ( t1.peptide_id = t2.peptide_id AND t1.ptmstr = t2.ptmstr ) \
+                INNER JOIN ideproduct3 t3 ON ( t1.peptide_id = t3.peptide_id AND t1.ptmstr = t3.ptmstr ) \
                 ) AS foo \
                 "
         qqresult = "SELECT * FROM combinedideproduct"
@@ -301,9 +312,12 @@ class QueryOpt( object ):
         #cursor.execute( 'SELECT COUNT(*) FROM sv2' )
         #print cursor.fetchall(  )
         cursor.execute( qq3 )
+        #cursor.execute( qq3a )
         cursor.execute( 'SELECT COUNT(*) FROM suppcorrect' )
         print cursor.fetchall(  )
         cursor.execute( qq4 )
+        cursor.execute( qq41 )
+        cursor.execute( qq42 )
         cursor.execute( qq4a )
         cursor.execute( qq6 )
         cursor.execute( qq6a )
@@ -313,6 +327,8 @@ class QueryOpt( object ):
         j = len(ides)
         cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"possibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"comparepossibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"cleancomparepossibles\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"ideproduct\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"combinedideproduct\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"ideproduct2\" CASCADE" )
@@ -321,6 +337,7 @@ class QueryOpt( object ):
         cursor.execute( "DROP VIEW IF EXISTS \"cleanidescompare\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"compcorrect\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"sv2\" CASCADE" )
         cursor.close()
         t1 = time.time()

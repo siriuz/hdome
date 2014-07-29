@@ -305,30 +305,21 @@ def compare_expt_form_ajax( request ):
             exptz2 = [ int(b) for b in exptz ]
             #exptz = formdata['exptz']
             context = { 'exptz' : exptz, 'expt1' : expt1  }
-            proteins = Protein.objects.filter( peptide__ion__experiment__id = expt1).distinct()
-            protein_ids = [b.id for b in proteins][:25]
+            #proteins = Protein.objects.filter( peptide__ion__experiment__id = expt1).distinct()
+            #protein_ids = [b.id for b in proteins][:25]
             expt = get_object_or_404( Experiment, id = expt1 )
             all_exp = [ expt ]
             #publications = expt.get_publications()
             lodgements = Lodgement.objects.filter( dataset__experiment = expt )
-            comp_exz = {}
+            #comp_exz = {}
             for ex in exptz:
                 ex_obj = get_object_or_404( Experiment, id = ex )
-                comp_exz[ ex_obj ] = []
+                #comp_exz[ ex_obj ] = []
                 all_exp.append( ex_obj )
-                #publications.append( ex_obj.get_publications() )
             publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
-            compare_ds = []
-            #for exp_cm in comp_exz:
-            #    for ds in exp_cm.dataset_set.all().distinct().order_by('title'):
-            #        if user.has_perm( 'view_dataset', ds ):
-            #            compare_ds.append( ds )
-            #            comp_exz[ exp_cm ].append( ds )
             if not( len(lodgements)):
                 lodgements = False
-            s1 = ExptArrayAssemble()
-            rows = s1.get_peptide_array_from_protein_expt( proteins[:2], expt, user, compare = True, comparators = compare_ds, cutoffs=True )
-            return render( request, 'pepsite/render_compare_expt_results_ajax.html', {"proteins": proteins, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'protein_ids' : protein_ids[:2], 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False, 'expt_cm' : comp_exz, 'compare_ds' : compare_ds  })
+            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications  })
     else:
         compare_form = CompareExptForm()
         context = { 'compare_form' : compare_form }
