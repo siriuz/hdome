@@ -5,6 +5,7 @@ from django.forms.util import ValidationError as FormValidationError
 
 from django.db.models.fields import URLField, CharField
 from django.db import models
+from django.db.models import *
 
 
 
@@ -245,8 +246,8 @@ class CurationForm(forms.Form):
     # code...
 
 class CompareExptForm( forms.Form ):
-    expt1 = forms.ChoiceField( label = 'Select an existing Experiment', choices = [ [b.id, b.title] for b in Experiment.objects.all()] )
-    exptz = forms.ChoiceField( label = 'Select Experiment(s) for comparison', widget = forms.SelectMultiple, choices = [ [b.id, b.title] for b in Experiment.objects.all()] )
+    expt1 = forms.ChoiceField( label = 'Select an existing Experiment', choices = [ [b.id, b.title] for b in Experiment.objects.annotate(num_ions=Count('ion')).filter(num_ions__gt=0).order_by('title')] )
+    exptz = forms.ChoiceField( label = 'Select Experiment(s) for comparison', widget = forms.SelectMultiple, choices = [ [b.id, b.title] for b in Experiment.objects.annotate(num_ions=Count('ion')).filter(num_ions__gt=0).order_by('title')] )
 
 class AjaxForm(forms.Form):
     """

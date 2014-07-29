@@ -169,7 +169,10 @@ function table_exportable() {
 </head>
 
 
-<h1>Comparing Experiments</h1>
+<h1 class="text-primary">Comparing Experiments</h1>
+<p class="text-info">
+A comparison score of <strong class="text-primary">2</strong> indicates that an equivalent peptide/PTM permutation exists in the dataset, within 95% FDR limits.  A score of <strong class="text-danger">1</strong> indicates a hit outisde the limits
+</p>
 
 
 {% endblock %}
@@ -208,6 +211,7 @@ function table_exportable() {
 
 
 {% if not complete %}<p class="text-info">You do not have permission to view some or all of this data </p>{% endif %}
+
 
 
 <br>

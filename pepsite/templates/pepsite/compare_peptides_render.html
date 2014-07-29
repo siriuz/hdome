@@ -48,9 +48,9 @@
             
             {% for check in row.checkers %}
                {% if check == 2 %}
-                   <td>2</td>
+               <td><strong class="text-primary">2</strong></td>
                {% elif check == 1 %}
-               <td style="color:red">1</td>
+               <td><strong class="text-danger">1</strong></td>
                {% else %}
                <td/>
                {% endif %}
