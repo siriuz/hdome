@@ -185,7 +185,9 @@ class QueryOpt( object ):
         cursor.execute( "DROP VIEW IF EXISTS \"ideproduct\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"combinedideproduct\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"ideproduct2\" CASCADE" )
-        cursor.execute( "DROP VIEW IF EXISTS \"allowedidescompare\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct3\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"allidescompare\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"cleanidescompare\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"sv2\" CASCADE" )
@@ -207,12 +209,13 @@ class QueryOpt( object ):
         if primary_clean:
             qq1_dj = qq1_dj.filter( ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct()
         qq1_dj_compare = IdEstimate.objects.filter( ion__dataset__in = dsets_compare ).distinct()
-        if others_clean:
-            qq1_dj_compare = qq1_dj_compare.filter( ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct()
+        qq1_dj_compare_clean = qq1_dj_compare.filter( ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct()
         qq1 = qq1_dj.query
         qq1_compare = qq1_dj_compare.query
+        qq1_compare_clean = qq1_dj_compare_clean.query
         cursor.execute( 'CREATE VIEW \"allowedides\" AS ' + str( qq1 ) )
-        cursor.execute( 'CREATE VIEW \"allowedidescompare\" AS ' + str( qq1_compare ) )
+        cursor.execute( 'CREATE VIEW \"allidescompare\" AS ' + str( qq1_compare ) )
+        cursor.execute( 'CREATE VIEW \"cleanidescompare\" AS ' + str( qq1_compare_clean ) )
         qq2 = "CREATE VIEW suppavail AS SELECT foo.id, foo.ptmstr,\
                 min(abs(foo.delta_mass)) FROM (select t1.id, t1.confidence, t1.peptide_id, \
                 t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM \
@@ -251,7 +254,7 @@ class QueryOpt( object ):
                 SELECT * FROM \
                 (SELECT DISTINCT t1.peptide_id, t1.ptmstr, array_agg(t6.id) as dsid FROM suppcorrect t1 \
                 INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
-                INNER JOIN allowedidescompare t4 ON (t2.id = t4.id) \
+                INNER JOIN allidescompare t4 ON (t2.id = t4.id) \
                 INNER JOIN pepsite_idestimate t3 ON ( t4.id = t3.id ) \
                 INNER JOIN pepsite_ion t5 ON ( t3.ion_id = t5.id ) \
                 INNER JOIN pepsite_dataset t6 ON ( t5.dataset_id = t6.id )\
@@ -264,7 +267,17 @@ class QueryOpt( object ):
                 SELECT * FROM \
                 (SELECT t1.id, t1.peptide_id, t1.ptmstr, array_agg(t6.id) as dsids  FROM \
                 possibles t1 \
-                INNER JOIN allowedidescompare t2 ON ( t1.id = t2.id ) \
+                INNER JOIN allidescompare t2 ON ( t1.id = t2.id ) \
+                INNER JOIN pepsite_ion t5 ON ( t2.ion_id = t5.id ) \
+                INNER JOIN pepsite_dataset t6 ON ( t5.dataset_id = t6.id )\
+                GROUP BY t1.id, t1.peptide_id, t1.ptmstr \
+                ) AS foo \
+                "
+        qq6a = "CREATE VIEW ideproduct3 AS \
+                SELECT * FROM \
+                (SELECT t1.id, t1.peptide_id, t1.ptmstr, array_agg(t6.id) as dsids  FROM \
+                possibles t1 \
+                INNER JOIN cleanidescompare t2 ON ( t1.id = t2.id ) \
                 INNER JOIN pepsite_ion t5 ON ( t2.ion_id = t5.id ) \
                 INNER JOIN pepsite_dataset t6 ON ( t5.dataset_id = t6.id )\
                 GROUP BY t1.id, t1.peptide_id, t1.ptmstr \
@@ -272,9 +285,10 @@ class QueryOpt( object ):
                 "
         qq7 = "CREATE VIEW combinedideproduct AS \
                 SELECT * FROM \
-                (SELECT DISTINCT t1.id, t2.dsids  FROM \
+                (SELECT DISTINCT t1.id, t2.dsids, t3.dsids as cleandsz  FROM \
                 possibles t1 \
                 INNER JOIN ideproduct2 t2 ON ( t1.id = t2.id ) \
+                INNER JOIN ideproduct3 t3 ON ( t1.id = t3.id ) \
                 ) AS foo \
                 "
         qqresult = "SELECT * FROM combinedideproduct"
@@ -292,6 +306,7 @@ class QueryOpt( object ):
         cursor.execute( qq4 )
         cursor.execute( qq4a )
         cursor.execute( qq6 )
+        cursor.execute( qq6a )
         cursor.execute( qq7 )
         cursor.execute( qqresult )
         ides = cursor.fetchall()
@@ -301,13 +316,13 @@ class QueryOpt( object ):
         cursor.execute( "DROP VIEW IF EXISTS \"ideproduct\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"combinedideproduct\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"ideproduct2\" CASCADE" )
-        cursor.execute( "DROP VIEW IF EXISTS \"allowedidescompare\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct3\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"allidescompare\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"cleanidescompare\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"sv2\" CASCADE" )
         cursor.close()
-        #ideobjs = IdEstimate.objects.filter( id__in = [b[0] for b in ides] ).distinct()
-        #ideobjs = ideobjs.filter( 
         t1 = time.time()
         return (ides, t1 - t0, j, exp_id, user_id, perm)
 
@@ -339,10 +354,10 @@ class QueryOpt( object ):
         hitlist = [False] * len( self.dsnos_ordered )
         expt = Experiment.objects.get( id = expt_id )
         rows = []
-        ide_ids, ds_lists =  [ b[0] for b in valuz ], [b[1] for b in valuz]
+        ide_ids, ds_lists, ds_lists_clean =  [ b[0] for b in valuz ], [b[1] for b in valuz], [b[2] for b in valuz]
         ides = IdEstimate.objects.filter( id__in = ide_ids ).distinct()
         ch1 = {}
-        for ide, dsnos in zip(ides, ds_lists):
+        for ide, dsnos, dsnos_clean in zip(ides, ds_lists, ds_lists_clean):
             repstr = '%s+%s' % ( ide.peptide.id, [ b.id for b in ide.ptms.all().order_by('id') ] )
             try:
                 ch1[repstr]
@@ -354,6 +369,8 @@ class QueryOpt( object ):
                     p2p = PepToProt.objects.get( peptide = ide.peptide, protein = prot )
                     row = { 'ide': ide, 'ptms' : ide.ptms.all(), 'expt' : expt, 'ds' : ide.ion.dataset, 'protein' : prot, 'peptoprot' : p2p } 
                     for ds_no in dsnos:
+                        hitlist[ self.dsnos_ordered.index( ds_no ) ] = 1
+                    for ds_no in dsnos_clean:
                         hitlist[ self.dsnos_ordered.index( ds_no ) ] = 2
                     row['checkers'] = hitlist
                     rows.append(row)

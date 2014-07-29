@@ -319,11 +319,11 @@ def compare_expt_form_ajax( request ):
                 #publications.append( ex_obj.get_publications() )
             publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
             compare_ds = []
-            for exp_cm in comp_exz:
-                for ds in exp_cm.dataset_set.all().distinct().order_by('title'):
-                    if user.has_perm( 'view_dataset', ds ):
-                        compare_ds.append( ds )
-                        comp_exz[ exp_cm ].append( ds )
+            #for exp_cm in comp_exz:
+            #    for ds in exp_cm.dataset_set.all().distinct().order_by('title'):
+            #        if user.has_perm( 'view_dataset', ds ):
+            #            compare_ds.append( ds )
+            #            comp_exz[ exp_cm ].append( ds )
             if not( len(lodgements)):
                 lodgements = False
             s1 = ExptArrayAssemble()
@@ -339,9 +339,13 @@ def comparison_peptides_render( request ):
   #return HttpResponse( 'Hello!' )
   if request.POST.has_key( 'expt' ) and request.POST.has_key( 'exptz[]' ):
             expt1 = request.POST['expt']
+            expt = get_object_or_404( Experiment, id = expt1 )
             exptz = request.POST.getlist('exptz[]' )
             #return HttpResponse( 'Something!!!' + str( request.POST.keys() )  )
             #exptz = formdata['exptz']
+            s1 = ExptArrayAssemble()
+            rows = s1.mkiii_compare_query( expt1, exptz, user.id ) 
+            return render( request, 'pepsite/compare_peptides_render.html', { 'rows' : rows, 'compare_ds' : s1.compare_ds, 'expt' : expt  })
             context = { 'exptz' : exptz, 'expt1' : expt1  }
             proteins = Protein.objects.filter( peptide__ion__experiment__id = expt1).distinct()
             protein_ids = [b.id for b in proteins][:25]

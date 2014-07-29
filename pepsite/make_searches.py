@@ -305,9 +305,9 @@ class ExptArrayAssemble( BaseSearch ):
         """docstring for simple_expt_query"""
         t0 = time.time()
         cursor = connection.cursor()
-        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\"" )
-        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\"" )
-        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"allowedides\"" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"suppavail\"" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
         expt = Experiment.objects.get( id = exp_id )
         print expt.title
         user = User.objects.get( id = user_id )
@@ -316,8 +316,8 @@ class ExptArrayAssemble( BaseSearch ):
             if not user.has_perm( 'view_dataset', ds ):
                 dsets = dsets.exclude( ds )
         qq1 = IdEstimate.objects.filter( ion__dataset__in = dsets, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().query
-        cursor.execute( 'CREATE VIEW \"allowedides\" AS ' + str( qq1 ) )
-        qq2 = "CREATE VIEW suppavail AS SELECT foo.id, foo.ptmstr,\
+        cursor.execute( 'CREATE TEMP VIEW \"allowedides\" AS ' + str( qq1 ) )
+        qq2 = "CREATE TEMP VIEW suppavail AS SELECT foo.id, foo.ptmstr,\
                 min(abs(foo.delta_mass)) FROM (select t1.id, t1.confidence, t1.peptide_id, \
                 t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM \
                 pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
@@ -325,8 +325,8 @@ class ExptArrayAssemble( BaseSearch ):
                 group by t1.id, t1.peptide_id) AS foo \
                 GROUP BY foo.id, foo.ptmstr \
                 "
-        qq2a = "CREATE VIEW sv2 AS SELECT * FROM suppavail WHERE adm = min"
-        qq3 = "CREATE VIEW suppcorrect AS SELECT DISTINCT foo.peptide_id, foo.ptmstr, min(abs(foo.delta_mass)) \
+        qq2a = "CREATE TEMP VIEW sv2 AS SELECT * FROM suppavail WHERE adm = min"
+        qq3 = "CREATE TEMP VIEW suppcorrect AS SELECT DISTINCT foo.peptide_id, foo.ptmstr, min(abs(foo.delta_mass)) \
                 FROM (select t1.id, t1.confidence, t1.peptide_id, t1.delta_mass, \
                 array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM pepsite_idestimate \
                 t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
@@ -344,12 +344,195 @@ class ExptArrayAssemble( BaseSearch ):
         cursor.execute( qq4 )
         ides = cursor.fetchall()
         j = len(ides)
-        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\"" )
-        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\"" )
-        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
+        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\" CASCADE" )
         cursor.close()
         t1 = time.time()
         return self.rapid_array([b[0] for b in ides], exp_id)
+
+    def mkiii_compare_query(self, prim_exp_id, other_exp_ids, user_id, primary_clean = True, perm = False):
+        """docstring for simple_expt_query"""
+        t0 = time.time()
+        cursor = connection.cursor()
+        #cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"possibles\" CASCADE" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"ideproduct\" CASCADE" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"combinedideproduct\" CASCADE" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"ideproduct2\" CASCADE" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"ideproduct3\" CASCADE" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"allidescompare\" CASCADE" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"cleanidescompare\" CASCADE" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\" CASCADE" )
+        #cursor.execute( "DROP VIEW IF EXISTS \"sv2\" CASCADE" )
+        expt = Experiment.objects.get( id = prim_exp_id )
+        exptz = Experiment.objects.filter( id__in = other_exp_ids )
+        print expt.title
+        user = User.objects.get( id = user_id )
+        dsets = Dataset.objects.filter( experiment__id = prim_exp_id ).distinct()
+        for ds in Experiment.objects.get( id = prim_exp_id ).dataset_set.all():
+            if not user.has_perm( 'view_dataset', ds ):
+                dsets = dsets.exclude( ds )
+        dsets_compare = Dataset.objects.filter( experiment__id__in = other_exp_ids ).distinct()
+        for ds in dsets_compare:
+            if not user.has_perm( 'view_dataset', ds ):
+                dsets_compare = dsets_compare.exclude( ds )
+        dsets_compare = dsets_compare.order_by( 'experiment', 'title' )
+        self.compare_ds = dsets_compare # will be sent to template
+        self.dsnos_ordered = [ b.id for b in dsets_compare ] # will be used to check presence of hit(s)
+        qq1_dj = IdEstimate.objects.filter( ion__dataset__in = dsets ).distinct()
+        if primary_clean:
+            qq1_dj = qq1_dj.filter( ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct()
+        qq1_dj_compare = IdEstimate.objects.filter( ion__dataset__in = dsets_compare ).distinct()
+        qq1_dj_compare_clean = qq1_dj_compare.filter( ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct()
+        qq1 = qq1_dj.query
+        qq1_compare = qq1_dj_compare.query
+        qq1_compare_clean = qq1_dj_compare_clean.query
+        cursor.execute( 'CREATE TEMP VIEW \"allowedides\" AS ' + str( qq1 ) )
+        cursor.execute( 'CREATE TEMP VIEW \"allidescompare\" AS ' + str( qq1_compare ) )
+        cursor.execute( 'CREATE TEMP VIEW \"cleanidescompare\" AS ' + str( qq1_compare_clean ) )
+        qq2 = "CREATE TEMP VIEW suppavail AS SELECT foo.id, foo.ptmstr,\
+                min(abs(foo.delta_mass)) FROM (select t1.id, t1.confidence, t1.peptide_id, \
+                t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM \
+                pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
+                \
+                group by t1.id, t1.peptide_id) AS foo \
+                GROUP BY foo.id, foo.ptmstr \
+                "
+        qq2a = "CREATE TEMP VIEW sv2 AS SELECT * FROM suppavail WHERE adm = min"
+        qq3 = "CREATE TEMP VIEW suppcorrect AS SELECT DISTINCT foo.peptide_id, foo.ptmstr, min(abs(foo.delta_mass)) \
+                FROM (select t1.id, t1.confidence, t1.peptide_id, t1.delta_mass, \
+                array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM pepsite_idestimate \
+                t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
+                GROUP BY t1.id) AS \
+                foo GROUP BY foo.peptide_id, foo.ptmstr"
+        qq3a = "CREATE TEMP VIEW compcorrect AS SELECT DISTINCT foo.peptide_id, foo.ptmstr, min(abs(foo.delta_mass)) \
+                FROM (select t1.id, t1.confidence, t1.peptide_id, t1.delta_mass, \
+                array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM pepsite_idestimate \
+                t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
+                GROUP BY t1.id) AS \
+                foo GROUP BY foo.peptide_id, foo.ptmstr \
+                INNER JOIN pepsite_ion ON (pepsite_ion.id = allowedides.id) \
+                "
+        sql1 = "select ptmstr from pepsite_idestimate t3 left outer join (select t1.id, t1.confidence, \
+                array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),\'+\') as ptmstr from pepsite_idestimate t1 \
+                left outer join pepsite_idestimate_ptms t2 on (t2.idestimate_id = t1.id) group by t1.id) as foo \
+                on(foo.id = t3.id) where t3.id = pepsite_idestimate.id"
+        qq4 = "CREATE TEMP VIEW possibles AS \
+                SELECT DISTINCT allowedides.id as id, t2.ptmstr, t1.peptide_id FROM suppcorrect t1 \
+                INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
+                INNER JOIN allowedides ON (t2.id = allowedides.id AND t1.min = abs(allowedides.delta_mass))"
+        qq4a = "CREATE TEMP VIEW ideproduct AS \
+                SELECT DISTINCT id FROM \
+                possibles"
+        qq5 = "CREATE TEMP VIEW ideproduct2 AS \
+                SELECT * FROM \
+                (SELECT DISTINCT t1.peptide_id, t1.ptmstr, array_agg(t6.id) as dsid FROM suppcorrect t1 \
+                INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
+                INNER JOIN allidescompare t4 ON (t2.id = t4.id) \
+                INNER JOIN pepsite_idestimate t3 ON ( t4.id = t3.id ) \
+                INNER JOIN pepsite_ion t5 ON ( t3.ion_id = t5.id ) \
+                INNER JOIN pepsite_dataset t6 ON ( t5.dataset_id = t6.id )\
+                GROUP BY t1.peptide_id, t1.ptmstr) AS foo"
+        qq6 = "CREATE TEMP VIEW dsids AS \
+                SELECT t1.id, t1.ptmstr, array_agg(t6.id) as dsid FROM suppcorrect t1 \
+                INNER JOIN \
+                "
+        qq6 = "CREATE TEMP VIEW ideproduct2 AS \
+                SELECT * FROM \
+                (SELECT t1.id, t1.peptide_id, t1.ptmstr, array_agg(t6.id) as dsids  FROM \
+                possibles t1 \
+                INNER JOIN allidescompare t2 ON ( t1.id = t2.id ) \
+                INNER JOIN pepsite_ion t5 ON ( t2.ion_id = t5.id ) \
+                INNER JOIN pepsite_dataset t6 ON ( t5.dataset_id = t6.id )\
+                GROUP BY t1.id, t1.peptide_id, t1.ptmstr \
+                ) AS foo \
+                "
+        qq6a = "CREATE TEMP VIEW ideproduct3 AS \
+                SELECT * FROM \
+                (SELECT t1.id, t1.peptide_id, t1.ptmstr, array_agg(t6.id) as dsids  FROM \
+                possibles t1 \
+                INNER JOIN cleanidescompare t2 ON ( t1.id = t2.id ) \
+                INNER JOIN pepsite_ion t5 ON ( t2.ion_id = t5.id ) \
+                INNER JOIN pepsite_dataset t6 ON ( t5.dataset_id = t6.id )\
+                GROUP BY t1.id, t1.peptide_id, t1.ptmstr \
+                ) AS foo \
+                "
+        qq7 = "CREATE TEMP VIEW combinedideproduct AS \
+                SELECT * FROM \
+                (SELECT DISTINCT t1.id, t2.dsids, t3.dsids as cleandsz  FROM \
+                possibles t1 \
+                INNER JOIN ideproduct2 t2 ON ( t1.id = t2.id ) \
+                INNER JOIN ideproduct3 t3 ON ( t1.id = t3.id ) \
+                ) AS foo \
+                "
+        qqresult = "SELECT * FROM combinedideproduct"
+        cursor.execute( qq2 )
+        cursor.execute( 'SELECT COUNT(*) FROM suppavail' )
+        print cursor.fetchall(  )
+        #cursor.execute( 'SELECT COUNT(foo.peptide_id) FROM (SELECT DISTINCT peptide_id, ptmstr FROM suppavail) as foo' )
+        #print cursor.fetchall(  )
+        #cursor.execute( qq2a )
+        #cursor.execute( 'SELECT COUNT(*) FROM sv2' )
+        #print cursor.fetchall(  )
+        cursor.execute( qq3 )
+        cursor.execute( 'SELECT COUNT(*) FROM suppcorrect' )
+        print cursor.fetchall(  )
+        cursor.execute( qq4 )
+        cursor.execute( qq4a )
+        cursor.execute( qq6 )
+        cursor.execute( qq6a )
+        cursor.execute( qq7 )
+        cursor.execute( qqresult )
+        ides = cursor.fetchall()
+        j = len(ides)
+        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"possibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"combinedideproduct\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct2\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct3\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"allidescompare\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"cleanidescompare\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"sv2\" CASCADE" )
+        cursor.close()
+        t1 = time.time()
+        print 'finished processing with %d outputs' % ( len(ides) )
+        return self.rapid_array_compare(ides, prim_exp_id)
+
+    def rapid_array_compare(self, valuz, expt_id):
+        """docstring for rapid_array"""
+        t0 = time.time()
+        print 'starting rapid_array_compare'
+        hitlist = [False] * len( self.dsnos_ordered )
+        expt = Experiment.objects.get( id = expt_id )
+        rows = []
+        ide_ids, ds_lists, ds_lists_clean =  [ b[0] for b in valuz ], [b[1] for b in valuz], [b[2] for b in valuz]
+        ides = IdEstimate.objects.filter( id__in = ide_ids ).distinct()
+        ch1 = {}
+        for ide, dsnos, dsnos_clean in zip(ides, ds_lists, ds_lists_clean):
+            repstr = '%s+%s' % ( ide.peptide.id, [ b.id for b in ide.ptms.all().order_by('id') ] )
+            try:
+                ch1[repstr]
+                pass
+            except:
+                ch1[repstr] = True
+                for prot in Protein.objects.filter( peptoprot__peptide__idestimate = ide ).distinct():
+                    hitlist = [False] * len( self.dsnos_ordered )
+                    p2p = PepToProt.objects.get( peptide = ide.peptide, protein = prot )
+                    row = { 'ide': ide, 'ptms' : ide.ptms.all(), 'expt' : expt, 'ds' : ide.ion.dataset, 'protein' : prot, 'peptoprot' : p2p } 
+                    for ds_no in dsnos:
+                        hitlist[ self.dsnos_ordered.index( ds_no ) ] = 1
+                    for ds_no in dsnos_clean:
+                        hitlist[ self.dsnos_ordered.index( ds_no ) ] = 2
+                    row['checkers'] = hitlist
+                    rows.append(row)
+        print 'finished rapid_array_compare with %d outputs' % ( len(rows) )
+        t1 = time.time()
+        return rows
 
     def rapid_array_crap(self, valuz, expt_id):
         """docstring for rapid_array"""
