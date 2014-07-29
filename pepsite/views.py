@@ -298,7 +298,55 @@ def compare_expt_form( request ):
 
 def compare_expt_form_ajax( request ):
     user = request.user
-    if request.method == 'POST': # If the form has been submitted...
+    if request.GET.items(): # If the form has been submitted...
+        form = CompareExptForm(request.GET) # A form bound to the POST data
+        if form.is_valid(): # All validation rules pass
+	    expt1 = form.cleaned_data['expt1'] 
+	    exptz = form.cleaned_data['exptz'] 
+            print 'exptz =', exptz
+            exptz2 = [ int(b) for b in exptz ]
+            expt = get_object_or_404( Experiment, id = expt1 )
+            all_exp = [ expt ]
+            lodgements = Lodgement.objects.filter( dataset__experiment = expt )
+            for ex in exptz:
+                ex_obj = get_object_or_404( Experiment, id = ex )
+                all_exp.append( ex_obj )
+            publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
+            if not( len(lodgements)):
+                lodgements = False
+            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications  })
+            exptz2 = [ int(b) for b in exptz ]
+            expt = get_object_or_404( Experiment, id = expt1 )
+            all_exp = [ expt ]
+            lodgements = Lodgement.objects.filter( dataset__experiment = expt )
+            for ex in exptz:
+                ex_obj = get_object_or_404( Experiment, id = ex )
+                all_exp.append( ex_obj )
+            publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
+            if not( len(lodgements)):
+                lodgements = False
+            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications  })
+	else:
+            context = {}
+            for f in form.fields.keys():
+                if f in form.data.keys():
+                    context[f] = form.data[f]
+                else:
+                    context[f] = form.fields[f].initial
+	    expt1 = context['expt1']
+	    exptz = context['exptz']
+            exptz2 = [ int(b) for b in exptz ]
+            expt = get_object_or_404( Experiment, id = expt1 )
+            all_exp = [ expt ]
+            lodgements = Lodgement.objects.filter( dataset__experiment = expt )
+            for ex in exptz:
+                ex_obj = get_object_or_404( Experiment, id = ex )
+                all_exp.append( ex_obj )
+            publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
+            if not( len(lodgements)):
+                lodgements = False
+            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications  })
+    elif request.method == 'POST': # If the form has been submitted...
             form = CompareExptForm(request.POST) # A form bound to the POST data
             expt1 = request.POST['expt1']
             exptz = request.POST.getlist('exptz' )
@@ -329,9 +377,11 @@ def comparison_peptides_render( request ):
   user = request.user
   #return HttpResponse( 'Hello!' )
   if request.POST.has_key( 'expt' ) and request.POST.has_key( 'exptz[]' ):
+            
             expt1 = request.POST['expt']
             expt = get_object_or_404( Experiment, id = expt1 )
             exptz = request.POST.getlist('exptz[]' )
+            print 'expt =', expt.id, 'exptz =', exptz
             #return HttpResponse( 'Something!!!' + str( request.POST.keys() )  )
             #exptz = formdata['exptz']
             s1 = ExptArrayAssemble()
