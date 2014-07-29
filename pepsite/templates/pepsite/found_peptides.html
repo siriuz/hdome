@@ -137,7 +137,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
-        <tr><th class="hilite">Protein</th><th/><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
+        <tr><th class="hilite">Protein</th><th>UniProt ID</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
     </thead>
     <tbody>
     {% for row in rows %}
@@ -146,7 +146,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
             </td>
             <td>
-                <a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">UniProt Entry</a>
+                <a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">{{row.protein.prot_id}}</a>
             </td>
             <td>
 	        <a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a>
@@ -181,7 +181,7 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 	   {{ row.ide.ion.precursor_mass }}
            </td>
            <td>
-	       <a href="{% url 'pepsite:expt2' row.expt.id %}" class="link">{{row.expt.title}}</a>
+	       <a href="{% url 'pepsite:expt2_ajax' row.expt.id %}" class="link">{{row.expt.title}}</a>
            </td>
         </tr>
     {% endfor %}
