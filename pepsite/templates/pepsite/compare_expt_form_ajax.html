@@ -160,7 +160,7 @@ $('#ssupload').click( function () {
 
 -->
 
-<form id="ssform" class="form-horizontal" method="post" action="{% url 'pepsite:compare_expt_form_ajax' %}">{% csrf_token %}
+<form id="ssform" class="form-horizontal" method="get" action="{% url 'pepsite:compare_expt_form_ajax' %}">
     <fieldset>
         <legend>{{ title }}</legend>
         {% for field in compare_form %}

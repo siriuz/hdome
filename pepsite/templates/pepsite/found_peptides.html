@@ -175,47 +175,32 @@ table_exportable();
     <tbody>
     {% for row in rows %}
         <tr>
-            <td>
-	       <a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a>
-            </td>
-            <td>
-                <a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">{{row.protein.prot_id}}</a>
-            </td>
-            <td>
-	        <a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a>
-            </td>
-            <td>
-                {{row.ide.peptide.sequence|length}}
-            </td>
-            <td>
-               {{ row.peptoprot.get_positions }}
-	   </td>
-	   <td>
-	   {% for ptm in row.ptms %}
-	       <a href="{% url 'pepsite:ptm_peptides' ptm.id %}" class="link">{{ptm.description}}</a>
-	   {% endfor %}
-	   </td>
-	   <td>
-	   {{ row.ide.delta_mass }}
-	   </td>
-	   <td>
-	   {{ row.ide.confidence }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.mz }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.charge_state }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.retention_time }}
-	   </td>
-	   <td>
-	   {{ row.ide.ion.precursor_mass }}
-           </td>
-           <td>
-	       <a href="{% url 'pepsite:expt2_ajax' row.expt.id %}" class="link">{{row.expt.title}}</a>
-           </td>
+            <td><a href="{% url 'pepsite:protein_peptides' row.protein.id %}" class="link">{{row.protein.description}}</a></td>
+
+            <td><a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" class="link" target="_blank">{{row.protein.prot_id}}</a></td>
+            
+            <td><a href="{% url 'pepsite:peptide_peptides' row.ide.peptide.id %}" class="link">{{row.ide.peptide.sequence}}</a></td>
+
+            <td>{{row.ide.peptide.sequence|length}}</td>
+            
+            <td>{{ row.peptoprot.get_positions }}</td>
+            
+            <td>{% for ptm in row.ptms %}<a href="{% url 'pepsite:ptm_peptides' ptm.id %}" class="link">{{ptm.description}}</a> {% endfor %}</td>
+            
+            <td>{{ row.ide.delta_mass }}</td>
+            
+            <td>{{ row.ide.confidence }}</td>
+            
+            <td>{{ row.ide.ion.mz }}</td>
+	    
+            <td>{{ row.ide.ion.charge_state }}</td>
+
+	    <td>{{ row.ide.ion.retention_time }}</td>
+	    
+            <td>{{ row.ide.ion.precursor_mass }}</td>
+            
+            <td><a href="{% url 'pepsite:expt2_ajax' row.expt.id %}" class="link">{{row.expt.title}}</a></td>
+        
         </tr>
     {% endfor %}
     </tbody>

@@ -689,6 +689,14 @@ class MassSearch( ExptArrayAssemble ):
         ides = IdEstimate.objects.filter( ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ).order_by( 'peptide__sequence' ) 
 	return ides
 
+    def get_unique_peptide_ides( self, search_on, arglist ):
+        if search_on == 'mz':
+            return self.get_unique_peptide_ides_from_mz( *[ float(arglist[0]), float(arglist[1]), arglist[2] ] )
+        elif search_on == 'mass':
+            return self.get_unique_peptide_ides_from_mass( *[ float(arglist[0]), float(arglist[1]), arglist[2] ] )
+        elif search_on == 'sequence':
+            return self.get_unique_peptide_ides_from_sequence( *arglist )
+
     def get_unique_peptide_ides_from_mass( self, mass, tolerance, user ):
         ml = []
         ides = IdEstimate.objects.filter( ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ).distinct().order_by( 'peptide__sequence' ) 

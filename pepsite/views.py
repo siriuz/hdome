@@ -301,6 +301,7 @@ def compare_expt_form_ajax( request ):
     if request.GET.items(): # If the form has been submitted...
         form = CompareExptForm(request.GET) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
+            
 	    expt1 = form.cleaned_data['expt1'] 
 	    exptz = form.cleaned_data['exptz'] 
             print 'exptz =', exptz
@@ -330,12 +331,13 @@ def compare_expt_form_ajax( request ):
             context = {}
             for f in form.fields.keys():
                 if f in form.data.keys():
-                    context[f] = form.data[f]
+                    context[f] = form.data.getlist(f)
                 else:
                     context[f] = form.fields[f].initial
-	    expt1 = context['expt1']
+	    expt1 = context['expt1'][0]
 	    exptz = context['exptz']
             exptz2 = [ int(b) for b in exptz ]
+            print 'invalid exptz =', exptz
             expt = get_object_or_404( Experiment, id = expt1 )
             all_exp = [ expt ]
             lodgements = Lodgement.objects.filter( dataset__experiment = expt )
@@ -593,7 +595,7 @@ def mass_search( request ):
 	    tolerance = form.cleaned_data['tolerance'] 
             context = { 'target_input' : target_input, 'tolerance' : tolerance }
 	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides_from_mass( float(target_input), float(tolerance), user )
+	    ides = s1.get_unique_peptide_ides( 'mass',  [float(target_input), float(tolerance), user] )
 	    #ides = s1.get_ides_from_mass( target_input, tolerance )
             desc = u'mass %s \u00B1 %s' % ( target_input, tolerance ) 
             context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
@@ -610,7 +612,7 @@ def mass_search( request ):
 	    tolerance = context['tolerance'] 
             context = { 'target_input' : target_input, 'tolerance' : tolerance }
 	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides_from_mass( float(target_input), float(tolerance), user )
+	    ides = s1.get_unique_peptide_ides( 'mass', [ float(target_input), float(tolerance), user ] )
 	    #ides = s1.get_ides_from_mass( target_input, tolerance )
             desc = u'mass %s \u00B1 %s' % ( target_input, tolerance ) 
             context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
@@ -632,7 +634,7 @@ def mz_search( request ):
 	    tolerance = form.cleaned_data['tolerance'] 
             context = { 'target_input' : target_input, 'tolerance' : tolerance }
 	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides_from_mz( float(target_input), float(tolerance), user )
+	    ides = s1.get_unique_peptide_ides( 'mz', [float(target_input), float(tolerance), user] )
 	    #ides = s1.get_ides_from_mass( target_input, tolerance )
             desc = u'm/z %s \u00B1 %s' % ( target_input, tolerance ) 
             context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
@@ -649,7 +651,7 @@ def mz_search( request ):
 	    tolerance = context['tolerance'] 
             context = { 'target_input' : target_input, 'tolerance' : tolerance }
 	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides_from_mz( float(target_input), float(tolerance), user )
+	    ides = s1.get_unique_peptide_ides( 'mz', [float(target_input), float(tolerance), user] )
 	    #ides = s1.get_ides_from_mass( target_input, tolerance )
             desc = u'm/z %s \u00B1 %s' % ( target_input, tolerance ) 
             context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
@@ -671,7 +673,7 @@ def sequence_search( request ):
 	    #tolerance = form.cleaned_data['tolerance'] 
             context = { 'target_input' : target_input } #, 'tolerance' : tolerance }
 	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides_from_sequence( target_input, user )
+	    ides = s1.get_unique_peptide_ides( 'sequence', [target_input, user] )
 	    #ides = s1.get_ides_from_mass( target_input, tolerance )
             desc = u'sequence %s' % ( target_input.upper() ) 
             context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }

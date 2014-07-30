@@ -343,6 +343,111 @@ class QueryOpt( object ):
         t1 = time.time()
         return (ides, t1 - t0, j, exp_id, user_id, perm)
 
+    def master_views_query(self, primary_clean = True, others_clean = False, perm = False):
+        """docstring for simple_expt_query"""
+        t0 = time.time()
+        cursor = connection.cursor()
+        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"possibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"comparepossibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"cleancomparepossibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"combinedideproduct\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct2\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct3\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"allidescompare\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"cleanidescompare\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail_all\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"augmented_ides\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"compcorrect\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"sv2\" CASCADE" )
+        #expt = Experiment.objects.get( id = prim_exp_id )
+        #exptz = Experiment.objects.filter( id__in = other_exp_ids )
+        #print expt.title
+        #user = User.objects.get( id = user_id )
+        #dsets = Dataset.objects.filter( experiment__id = exp_id ).distinct()
+        #for ds in Experiment.objects.get( id = exp_id ).dataset_set.all():
+        #    if not user.has_perm( 'view_dataset', ds ):
+        #        dsets = dsets.exclude( ds )
+        #dsets_compare = Dataset.objects.filter( experiment__id__in = other_exp_ids ).distinct()
+        #for ds in dsets_compare:
+        #    if not user.has_perm( 'view_dataset', ds ):
+        #        dsets_compare = dsets_compare.exclude( ds )
+        #dsets_compare.order_by ( 'experiment', 'title' )
+        #self.dsnos_ordered = [ b.id for b in dsets_compare ]
+        #qq1_dj = IdEstimate.objects.filter( ion__dataset__in = dsets ).distinct()
+        #if primary_clean:
+        #    qq1_dj = qq1_dj.filter( ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct()
+        #qq1_dj_compare = IdEstimate.objects.filter( ion__dataset__in = dsets_compare ).distinct()
+        #qq1_dj_compare_clean = qq1_dj_compare.filter( ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct()
+        #qq1 = qq1_dj.query
+        #qq1_compare = qq1_dj_compare.query
+        #qq1_compare_clean = qq1_dj_compare_clean.query
+        #cursor.execute( 'CREATE TEMP VIEW \"allowedides\" AS ' + str( qq1 ) )
+        #cursor.execute( 'CREATE TEMP VIEW \"allidescompare\" AS ' + str( qq1_compare ) )
+        #cursor.execute( 'CREATE TEMP VIEW \"cleanidescompare\" AS ' + str( qq1_compare_clean ) )
+        qq2 = "CREATE TEMP VIEW suppavail_all AS SELECT foo.id, foo.ptmarray, foo.ptmstr, foo.peptide_id \
+                FROM (select t1.id, t1.confidence, t1.peptide_id, \
+                t1.delta_mass, array_agg(t2.ptm_id order by t2.ptm_id) AS ptmarray, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM \
+                pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
+                group by t1.id, t1.peptide_id, t1.peptide_id) AS foo \
+                "
+        qq2a = "CREATE TEMP VIEW augmented_ides AS \
+                SELECT t1.id, t1.peptide_id, t1.ptmarray, t1.ptmstr, t2.confidence, t2.delta_mass, \
+                t2.\"isRemoved\", t3.mz, t3.precursor_mass, t3.retention_time, \
+                t4.confidence_cutoff, t4.id as dataset_id, t5.id as experiment_id, \
+                t6.id as cell_line_id \
+                FROM \
+                suppavail_all t1 INNER JOIN pepsite_idestimate t2 ON (t1.id = t2.id) \
+                INNER JOIN pepsite_ion t3 ON (t2.ion_id = t3.id) \
+                INNER JOIN pepsite_dataset t4 on (t3.dataset_id = t4.id) \
+                INNER JOIN pepsite_experiment t5 on (t3.experiment_id = t5.id) \
+                INNER JOIN pepsite_cellline t6 on (t5.cell_line_id = t6.id) \
+                INNER JOIN pepsite_peptide t7 on (t2.peptide_id = t7.id) \
+                "
+        qq3 = "CREATE TEMP VIEW prot_ides AS \
+                SELECT t1.id as p2p_id, t1.protein_id, t2.* FROM pepsite_peptoprot t1 \
+                INNER JOIN augmented_ides t2 ON \
+                ( t2.peptide_id = t1.peptide_id ) \
+                "
+        qqresult = "SELECT * FROM augmented_ides"
+        cursor.execute( qq2 )
+        cursor.execute( qq2a )
+        cursor.execute( qq3 )
+        cursor.execute( 'SELECT COUNT (*) FROM pepsite_idestimate' )
+        print 'idestimate table length =', cursor.fetchall(  )
+        cursor.execute( 'SELECT COUNT (*) FROM augmented_ides' )
+        print 'augmented ide view length =', cursor.fetchall(  )
+        cursor.execute( 'SELECT COUNT (*) FROM prot_ides' )
+        print 'prot ide view length =', cursor.fetchall(  )
+        cursor.execute( qqresult )
+        ides_aug = cursor.fetchall(  )
+        print ides_aug[:4]
+        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail_all\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"augmented_ides\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"possibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"comparepossibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"cleancomparepossibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"combinedideproduct\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct2\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct3\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"allidescompare\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"cleanidescompare\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"compcorrect\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"sv2\" CASCADE" )
+        cursor.close()
+        t1 = time.time()
+        print 'time taken =', t1-t0
+        return None
+        return (ides, t1 - t0, j, exp_id, user_id, perm)
+
+
     def rapid_array(self, valuz, expt_id):
         """docstring for rapid_array"""
         t0 = time.time()
@@ -423,17 +528,17 @@ if __name__=='__main__':
     user_id = 1
     print 'here we go... expecting 1578 returns...\n'
     qo = QueryOpt()
-    q2r = qo.mkii_expt_query( exp_id, user_id, perm = False)
-    ar1 = q2r[0]
-    print ar1
-    print ar1.count()
+    q2r = qo.master_views_query( )
+    #ar1 = q2r[0]
+    #print ar1
+    #print ar1.count()
     #print dir(q1r[0])
-    print '\n\nmkii_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r\n\n' %  q2r[1:]   #print 'simple_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r' % qo.simple_expt_query( exp_id, user_id, perm = False)
-    q3r = qo.mkiii_compare_query( exp_id, other_exp_ids, user_id, perm = False)
-    print '\n\nmkiii_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r\n\n' %  q3r[1:]   #print 'simple_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r' % qo.simple_expt_query( exp_id, user_id, perm = False)
-    print q3r[0][:4]
-    ar1 = q3r[0][:]
-    print '\n\nrapid_array_compare ran for %f seconds and returned %d results\n\n' % ( qo.rapid_array_compare(ar1, exp_id)  )
+    #print '\n\nmkii_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r\n\n' %  q2r[1:]   #print 'simple_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r' % qo.simple_expt_query( exp_id, user_id, perm = False)
+    #q3r = qo.mkiii_compare_query( exp_id, other_exp_ids, user_id, perm = False)
+    #print '\n\nmkiii_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r\n\n' %  q3r[1:]   #print 'simple_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r' % qo.simple_expt_query( exp_id, user_id, perm = False)
+    #print q3r[0][:4]
+    #ar1 = q3r[0][:]
+    #print '\n\nrapid_array_compare ran for %f seconds and returned %d results\n\n' % ( qo.rapid_array_compare(ar1, exp_id)  )
     #q2r = qo.make_array_from_ide_vals( ar1, exp_id )
     #print '\n\nassembled array of size %d in %f seconds\n\n' % ( q2r[1].count(), q2r[0] )
     #print q2r[1][:3]
