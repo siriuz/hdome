@@ -3,6 +3,10 @@
 {% load staticfiles %}
 {% block headline %}
 
+{% load template_filter %}
+      {% load guardian_tags %}
+{% query_data_perms user expt as complete %}
+
 <style>
 #cssTable td 
 {
@@ -219,10 +223,6 @@ function table_exportable() {
 
 
 
-
-{% load template_filter %}
-      {% load guardian_tags %}
-{% query_data_perms user expt as complete %}
 
 <div class="table_body">
 

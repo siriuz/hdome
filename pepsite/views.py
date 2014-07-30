@@ -917,6 +917,10 @@ def expt2_ajax( request, expt_id ):
 
 def peptides_render( request, expt_id ):
     user = request.user
+    print 'user = ', user, user.id, user.username
+    if user.id is None:
+        user = User.objects.get( id = -1 )
+    print 'user = ', user, user.id, user.username
     #return HttpResponse( 'Hello!' )
     #if request.POST.has_key( 'expt_id' ):
     proteins = Protein.objects.filter( peptide__ion__experiment__id = expt_id ).distinct()

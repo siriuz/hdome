@@ -94,6 +94,39 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
             textExtraction : 'complex',
             sortMultiSortKey: 'none'
         });
+
+
+
+function table_exportable() {
+
+// $('table').each(function() {
+    //var $table = $(this);
+    var $table = $('#cssTable');
+ 
+    var $button1 = $("<button type='button' class='btn btn-lg btn-success'>");
+    var $button2 = $("<button type='button' class='btn btn-lg btn-success'>");
+    $button1.text("Export to spreadsheet");
+    $button2.text("Export to spreadsheet");
+    $button1.insertBefore($table);
+    $button2.insertAfter($table);
+ 
+    $button1.click(function() {
+      var csv = $table.table2CSV({delivery:'value'});
+      window.location.href = 'data:text/csv;charset=UTF-8,'
+                            + encodeURIComponent(csv);
+    });
+ 
+    $button2.click(function() {
+      var csv = $table.table2CSV({delivery:'value'});
+      window.location.href = 'data:text/csv;charset=UTF-8,'
+                            + encodeURIComponent(csv);
+    });
+//  });
+}
+
+table_exportable();
+
+
     });
 
 </script>

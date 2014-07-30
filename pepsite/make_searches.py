@@ -320,6 +320,7 @@ class ExptArrayAssemble( BaseSearch ):
         for ds in Experiment.objects.get( id = exp_id ).dataset_set.all():
             if not user.has_perm( 'view_dataset', ds ):
                 dsets = dsets.exclude( ds )
+        print 'done'
         qq1 = IdEstimate.objects.filter( ion__dataset__in = dsets, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().query
         cursor.execute( 'CREATE TEMP VIEW \"allowedides\" AS ' + str( qq1 ) )
         qq2 = "CREATE TEMP VIEW suppavail AS SELECT foo.id, foo.ptmstr,\
