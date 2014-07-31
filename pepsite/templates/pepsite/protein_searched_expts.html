@@ -115,7 +115,7 @@ cursor:pointer;
             <a href="{% url 'pepsite:protein_full_listing' protein.id %}">{{ protein.name }}</a>
         </td>
         <td>
-            <a href="{{ protein.get_uniprot_link }}" target="_blank">{{protein.prot_id}}</a>
+            <a href="http://www.uniprot.org/uniprot/{{row.protein.prot_id}}" target="_blank">{{protein.prot_id}}</a>
         </td>
     </tr>
     {% endfor %}

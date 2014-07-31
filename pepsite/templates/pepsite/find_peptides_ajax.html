@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% load staticfiles %}
+{% block headline %}
+
+<style>
+#cssTable td 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+#cssTable th 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+
+.hilite:hover
+{
+background-color:yellow;
+}
+.hilite
+{
+cursor:pointer;
+}
+
+.table_body
+{
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+#loader
+{
+z-index:-10;
+}
+
+.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    
+}
+
+
+
+
+</style>
+
+
+<script>
+
+
+$(document).ready(function() {
+
+    $('.div-1').css(( "z-index" ), 10 );
+    $('#loader').show();
+
+$('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+var csrftoken = getCookie('csrftoken');
+
+function reset_tablesort() {       
+
+    $("#cssTable").tablesorter({ 
+        // pass the headers argument and assing a object 
+        headers: { 
+            // assign the secound column (we start counting zero) 
+            1: { 
+                // disable it by setting the property sorter to false 
+                //sorter: false 
+            }, 
+        } 
+    });
+}
+
+
+
+
+
+//$('#testpoint').html('Yep<br>');
+    var stype = "{{search_type}}";
+    var sargs = {{search_args|safe}};
+    var render_url = "/pepsite/searched_peptides_render";
+
+//    $('#testpoint').append( 'hello<br>' );
+//reset_tablesort();
+
+function table_exportable() {
+
+// $('table').each(function() {
+    //var $table = $(this);
+    var $table = $('#cssTable');
+ 
+    var $button1 = $("<button type='button' class='btn btn-lg btn-success'>");
+    var $button2 = $("<button type='button' class='btn btn-lg btn-success'>");
+    $button1.text("Export to spreadsheet");
+    $button2.text("Export to spreadsheet");
+    $button1.insertBefore($table);
+    $button2.insertAfter($table);
+ 
+    $button1.click(function() {
+      var csv = $table.table2CSV({delivery:'value'});
+      window.location.href = 'data:text/csv;charset=UTF-8,'
+                            + encodeURIComponent(csv);
+    });
+ 
+    $button2.click(function() {
+      var csv = $table.table2CSV({delivery:'value'});
+      window.location.href = 'data:text/csv;charset=UTF-8,'
+                            + encodeURIComponent(csv);
+    });
+//  });
+}
+
+
+//    for (i = 0; i < protein_ids.length; i++) { 
+        $.ajax({
+                        url : render_url, 
+                        type : "POST",
+                        dataType: "html", 
+                        data : {
+                            'stype' : stype,
+                            'sargs' : sargs,
+                            csrfmiddlewaretoken: csrftoken
+                            },
+                            success : function(retdat) {
+                                $("#emptyslot" ).append( "<br>" + retdat + "<br>" );
+                                reset_tablesort();
+                                table_exportable();
+                                $('.div-1').css(( "z-index" ), -100 );
+                                $('#loader').hide();
+                                //$('#cssTable tr:last').after(retdat);
+                                //$("#testpoint" ).append( "<br>" + "complete" + "<br>" );
+                                //$('.tablesorter').trigger('update'); //this is absolute GOLD!!!
+                                //reset_tablesort();
+                            },
+                            error : function(xhr,errmsg,err) {
+                                alert(xhr.status + ": " + xhr.responseText);
+                            }
+                    });
+//   }	
+
+});
+
+</script>
+
+
+
+</head>
+
+{% if search %}
+
+{% if heading %}
+
+<h1>Search results for <span class="text-primary">{{ heading }}</span> search on <span class="text-info">{{text_input}}</span></h1>
+<p class="text-info">Interactive results page</p>
+
+{% else %}
+
+<h1>Search results for <span class="text-primary">{{ query_on }}</span> search on <span class="text-info">{{text_input}}</span></h1>
+<p class="text-info">Interactive results page</p>
+
+{% endif %}
+
+{% else %}
+
+<h1><span class="text-primary">{{ query_on }}</span> = <span class="text-info">{{text_input}}</span></h1>
+<p class="text-info">Interactive results page</p>
+
+
+{% endif %}
+
+
+{% endblock %}
+
+{% block content %}
+
+<div id="summary"></div>
+
+
+
+
+<div id="summary"></div>
+
+{% if publications %}
+
+<h2 class="text-primary">Please cite the following publications when using this data:</h2>
+<ul>
+{% for publication in publications %}
+
+<li>{{publication.display}}</li>
+
+{% endfor %}
+
+{% endif %}
+
+</ul>
+
+</div> <!-- container --> 
+<div id="testpoint"></div>
+
+{% load template_filter %}
+      {% load guardian_tags %}
+
+
+
+
+
+
+
+<br>
+
+
+<div class="table_body">
+
+<div class="div-1">
+<img id="loader" class="center" src="{% static 'animations/ajax_loader_blue_512.gif' %}"/>
+</div>
+
+    <div id="emptyslot"></div>
+
+</div> <!-- table_body -->
+
+
+
+<div class="container">
+
+{% endblock %}

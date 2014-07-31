@@ -417,6 +417,49 @@ def comparison_peptides_render( request ):
   else:
       return HttpResponse( 'Nothing!!!' + str( request.POST.keys() )  )
 
+def searched_peptides_render( request ):
+  user = request.user
+  #return HttpResponse( 'Hello!' )
+  if request.POST.has_key( 'stype' ) and request.POST.has_key( 'sargs[]' ):
+            
+            stype = request.POST['stype']
+            #expt = get_object_or_404( Experiment, id = expt1 )
+            sargs = request.POST.getlist('sargs[]' )
+            sargs.append( user )
+            print 'stype =', stype, 'sargs =', sargs
+            #return HttpResponse( 'Something!!!' + str( request.POST.keys() )  )
+            #exptz = formdata['exptz']
+            s1 = MassSearch()
+            rows = s1.get_unique_peptide_ides( stype, sargs ) 
+            return render( request, 'pepsite/peptides_render_rapid.html', { 'rows' : rows  })
+            context = { 'exptz' : exptz, 'expt1' : expt1  }
+            proteins = Protein.objects.filter( peptide__ion__experiment__id = expt1).distinct()
+            protein_ids = [b.id for b in proteins][:25]
+            expt = get_object_or_404( Experiment, id = expt1 )
+            all_exp = [ expt ]
+            #publications = expt.get_publications()
+            lodgements = Lodgement.objects.filter( dataset__experiment = expt )
+            comp_exz = {}
+            for ex in exptz:
+                ex_obj = get_object_or_404( Experiment, id = ex )
+                comp_exz[ ex_obj ] = []
+                all_exp.append( ex_obj )
+                #publications.append( ex_obj.get_publications() )
+            publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
+            compare_ds = []
+            for exp_cm in comp_exz:
+                for ds in exp_cm.dataset_set.all().distinct().order_by('title'):
+                    if user.has_perm( 'view_dataset', ds ):
+                        compare_ds.append( ds )
+                        comp_exz[ exp_cm ].append( ds )
+            if not( len(lodgements)):
+                lodgements = False
+            s1 = ExptArrayAssemble()
+            rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user, compare = True, comparators = compare_ds, cutoffs=True )
+            return render( request, 'pepsite/compare_peptides_render.html', {"proteins": proteins, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz, 'protein_ids' : protein_ids, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False, 'expt_cm' : comp_exz, 'compare_ds' : compare_ds  })
+  else:
+      return HttpResponse( 'Nothing!!!' + str( request.POST.keys() )  )
+
 
 def render_full_comparison_ajax(request):
     """docstring for render_full_comparison_ajax"""
@@ -589,18 +632,14 @@ def cell_line_tissue_search( request ):
 def mass_search( request ):
     user = request.user
     if request.GET.items(): # If the form has been submitted...
-        form = MassSearchForm(request.GET) # A form bound to the POST data
+        form = MzSearchForm(request.GET) # A form bound to the POST data
+        search_type, query_on = 'mass', 'Precursor Mass'
+        target_input, tolerance = 0.0, 0.0
+        desc = 'empty'
         if form.is_valid(): # All validation rules pass
 	    target_input = form.cleaned_data['target_input'] 
 	    tolerance = form.cleaned_data['tolerance'] 
-            context = { 'target_input' : target_input, 'tolerance' : tolerance }
-	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides( 'mass',  [float(target_input), float(tolerance), user] )
-	    #ides = s1.get_ides_from_mass( target_input, tolerance )
-            desc = u'mass %s \u00B1 %s' % ( target_input, tolerance ) 
-            context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
-	    #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele', 'search' : True }
-            return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
+            desc = u'mass = %s \u00B1 %s Da' % ( target_input, tolerance ) 
 	else:
             context = {}
             for f in form.fields.keys():
@@ -609,17 +648,10 @@ def mass_search( request ):
                 else:
                     context[f] = form.fields[f].initial
 	    target_input = context['target_input']
-	    tolerance = context['tolerance'] 
-            context = { 'target_input' : target_input, 'tolerance' : tolerance }
-	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides( 'mass', [ float(target_input), float(tolerance), user ] )
-	    #ides = s1.get_ides_from_mass( target_input, tolerance )
-            desc = u'mass %s \u00B1 %s' % ( target_input, tolerance ) 
-            context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
-	    #target = request.get['target_input']
-	    #context = { 'msg' : text_input }
-            return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
-
+	    tolerance = context['tolerance']
+            desc = u'mass = %s \u00B1 %s Da' % ( target_input, tolerance ) 
+        context = { 'search' : True, 'query_on' : query_on, 'text_input' : desc, 'search_type' : search_type, 'search_args' : [target_input, tolerance] }
+        return render( request, 'pepsite/find_peptides_ajax.html', context ) # Redirect after POST
     else:
         textform = MassSearchForm()
         context = { 'massform' : textform }
@@ -629,17 +661,13 @@ def mz_search( request ):
     user = request.user
     if request.GET.items(): # If the form has been submitted...
         form = MzSearchForm(request.GET) # A form bound to the POST data
+        search_type, query_on = 'mz', 'Ion m/z'
+        target_input, tolerance = 0.0, 0.0
+        desc = 'empty'
         if form.is_valid(): # All validation rules pass
 	    target_input = form.cleaned_data['target_input'] 
 	    tolerance = form.cleaned_data['tolerance'] 
-            context = { 'target_input' : target_input, 'tolerance' : tolerance }
-	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides( 'mz', [float(target_input), float(tolerance), user] )
-	    #ides = s1.get_ides_from_mass( target_input, tolerance )
-            desc = u'm/z %s \u00B1 %s' % ( target_input, tolerance ) 
-            context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
-	    #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele', 'search' : True }
-            return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
+            desc = u'm/z = %s \u00B1 %s' % ( target_input, tolerance ) 
 	else:
             context = {}
             for f in form.fields.keys():
@@ -648,16 +676,10 @@ def mz_search( request ):
                 else:
                     context[f] = form.fields[f].initial
 	    target_input = context['target_input']
-	    tolerance = context['tolerance'] 
-            context = { 'target_input' : target_input, 'tolerance' : tolerance }
-	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides( 'mz', [float(target_input), float(tolerance), user] )
-	    #ides = s1.get_ides_from_mass( target_input, tolerance )
-            desc = u'm/z %s \u00B1 %s' % ( target_input, tolerance ) 
-            context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
-	    #target = request.get['target_input']
-	    #context = { 'msg' : text_input }
-            return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
+	    tolerance = context['tolerance']
+            desc = u'm/z = %s \u00B1 %s' % ( target_input, tolerance ) 
+        context = { 'search' : True, 'query_on' : query_on, 'text_input' : desc, 'search_type' : search_type, 'search_args' : [target_input, tolerance] }
+        return render( request, 'pepsite/find_peptides_ajax.html', context ) # Redirect after POST
 
     else:
         textform = MzSearchForm()
@@ -667,18 +689,13 @@ def mz_search( request ):
 def sequence_search( request ):
     user = request.user
     if request.GET.items(): # If the form has been submitted...
-        form = SequenceSearchForm(request.GET) # A form bound to the POST data
+        form = MzSearchForm(request.GET) # A form bound to the POST data
+        search_type, query_on = 'sequence', 'Peptide sequence'
+        target_input = ''
+        desc = 'empty'
         if form.is_valid(): # All validation rules pass
-	    target_input = form.cleaned_data['target_input'] 
-	    #tolerance = form.cleaned_data['tolerance'] 
-            context = { 'target_input' : target_input } #, 'tolerance' : tolerance }
-	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides( 'sequence', [target_input, user] )
-	    #ides = s1.get_ides_from_mass( target_input, tolerance )
-            desc = u'sequence %s' % ( target_input.upper() ) 
-            context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
-	    #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Allele', 'search' : True }
-            return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
+	    target_input = str(form.cleaned_data['target_input']) 
+            desc = target_input 
 	else:
             context = {}
             for f in form.fields.keys():
@@ -686,18 +703,10 @@ def sequence_search( request ):
                     context[f] = form.data[f]
                 else:
                     context[f] = form.fields[f].initial
-	    target_input = context['target_input']
-	    #tolerance = context['tolerance'] 
-            context = { 'target_input' : target_input } #, 'tolerance' : tolerance }
-	    s1 = MassSearch()
-	    ides = s1.get_unique_peptide_ides_from_mz( target_input, user )
-	    #ides = s1.get_ides_from_mass( target_input, tolerance )
-            desc = u'sequence %s' % ( target_input.upper() ) 
-            context = { 'rows' : ides, 'search' : True, 'query_on' : 'Peptide', 'text_input' : desc }
-	    #target = request.get['target_input']
-	    #context = { 'msg' : text_input }
-            return render( request, 'pepsite/found_peptides.html', context ) # Redirect after POST
-
+	    target_input = str(context['target_input'])
+            desc = target_input.upper()
+        context = { 'search' : True, 'query_on' : query_on, 'text_input' : desc, 'search_type' : search_type, 'search_args' : [target_input] }
+        return render( request, 'pepsite/find_peptides_ajax.html', context ) # Redirect after POST
     else:
         textform = SequenceSearchForm()
         context = { 'massform' : textform }
@@ -954,7 +963,6 @@ def peptides_render( request, expt_id ):
     return HttpResponse( [ b['expt'].title for b in rows] )
     #else:
     #  return HttpResponse( 'Nothing!!!' + str( request.POST.keys() )  )
-
 
 
 

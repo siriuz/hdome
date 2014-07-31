@@ -7,7 +7,7 @@
 
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
-        <tr><th class="hilite">Protein</th><th>UniProt code</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th>
+        <tr><th class="hilite">Protein</th><th>UniProt code</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th>
                 {% for ds in compare_ds %}
                 <th><span class="text-primary">{{ds.experiment.title}}</span>
                     {{ds.title}}</th>
@@ -37,6 +37,8 @@
             <td>{{ row.ide.delta_mass }}</td>
             
             <td>{{ row.ide.confidence }}</td>
+
+            <td>{{row.ide.ion.mz}}</td>
             
             <td>{{ row.ide.ion.charge_state }}</td>
             
