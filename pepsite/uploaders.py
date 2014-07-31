@@ -10,6 +10,7 @@ import datetime
 from django.utils.timezone import utc
 import uniprot
 from django.db.models import Count
+from django.db import IntegrityError, transaction
 
 
 class Uploads(dbtools.DBTools):
@@ -231,7 +232,7 @@ class Uploads(dbtools.DBTools):
 
 
                         elif m == 'uniprot_ids':
-                            print elements[k]
+                            #print elements[k]
           
                             allstr += '<td><a href=\"http://www.uniprot.org/uniprot/' + elements[k].split('|')[1] + '\" target=\"_blank\">' + elements[k].split('|')[1] + '</a></td>'
                             uldict[j]['uniprot_ids'] = [ elements[k].split('|')[1] ]
@@ -350,21 +351,19 @@ class Uploads(dbtools.DBTools):
         self.uldict = uldict
         self.dataset_nos = sorted( self.dataset_nos )
 
+    @transaction.atomic
     def prepare_upload_simple(self):
         """docstring for fname(self, cleaned_data"""
         self.instrument = self.get_model_object( Instrument, id = self.instrument_id )
         self.cell_line = self.get_model_object( CellLine, id = self.cell_line_id )
         if not self.expt_id:
             self.expt = self.get_model_object( Experiment, cell_line = self.cell_line, title = self.expt_title, description = self.expt_desc )
-            self.expt.save()
         else:
             self.expt = self.get_model_object( Experiment, id = self.expt_id )
-            self.expt.save()
         for ab in self.antibodies:
                 self.add_if_not_already(  ab, self.expt.antibody_set )
         if not self.lodgement:
             self.lodgement = self.get_model_object( Lodgement, user = self.user, title = self.lodgement_title, datetime = self.now, datafilename=self.lodgement_filename )
-            self.lodgement.save()
             if self.publications:
                 for pl in self.publications:
                     pbln = self.get_model_object( Publication, id=pl )
@@ -374,7 +373,7 @@ class Uploads(dbtools.DBTools):
                     datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title ), 
                     #dmass_cutoff = self.cutoff_mappings['dm_cutoff'], 
                     confidence_cutoff = self.cutoff_mappings['cf_cutoff'] )
-            ds.save()
+            #ds.save()
             assign_perm('view_dataset', self.user, ds)
             assign_perm('edit_dataset', self.user, ds)
             for group in self.user.groups.all():
@@ -431,7 +430,8 @@ class Uploads(dbtools.DBTools):
         self.uniprot_data = uniprot.batch_uniprot_metadata( self.uniprot_ids )
         
 
-    def upload_simple( self ):
+    @transaction.atomic
+    def old_upload_simple( self ):
         """None -> None
         """
         i = 0
@@ -479,7 +479,36 @@ class Uploads(dbtools.DBTools):
             for protein in proteins:
                 p2p = self.get_model_object( PepToProt, peptide = pep, protein = protein )
                 p2p.save()
-            print 'uploaded ion #%d from Experiment: %s, ion: %s' % ( i, self.expt.title, ion.__str__() )
+            #print 'uploaded ion #%d from Experiment: %s, ion: %s' % ( i, self.expt.title, ion.__str__() )
+
+    @transaction.atomic
+    def upload_simple( self ):
+        """None -> None
+        """
+        i = 0
+        for k in self.uldict.keys():
+            i += 1
+            local = self.uldict[k]
+            pep = self.get_model_object( Peptide, sequence = local['peptide_sequence'] )
+            proteins = []
+            ptms = []
+            for prt, unp in zip( local['proteins'], local['uniprot_ids'] ):
+                pr1 = self.get_model_object( Protein,  prot_id = unp, description = prt, name = prt )
+                proteins.append( pr1 )
+            for ptm_desc in local['ptms']:
+                ptm = self.get_model_object( Ptm, description = ptm_desc, name = ptm_desc )
+                ptms.append( ptm )
+            dsno = local['dataset']
+            dataset = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
+                    datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title )  )
+            ion = self.get_model_object( Ion,  charge_state = local['charge'], precursor_mass = local['precursor_mass'],
+                    retention_time = local['retention_time'], mz = local['mz'], experiment = self.expt, dataset = dataset, spectrum = local['spectrum'] )
+            ide = self.get_model_object( IdEstimate, ion = ion, peptide = pep, confidence = local['confidence'], delta_mass = local['delta_mass'] )
+            for ptm in ptms:
+                self.add_if_not_already( ptm, ide.ptms )
+                #ide.save()
+            for protein in proteins:
+                p2p = self.get_model_object( PepToProt, peptide = pep, protein = protein )
 
     def upload_simple_multiple( self ):
         """None -> None

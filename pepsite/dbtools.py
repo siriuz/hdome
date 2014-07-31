@@ -17,6 +17,13 @@ class NonUniqueError(Error):
     def __str__(self):
 	return repr( self.msg )
 
+class ObjectUnreadyError(Error):
+    def __init__(self, msg = 'The object is unready!' ):
+        self.msg = msg
+
+    def __str__(self):
+	return repr( self.msg )
+
 class ClassNotFoundError(Error):
     def __init__(self, msg = 'Query yielded zero class instances' ):
         self.msg = msg
@@ -30,7 +37,7 @@ class DBTools(object):
     def add_if_not_already( self, obj1, obj2_lookup ):
         """<Django model ob>, <Django model obj> -> None
         """
-        if obj1 not in obj2_lookup.all():
+        if not obj2_lookup.filter( id = obj1.id ).exists():
             obj2_lookup.add( obj1 )
 
     def fname(self):
@@ -38,11 +45,39 @@ class DBTools(object):
         pass
 
     
+    def old_get_model_object( self, obj_type, **conditions ):
+        """(DBTools, <arbitrary Django model object>) -> 
+        <unsaved arbitrary Django model object> |  
+        <saved arbitrary Django model object> | Error
+        """
+        if not len( obj_type.objects.filter( **conditions ) ):
+            return obj_type( **conditions )
+        elif len( obj_type.objects.filter( **conditions ) ) == 1:
+            return obj_type.objects.get( **conditions )
+        else:
+            raise NonUniqueError(  )
+    
     def get_model_object( self, obj_type, **conditions ):
         """(DBTools, <arbitrary Django model object>) -> 
         <unsaved arbitrary Django model object> |  
         <saved arbitrary Django model object> | Error
         """
+        try:
+            return obj_type.objects.get( **conditions )
+        except:
+            try:
+                return obj_type.objects.create( **conditions )
+            except:
+                if not len( obj_type.objects.filter( **conditions ) ):
+                    raise NonUniqueError(  )
+                elif len( obj_type.objects.filter( **conditions ) ) > 1:
+                    raise ClassNotFoundError(  )
+                else:
+                    raise ObjectUnreadyError()
+
+
+                
+
         if not len( obj_type.objects.filter( **conditions ) ):
             return obj_type( **conditions )
         elif len( obj_type.objects.filter( **conditions ) ) == 1:
