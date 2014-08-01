@@ -153,6 +153,7 @@ class Experiment( models.Model ):
     cell_line = models.ForeignKey( CellLine )
     #lodgement = models.ForeignKey( Lodgement )
     notes = models.TextField( default = '',blank=True, null=True )
+    proteins = models.ManyToManyField( 'Protein' )
 
     def __str__(self):
 	return self.title

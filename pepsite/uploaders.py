@@ -478,6 +478,7 @@ class Uploads(dbtools.DBTools):
                 #ide.save()
             for protein in proteins:
                 p2p = self.get_model_object( PepToProt, peptide = pep, protein = protein )
+                ex2pr = self.get_model_object( PepToProt, peptide = pep, protein = protein )
                 p2p.save()
             #print 'uploaded ion #%d from Experiment: %s, ion: %s' % ( i, self.expt.title, ion.__str__() )
 
@@ -509,6 +510,7 @@ class Uploads(dbtools.DBTools):
                 #ide.save()
             for protein in proteins:
                 p2p = self.get_model_object( PepToProt, peptide = pep, protein = protein )
+                self.add_if_not_already( protein, self.expt.proteins )
 
     def upload_simple_multiple( self ):
         """None -> None
