@@ -75,7 +75,7 @@ cursor:pointer;
 	{% for experiment in idestimate.ion.experiments.all %}
 <tr>
 	<td>
-	<a href="{% url 'pepsite:expt2' experiment.id %}" class="link">{{experiment.title}}</a>
+	<a href="{% url 'pepsite:expt2_ajax' experiment.id %}" class="link">{{experiment.title}}</a>
 	</td>
 	<td>
 	<a href="{% url 'pepsite:peptide_expts' peptide.id %}" class="link">{{peptide.sequence}}</a>

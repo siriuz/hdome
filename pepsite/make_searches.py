@@ -316,12 +316,19 @@ class ExptArrayAssemble( BaseSearch ):
         expt = Experiment.objects.get( id = exp_id )
         print expt.title
         user = User.objects.get( id = user_id )
+        print 'check1'
         dsets = Dataset.objects.filter( experiment__id = exp_id ).distinct()
+        print dsets
+        print Experiment.objects.get( id = exp_id ).dataset_set.all()
         for ds in Experiment.objects.get( id = exp_id ).dataset_set.all():
             if not user.has_perm( 'view_dataset', ds ):
-                dsets = dsets.exclude( ds )
-        print 'done'
-        qq1 = IdEstimate.objects.filter( ion__dataset__in = dsets, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().query
+                print dsets.count()
+                dsets = dsets.exclude( id = ds.id )
+        print 'check2'
+        try:
+            qq1 = IdEstimate.objects.filter( ion__dataset__in = dsets, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().query
+        except TypeError:
+            qq1 = IdEstimate.objects.filter( ion__dataset = dsets, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().query
         cursor.execute( 'CREATE TEMP VIEW \"allowedides\" AS ' + str( qq1 ) )
         qq2 = "CREATE TEMP VIEW suppavail AS SELECT foo.id, foo.ptmstr,\
                 min(abs(foo.delta_mass)) FROM (select t1.id, t1.confidence, t1.peptide_id, \
