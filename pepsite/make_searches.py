@@ -545,7 +545,7 @@ class ExptArrayAssemble( BaseSearch ):
                 pass
             except:
                 ch1[repstr] = True
-                for prot in Protein.objects.filter( peptoprot__peptide__idestimate = ide ).distinct():
+                for prot in Protein.objects.filter( peptoprot__peptide__idestimate = ide, experiment = expt ).distinct():
                     hitlist = [False] * len( self.dsnos_ordered )
                     p2p = PepToProt.objects.get( peptide = ide.peptide, protein = prot )
                     row = { 'ide': ide, 'ptms' : ide.ptms.all(), 'expt' : expt, 'ds' : ide.ion.dataset, 'protein' : prot, 'peptoprot' : p2p } 
@@ -589,7 +589,7 @@ class ExptArrayAssemble( BaseSearch ):
                 pass
             except:
                 ch1[repstr] = True
-                for prot in Protein.objects.filter( peptoprot__peptide__idestimate = ide ).distinct():
+                for prot in Protein.objects.filter( peptoprot__peptide__idestimate = ide, experiment = expt ).distinct():
                     p2p = PepToProt.objects.get( peptide = ide.peptide, protein = prot )
                     row = { 'ide': ide, 'ptms' : ide.ptms.all(), 'expt' : expt, 'ds' : ide.ion.dataset, 'protein' : prot, 'peptoprot' : p2p } 
                     rows.append(row)

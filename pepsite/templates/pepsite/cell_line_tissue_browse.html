@@ -92,7 +92,7 @@ cursor:pointer;
 	</td>
 	<td>
 	{% for expt in cell_line.get_experiments %}
-		<a href="{% url 'pepsite:expt2' expt.id %}">{{ expt.title }}</a>
+		<a href="{% url 'pepsite:expt2_ajax' expt.id %}">{{ expt.title }}</a>
 	{% endfor %}
 	
 	</td>

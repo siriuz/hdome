@@ -903,6 +903,10 @@ def expt2_ajax( request, expt_id ):
     expt = get_object_or_404( Experiment, id = expt_id )
     publications = expt.get_publications()
     lodgements = Lodgement.objects.filter( dataset__experiment = expt )
+    complete = True
+    for dataset in expt.dataset_set.all():
+        if ( not user.has_perm( 'view_dataset', dataset ) ):
+            complete = False
     if not( len(lodgements)):
         lodgements = False
     #paginator = Paginator(proteins, 25 ) # Show 25 contacts per page
@@ -924,7 +928,7 @@ def expt2_ajax( request, expt_id ):
     #    if pid in protein_ids_initial:
     #        protein_ids_total.remove(pid)
     #protein_ids = protein_ids_total[initial_quota:] 
-    return render( request, 'pepsite/expt2_ajax.html', { 'expt' : expt, 'lodgements' : lodgements, 'publications' : publications, 'paginate' : False })
+    return render( request, 'pepsite/expt2_ajax.html', { 'expt' : expt, 'lodgements' : lodgements, 'complete' : complete, 'publications' : publications, 'paginate' : False })
 
 def peptides_render( request, expt_id ):
     user = request.user
