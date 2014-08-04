@@ -271,6 +271,20 @@ class PepToProt(models.Model):
         for pos in poslist:
             pstr += '%d-%d ' %( pos[0], pos[1])
         return pstr.strip()
+
+    def assign_positions(self):
+        """docstring for get_positions"""
+        poslist = [(m.start(0), m.end(0)) for m in re.finditer(self.peptide.sequence, self.protein.sequence)]
+        pstr = ''
+        for pos in poslist:
+            try:
+                posobj = Position.objects.get(  initial_res = pos[0], final_res = pos[1] )
+            except:
+                assert( not Position.objects.filter(  initial_res = pos[0], final_res = pos[1] ) )
+                posobj = Position.objects.create(  initial_res = pos[0], final_res = pos[1] )
+            if not self.positions.filter( id = posobj.id ).exists():
+                self.positions.add( posobj )
+                
         
 
 

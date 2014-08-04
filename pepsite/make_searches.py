@@ -386,11 +386,11 @@ class ExptArrayAssemble( BaseSearch ):
         dsets = Dataset.objects.filter( experiment__id = prim_exp_id ).distinct()
         for ds in Experiment.objects.get( id = prim_exp_id ).dataset_set.all():
             if not user.has_perm( 'view_dataset', ds ):
-                dsets = dsets.exclude( ds )
+                dsets = dsets.exclude( id = ds.id )
         dsets_compare = Dataset.objects.filter( experiment__id__in = other_exp_ids ).distinct()
         for ds in dsets_compare:
             if not user.has_perm( 'view_dataset', ds ):
-                dsets_compare = dsets_compare.exclude( ds )
+                dsets_compare = dsets_compare.exclude( id = ds.id )
         dsets_compare = dsets_compare.order_by( 'experiment', 'title' )
         self.compare_ds = dsets_compare # will be sent to template
         self.dsnos_ordered = [ b.id for b in dsets_compare ] # will be used to check presence of hit(s)

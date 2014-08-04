@@ -1,0 +1,51 @@
+                    List of relations
+ Schema |              Name              | Type  | Owner  
+--------+--------------------------------+-------+--------
+ public | auth_group                     | table | rimmer
+ public | auth_group_permissions         | table | rimmer
+ public | auth_permission                | table | rimmer
+ public | auth_user                      | table | rimmer
+ public | auth_user_groups               | table | rimmer
+ public | auth_user_user_permissions     | table | rimmer
+ public | django_admin_log               | table | rimmer
+ public | django_content_type            | table | rimmer
+ public | django_migrations              | table | rimmer
+ public | django_session                 | table | rimmer
+ public | guardian_groupobjectpermission | table | rimmer
+ public | guardian_userobjectpermission  | table | rimmer
+ public | news_article                   | table | rimmer
+ public | news_article_media             | table | rimmer
+ public | news_media                     | table | rimmer
+ public | pepsite_allele                 | table | rimmer
+ public | pepsite_antibody               | table | rimmer
+ public | pepsite_antibody_alleles       | table | rimmer
+ public | pepsite_antibody_experiments   | table | rimmer
+ public | pepsite_cellline               | table | rimmer
+ public | pepsite_cellline_individuals   | table | rimmer
+ public | pepsite_dataset                | table | rimmer
+ public | pepsite_entity                 | table | rimmer
+ public | pepsite_experiment             | table | rimmer
+ public | pepsite_experiment_proteins    | table | rimmer
+ public | pepsite_expression             | table | rimmer
+ public | pepsite_externaldb             | table | rimmer
+ public | pepsite_gene                   | table | rimmer
+ public | pepsite_idestimate             | table | rimmer
+ public | pepsite_idestimate_ptms        | table | rimmer
+ public | pepsite_individual             | table | rimmer
+ public | pepsite_instrument             | table | rimmer
+ public | pepsite_ion                    | table | rimmer
+ public | pepsite_lodgement              | table | rimmer
+ public | pepsite_lookupcode             | table | rimmer
+ public | pepsite_lookupcode_cell_lines  | table | rimmer
+ public | pepsite_manufacturer           | table | rimmer
+ public | pepsite_peptide                | table | rimmer
+ public | pepsite_peptoprot              | table | rimmer
+ public | pepsite_peptoprot_positions    | table | rimmer
+ public | pepsite_position               | table | rimmer
+ public | pepsite_protein                | table | rimmer
+ public | pepsite_ptm                    | table | rimmer
+ public | pepsite_publication            | table | rimmer
+ public | pepsite_publication_cell_lines | table | rimmer
+ public | pepsite_publication_lodgements | table | rimmer
+(46 rows)
+

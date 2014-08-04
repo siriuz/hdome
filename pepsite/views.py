@@ -70,6 +70,25 @@ def protein_browse( request ):
 	context = { 'proteins' : proteins }
 	return render( request, 'pepsite/protein_browse.html', context)
 
+def protein_browse_ajax( request ):
+    user = request.user
+    if user.id is None:
+        user = User.objects.get( id = -1 )
+    complete = True
+    for ds in Dataset.objects.all():
+        if not user.has_perm( 'view_dataset', ds ):
+            complete = False
+            break
+    return render( request, 'pepsite/protein_browse_ajax.html', {'complete' : complete})
+
+def browsable_proteins_render(request):
+    """docstring for browsable_proteins_render"""
+    print '\n\nActivated!!!\n\n'
+    proteins = Protein.objects.all().distinct()
+    context = { 'proteins' : proteins }
+    return render( request, 'pepsite/render_proteins_for_browse.html', context)
+
+
 #@login_required
 def cell_line_browse( request ):
 	cell_lines = CellLine.objects.all().distinct()
@@ -312,21 +331,15 @@ def compare_expt_form_ajax( request ):
             for ex in exptz:
                 ex_obj = get_object_or_404( Experiment, id = ex )
                 all_exp.append( ex_obj )
+            complete = True
+            for dataset in Dataset.objects.filter( experiment__id__in =  exptz + [ expt1 ] ):
+                if ( not user.has_perm( 'view_dataset', dataset ) ):
+                    complete = False
+            print 'complete =', complete
             publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
             if not( len(lodgements)):
                 lodgements = False
-            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications  })
-            exptz2 = [ int(b) for b in exptz ]
-            expt = get_object_or_404( Experiment, id = expt1 )
-            all_exp = [ expt ]
-            lodgements = Lodgement.objects.filter( dataset__experiment = expt )
-            for ex in exptz:
-                ex_obj = get_object_or_404( Experiment, id = ex )
-                all_exp.append( ex_obj )
-            publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
-            if not( len(lodgements)):
-                lodgements = False
-            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications  })
+            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'complete' : complete, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications  })
 	else:
             context = {}
             for f in form.fields.keys():
@@ -345,9 +358,14 @@ def compare_expt_form_ajax( request ):
                 ex_obj = get_object_or_404( Experiment, id = ex )
                 all_exp.append( ex_obj )
             publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
+            complete = True
+            for dataset in Dataset.objects.filter( experiment__id__in =  exptz + [ expt1 ] ):
+                if ( not user.has_perm( 'view_dataset', dataset ) ):
+                    complete = False
+            print 'complete =', complete
             if not( len(lodgements)):
                 lodgements = False
-            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications  })
+            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'complete' : complete, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications  })
     elif request.method == 'POST': # If the form has been submitted...
             form = CompareExptForm(request.POST) # A form bound to the POST data
             expt1 = request.POST['expt1']
@@ -377,6 +395,8 @@ def compare_expt_form_ajax( request ):
 
 def comparison_peptides_render( request ):
   user = request.user
+  if user.id is None:
+    user = User.objects.get( id = -1 )
   #return HttpResponse( 'Hello!' )
   if request.POST.has_key( 'expt' ) and request.POST.has_key( 'exptz[]' ):
             
@@ -386,9 +406,13 @@ def comparison_peptides_render( request ):
             print 'expt =', expt.id, 'exptz =', exptz
             #return HttpResponse( 'Something!!!' + str( request.POST.keys() )  )
             #exptz = formdata['exptz']
+            complete = True
+            for dataset in Dataset.objects.filter( experiment__id__in =  exptz + [ expt1 ] ):
+                if ( not user.has_perm( 'view_dataset', dataset ) ):
+                    complete = False
             s1 = ExptArrayAssemble()
             rows = s1.mkiii_compare_query( expt1, exptz, user.id ) 
-            return render( request, 'pepsite/compare_peptides_render.html', { 'rows' : rows, 'compare_ds' : s1.compare_ds, 'expt' : expt  })
+            return render( request, 'pepsite/compare_peptides_render.html', { 'rows' : rows, 'compare_ds' : s1.compare_ds, 'expt' : expt, 'complete' : complete  })
             context = { 'exptz' : exptz, 'expt1' : expt1  }
             proteins = Protein.objects.filter( peptide__ion__experiment__id = expt1).distinct()
             protein_ids = [b.id for b in proteins][:25]
