@@ -933,25 +933,6 @@ def expt2_ajax( request, expt_id ):
             complete = False
     if not( len(lodgements)):
         lodgements = False
-    #paginator = Paginator(proteins, 25 ) # Show 25 contacts per page
-
-    #page = request.GET.get('page')
-    #try:
-    #    proteins = paginator.page(page)
-    #except PageNotAnInteger:
-    #    # If page is not an integer, deliver first page.
-    #    proteins = paginator.page(1)
-    #except EmptyPage:
-    #    # If page is out of range (e.g. 9999), deliver last page of results.
-    #    proteins = paginator.page(paginator.num_pages)
-    #s1 = ExptArrayAssemble()
-    #rows = s1.get_peptide_array_from_protein_expt( proteins[:initial_quota], expt, user, cutoffs = True )
-    #protein_ids_total = [ b.id for b in proteins ]
-    #protein_ids_initial = protein_ids_total[:][:initial_quota] 
-    #for pid in protein_ids_total:
-    #    if pid in protein_ids_initial:
-    #        protein_ids_total.remove(pid)
-    #protein_ids = protein_ids_total[initial_quota:] 
     return render( request, 'pepsite/expt2_ajax.html', { 'expt' : expt, 'lodgements' : lodgements, 'complete' : complete, 'publications' : publications, 'paginate' : False })
 
 def peptides_render( request, expt_id ):
@@ -960,38 +941,14 @@ def peptides_render( request, expt_id ):
     if user.id is None:
         user = User.objects.get( id = -1 )
     print 'user = ', user, user.id, user.username
-    #return HttpResponse( 'Hello!' )
-    #if request.POST.has_key( 'expt_id' ):
-    proteins = Protein.objects.filter( peptide__ion__experiment__id = expt_id ).distinct()
-    #print protein_ids
-    #proteins = Protein.objects.filter( id__in = protein_ids).distinct()
     expt = get_object_or_404( Experiment, id = expt_id )
-    #publications = expt.get_publications()
-    #lodgements = Lodgement.objects.filter( dataset__experiment = expt )
-    #if not( len(lodgements)):
-    #    lodgements = False
-    #paginator = Paginator(proteins, 25 ) # Show 25 contacts per page
-
-    #page = request.GET.get('page')
-    #try:
-    #    proteins = paginator.page(page)
-    #except PageNotAnInteger:
-    #    # If page is not an integer, deliver first page.
-    #    proteins = paginator.page(1)
-    #except EmptyPage:
-    #    # If page is out of range (e.g. 9999), deliver last page of results.
-    #    proteins = paginator.page(paginator.num_pages)
     s1 = ExptArrayAssemble()
-    #rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user, cutoffs = True )
     rows = s1.mkiii_expt_query(  expt.id, user.id )
     print len(rows)
-    #protein_ids = [ b.id for b in proteins ]
     return render( request, 'pepsite/peptides_render_rapid.html', { 'expt' : expt, 'rows' : rows }) 
-    return HttpResponse( [ b['expt'].title for b in rows] )
-    return HttpResponse( [ b['expt'].title for b in rows] )
-    #else:
-    #  return HttpResponse( 'Nothing!!!' + str( request.POST.keys() )  )
 
+def peptides_render_sql_improved( request, expt_id ):
+    pass
 
 
 

@@ -1,0 +1,8 @@
+
+
+streamingResponse - for continuous ajax upload
+
+celery for async upload (queue system rabbitmq)
+   email notification [whatever]
+
+django debug toolbar

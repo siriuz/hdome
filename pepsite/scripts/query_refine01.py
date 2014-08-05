@@ -394,6 +394,14 @@ class QueryOpt( object ):
                 pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
                 group by t1.id, t1.peptide_id, t1.peptide_id) AS foo \
                 "
+        qq2 = "CREATE VIEW suppavail_all AS SELECT foo.id, foo.ptmarray, foo.ptmstr, foo.peptide_id, foo.ptmz \
+                FROM (select t1.id, t1.confidence, t1.peptide_id, \
+                t1.delta_mass, array_agg(t2.ptm_id ORDER BY t2.ptm_id) AS ptmarray, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr, \
+                array_agg(t3.description order by t3.id) AS ptmz FROM \
+                pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
+                INNER JOIN pepsite_ptm t3 ON ( t3.id = t2.ptm_id ) \
+                GROUP BY t1.id, t1.peptide_id, t1.peptide_id) AS foo \
+                "
         qq2a = "CREATE TEMP VIEW augmented_ides AS \
                 SELECT t1.id, t1.peptide_id, t1.ptmarray, t1.ptmstr, t2.confidence, t2.delta_mass, \
                 t2.\"isRemoved\", t3.mz, t3.precursor_mass, t3.retention_time, \

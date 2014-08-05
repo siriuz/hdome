@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 admin.autodiscover()
+from django.conf import settings
 
 urlpatterns = patterns('',
     # Examples:
@@ -20,3 +21,10 @@ urlpatterns = patterns('',
     url(r'^about/$', 'hdome.views.about', name='about'),
     url(r'^banner/$', 'hdome.views.banner', name='banner'),
 )
+
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += patterns('',
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    )

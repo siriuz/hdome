@@ -145,7 +145,7 @@ class IonAdmin(admin.ModelAdmin):
 
 class ExperimentAdmin(admin.ModelAdmin):
     inlines = [
-        ExpIonInline,
+        #ExpIonInline,
         ExpAbInline,
         #ExpIonInline,
         DatasetInLine,
