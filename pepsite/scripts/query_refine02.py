@@ -134,7 +134,9 @@ class QueryOpt( object ):
         cursor = connection.cursor()
         cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
-        cursor.execute( "DROP VIEW IF EXISTS \"shizzle\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"prot_expt\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"semi_master\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"grand_master\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
         cursor.execute( "DROP VIEW IF EXISTS \"sv2\"" )
         expt = Experiment.objects.get( id = exp_id )
@@ -144,6 +146,7 @@ class QueryOpt( object ):
         qq1 = IdEstimate.objects.filter( ion__experiment = expt, ion__dataset__confidence_cutoff__lt = F('confidence') ).distinct().query
         cursor.execute( 'CREATE VIEW \"allowedides\" AS ' + str( qq1 ) )
         # Generate SQL for finding idestimate-ptms combo with lowest possible abs(delta_mass) [per experiment] 
+        # NOTE: This contins one row per IdEstimate - it can be a starting point for a 'master' view
         qq2 = "CREATE VIEW suppavail AS SELECT foo.id, foo.ptmstr, foo.experiment_id, \
                 min(abs(foo.delta_mass)) FROM \
                 ( select t1.id, t1.peptide_id, t3.experiment_id, \
@@ -176,8 +179,46 @@ class QueryOpt( object ):
                 suppcorrect t1 \
                 INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
                 INNER JOIN allowedides t3 ON (t2.id = t3.id AND t1.min = abs(t3.delta_mass))"
+        # Assign correct protein identifications and peptide positionings on a per experiment basis
+        qqprot = "CREATE VIEW prot_expt AS SELECT DISTINCT \
+                t1.id as p2p_id, t1.peptide_id, t1.protein_id, array_agg(t2.position_id ORDER BY t2.position_id) as posnarray, \
+                array_to_string( array_agg( CAST(t3.initial_res AS text) || '-' || CAST(t3.final_res AS text) ORDER BY t3.initial_res ), ' ') as posnstr \
+                FROM pepsite_peptoprot t1 \
+                LEFT OUTER JOIN pepsite_peptoprot_positions t2 \
+                ON ( t1.id = t2.peptoprot_id  ) \
+                INNER JOIN pepsite_position t3 \
+                ON ( t2.position_id = t3.id ) \
+                GROUP BY t1.id, t1.peptide_id, t1.protein_id \
+                "
         # now let us create a master view which contains prepackaged peptide data for display
-        qqmaster = " \
+        qqsemimaster = "CREATE VIEW semi_master AS \
+                SELECT t1.*, t2.peptide_id, t2.delta_mass, abs( t2.delta_mass ) as abdm, \
+                t2.confidence, t2.\"isRemoved\",  t2.ion_id, \
+                t3.title, t4.sequence as peptide_sequence, \
+                char_length( t4.sequence ) as peptide_length, \
+                t5.charge_state, t5.retention_time, t5.dataset_id, \
+                t6.confidence_cutoff \
+                FROM \
+                suppavail t1 \
+                INNER JOIN pepsite_idestimate t2 \
+                ON ( t1.id = t2.id ) \
+                INNER JOIN pepsite_experiment t3 \
+                ON ( t1.experiment_id = t3.id ) \
+                INNER JOIN pepsite_peptide t4 \
+                ON ( t2.peptide_id = t4.id ) \
+                INNER JOIN pepsite_ion t5 \
+                ON ( t5.id = t2.ion_id ) \
+                INNER JOIN pepsite_dataset t6 \
+                ON ( t6.id = t5.dataset_id ) \
+                "
+        qqmaster = "CREATE MATERIALIZED VIEW grand_master AS \
+                SELECT t1.*, \
+                t3.protein_id, t3.posnarray, t3.posnstr \
+                FROM semi_master t1\
+                INNER JOIN pepsite_experiment_proteins t2 \
+                ON ( t1.experiment_id = t2.experiment_id ) \
+                INNER JOIN prot_expt t3 \
+                ON ( t3.protein_id = t2.protein_id AND t3.peptide_id = t1.peptide_id ) \
                 "
         cursor.execute( qq2 )
         cursor.execute( 'SELECT COUNT(*) FROM suppavail' )
@@ -185,6 +226,15 @@ class QueryOpt( object ):
         cursor.execute( qq3 )
         cursor.execute( 'SELECT COUNT(*) FROM suppcorrect' )
         print 'suppcorrect', cursor.fetchall(  )
+        cursor.execute( qqprot )
+        cursor.execute( 'SELECT COUNT(*) FROM prot_expt' )
+        print 'prot_expt', cursor.fetchall(  )
+        cursor.execute( qqsemimaster )
+        cursor.execute( 'SELECT COUNT(*) FROM semi_master' )
+        print 'semi_master', cursor.fetchall(  )
+        cursor.execute( qqmaster )
+        cursor.execute( 'SELECT COUNT(*) FROM grand_master' )
+        print 'grand_master', cursor.fetchall(  )
         cursor.execute( qq4 )
         ides = cursor.fetchall()
         j = len(ides)
