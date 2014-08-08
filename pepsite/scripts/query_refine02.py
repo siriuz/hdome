@@ -137,6 +137,8 @@ class QueryOpt( object ):
         cursor.execute( "DROP VIEW IF EXISTS \"prot_expt\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"semi_master\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"grand_master\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"master_allowed\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"master_disallowed\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
         cursor.execute( "DROP VIEW IF EXISTS \"sv2\"" )
         expt = Experiment.objects.get( id = exp_id )
@@ -148,7 +150,7 @@ class QueryOpt( object ):
         # Generate SQL for finding idestimate-ptms combo with lowest possible abs(delta_mass) [per experiment] 
         # NOTE: This contins one row per IdEstimate - it can be a starting point for a 'master' view
         qq2 = "CREATE VIEW suppavail AS SELECT foo.id, foo.ptmstr, foo.experiment_id, \
-                min(abs(foo.delta_mass)) FROM \
+                min(abs(foo.delta_mass)) minadm FROM \
                 ( select t1.id, t1.peptide_id, t3.experiment_id, \
                 t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr \
                 FROM pepsite_idestimate t1 \
@@ -162,7 +164,7 @@ class QueryOpt( object ):
                 "
         # Find peptide-ptms combo with lowest possible abs(delta_mass) [per experiment]
         qq3 = "CREATE VIEW suppcorrect AS SELECT DISTINCT \
-                foo.peptide_id, foo.ptmstr, foo.experiment_id, min(abs(foo.delta_mass)) \
+                foo.peptide_id, foo.ptmstr, foo.experiment_id, min(abs(foo.delta_mass)) as minadm \
                 FROM (select t1.id, t1.confidence, t1.peptide_id, t1.delta_mass, \
                 t3.experiment_id, \
                 array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr \
@@ -177,8 +179,8 @@ class QueryOpt( object ):
         # Locate those idestimates whch represent best value for both peptide-ptms and idestimate-ptms
         qq4 = "SELECT DISTINCT t3.id FROM \
                 suppcorrect t1 \
-                INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
-                INNER JOIN allowedides t3 ON (t2.id = t3.id AND t1.min = abs(t3.delta_mass))"
+                INNER JOIN suppavail t2 ON (t2.minadm = t1.minadm AND t2.ptmstr = t1.ptmstr) \
+                INNER JOIN allowedides t3 ON (t2.id = t3.id AND t1.minadm = abs(t3.delta_mass))"
         # Assign correct protein identifications and peptide positionings on a per experiment basis
         qqprot = "CREATE VIEW prot_expt AS SELECT DISTINCT \
                 t1.id as p2p_id, t1.peptide_id, t1.protein_id, array_agg(t2.position_id ORDER BY t2.position_id) as posnarray, \
@@ -220,6 +222,31 @@ class QueryOpt( object ):
                 INNER JOIN prot_expt t3 \
                 ON ( t3.protein_id = t2.protein_id AND t3.peptide_id = t1.peptide_id ) \
                 "
+        qqallowed = "CREATE MATERIALIZED VIEW master_allowed AS \
+                SELECT DISTINCT ON (t1.id) t1.* \
+                FROM grand_master t1 \
+                INNER JOIN suppcorrect t2 \
+                ON (t1.peptide_id = t2.peptide_id AND t1.ptmstr = t2.ptmstr \
+                AND t1.abdm = t2.minadm ) \
+                WHERE t1.confidence > t1.confidence_cutoff and t1.\"isRemoved\" = false \
+                ORDER BY t1.id, t1.ion_id \
+                "
+        qqdisallowed = "CREATE MATERIALIZED VIEW master_disallowed AS \
+                SELECT * FROM grand_master \
+                EXCEPT \
+                SELECT * FROM master_allowed \
+                "
+        dummy = "WITH _ides AS \
+                ( SELECT t1.id \
+                FROM grand_master t1 \
+                INNER JOIN suppcorrect t2 \
+                ON (t1.experiment_id = t2.experiment_id AND t1.ptmstr = t2.ptmstr \
+                AND t1.peptide_id = t2.peptide_id and t1.abdm = t2.minadm ) \
+                CREATE MATERIALIZED VIEW master_allowed AS \
+                SELECT t1.* \
+                FROM grand_master t1 \
+                INNER JOIN suppavail t2 ON (t2.minadm = t1.minadm AND t2.ptmstr = t1.ptmstr) \
+                "
         cursor.execute( qq2 )
         cursor.execute( 'SELECT COUNT(*) FROM suppavail' )
         print 'suppavail', cursor.fetchall(  )
@@ -235,6 +262,12 @@ class QueryOpt( object ):
         cursor.execute( qqmaster )
         cursor.execute( 'SELECT COUNT(*) FROM grand_master' )
         print 'grand_master', cursor.fetchall(  )
+        cursor.execute( qqallowed )
+        cursor.execute( 'SELECT COUNT(*) FROM master_allowed' )
+        print 'master_allowed', cursor.fetchall(  )
+        cursor.execute( qqdisallowed )
+        cursor.execute( 'SELECT COUNT(*) FROM master_disallowed' )
+        print 'master_disallowed', cursor.fetchall(  )
         cursor.execute( qq4 )
         ides = cursor.fetchall()
         j = len(ides)
