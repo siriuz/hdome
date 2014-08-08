@@ -100,70 +100,22 @@ class QueryOpt( object ):
         t1 = time.time()
         return (v1, t1 - t0, j, exp_id, user_id, perm)
 
-    def mkiii_expt_query(self, exp_id, user_id, perm = False):
+    def mkiv_expt_query(self, exp_id, user_id, perm = False):
         """docstring for simple_expt_query"""
         t0 = time.time()
         cursor = connection.cursor()
-        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CSCADE" )
-        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
-        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
-        cursor.execute( "DROP VIEW IF EXISTS \"sv2\"" )
+        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\"" )
+        cursor.execute( "DROP VIEW IF EXISTS \"disallowedides\"" )
         expt = Experiment.objects.get( id = exp_id )
         print expt.title
         user = User.objects.get( id = user_id )
-        dsets = Dataset.objects.filter( experiment__id = exp_id ).distinct()
-        for ds in Experiment.objects.get( id = exp_id ).dataset_set.all():
-            if not user.has_perm( 'view_dataset', ds ):
-                dsets = dsets.exclude( ds )
-        qq1 = IdEstimate.objects.filter( ion__dataset__in = dsets, ion__dataset__confidence_cutoff__lte = F('confidence') ).distinct().query
-        cursor.execute( 'CREATE VIEW \"allowedides\" AS ' + str( qq1 ) )
-        qq2 = "CREATE VIEW suppavail AS SELECT foo.id, foo.ptmstr,\
-                min(abs(foo.delta_mass)) FROM (select t1.id, t1.confidence, t1.peptide_id, \
-                t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM \
-                pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
-                \
-                group by t1.id, t1.peptide_id) AS foo \
-                GROUP BY foo.id, foo.ptmstr \
-                "
-        qq2a = "CREATE VIEW sv2 AS SELECT * FROM suppavail WHERE adm = min"
-        qq3 = "CREATE VIEW suppcorrect AS SELECT DISTINCT foo.peptide_id, foo.ptmstr, min(abs(foo.delta_mass)) \
-                FROM (select t1.id, t1.confidence, t1.peptide_id, t1.delta_mass, \
-                array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM pepsite_idestimate \
-                t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
-                GROUP BY t1.id) AS \
-                foo GROUP BY foo.peptide_id, foo.ptmstr"
-        sql1 = "select ptmstr from pepsite_idestimate t3 left outer join (select t1.id, t1.confidence, \
-                array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),\'+\') as ptmstr from pepsite_idestimate t1 \
-                left outer join pepsite_idestimate_ptms t2 on (t2.idestimate_id = t1.id) group by t1.id) as foo \
-                on(foo.id = t3.id) where t3.id = pepsite_idestimate.id"
+        qq1a = IdEstimate.objects.filter( ion__dataset__in = dsets, ion__dataset__confidence_cutoff__lt = F('confidence') ).distinct().query
+        cursor.execute( 'CREATE TEMP VIEW \"allowedides\" AS ' + str( qq1 ) )
+        qq1b = IdEstimate.objects.filter( ion__dataset__in = dsets, ion__dataset__confidence_cutoff__gte = F('confidence') ).distinct().query
+        cursor.execute( 'CREATE TEMP VIEW \"disallowedides\" AS ' + str( qq2 ) )
         qq4 = "SELECT DISTINCT allowedides.id FROM suppcorrect t1 \
                 INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
                 INNER JOIN allowedides ON (t2.id = allowedides.id AND t1.min = abs(allowedides.delta_mass))"
-        qq4a = "SELECT * FROM \
-                ( \
-                SELECT DISTINCT t1.peptide_id, t1.ptmstr, min(tds.id) as dsmin FROM suppcorrect t1 \
-                INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
-                INNER JOIN allowedides ON (t2.id = allowedides.id AND t1.min = abs(allowedides.delta_mass)) \
-                INNER JOIN pepsite_ion ON (pepsite_ion.id = allowedides.id) \
-                INNER JOIN pepsite_dataset tds \
-                ON ( pepsite_ion.dataset_id = tds.id ) \
-                GROUP BY t1.peptide_id, t1.ptmstr \
-                ) AS perm1\
-                INNER JOIN suppcorrect t3 ON ( t3.ptmstr = perm1.ptmstr ) \
-                "
-        qq4a = "SELECT DISTINCT allowedides.id FROM suppcorrect t1 INNER JOIN \
-                allowedides ON (t1.peptide_id = allowedides. AND t1.min = abs(allowedides.delta_mass))"
-        cursor.execute( qq2 )
-        cursor.execute( 'SELECT COUNT(*) FROM suppavail' )
-        print cursor.fetchall(  )
-        #cursor.execute( 'SELECT COUNT(foo.peptide_id) FROM (SELECT DISTINCT peptide_id, ptmstr FROM suppavail) as foo' )
-        #print cursor.fetchall(  )
-        #cursor.execute( qq2a )
-        #cursor.execute( 'SELECT COUNT(*) FROM sv2' )
-        #print cursor.fetchall(  )
-        cursor.execute( qq3 )
-        cursor.execute( 'SELECT COUNT(*) FROM suppcorrect' )
-        print cursor.fetchall(  )
         cursor.execute( qq4 )
         ides = cursor.fetchall()
         j = len(ides)
@@ -174,6 +126,73 @@ class QueryOpt( object ):
         #ideobjs = IdEstimate.objects.filter( id__in = [b[0] for b in ides] ).distinct()
         #ideobjs = ideobjs.filter( 
         t1 = time.time()
+        return (ides, t1 - t0, j, exp_id, user_id, perm)
+
+    def mkiv_create_views(self, exp_id, user_id, perm = False):
+        """docstring for simple_expt_query"""
+        t0 = time.time()
+        cursor = connection.cursor()
+        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"shizzle\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
+        cursor.execute( "DROP VIEW IF EXISTS \"sv2\"" )
+        expt = Experiment.objects.get( id = exp_id )
+        print expt.title
+        user = User.objects.get( id = user_id )
+        # Generate SQL for finding permitted IdEstimates
+        qq1 = IdEstimate.objects.filter( ion__experiment = expt, ion__dataset__confidence_cutoff__lt = F('confidence') ).distinct().query
+        cursor.execute( 'CREATE VIEW \"allowedides\" AS ' + str( qq1 ) )
+        # Generate SQL for finding idestimate-ptms combo with lowest possible abs(delta_mass) [per experiment] 
+        qq2 = "CREATE VIEW suppavail AS SELECT foo.id, foo.ptmstr, foo.experiment_id, \
+                min(abs(foo.delta_mass)) FROM \
+                ( select t1.id, t1.peptide_id, t3.experiment_id, \
+                t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr \
+                FROM pepsite_idestimate t1 \
+                LEFT OUTER JOIN pepsite_idestimate_ptms t2 \
+                ON (t2.idestimate_id = t1.id) \
+                INNER JOIN pepsite_ion t3 \
+                ON ( t1.ion_id = t3.id ) \
+                GROUP BY t1.id, t1.peptide_id, t3.experiment_id \
+                ) AS foo \
+                GROUP BY foo.id, foo.ptmstr, foo.experiment_id \
+                "
+        # Find peptide-ptms combo with lowest possible abs(delta_mass) [per experiment]
+        qq3 = "CREATE VIEW suppcorrect AS SELECT DISTINCT \
+                foo.peptide_id, foo.ptmstr, foo.experiment_id, min(abs(foo.delta_mass)) \
+                FROM (select t1.id, t1.confidence, t1.peptide_id, t1.delta_mass, \
+                t3.experiment_id, \
+                array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr \
+                FROM pepsite_idestimate t1 \
+                LEFT OUTER JOIN pepsite_idestimate_ptms t2 \
+                ON (t2.idestimate_id = t1.id) \
+                INNER JOIN pepsite_ion t3 \
+                ON (t1.ion_id = t3.id ) \
+                GROUP BY t1.id, t3.experiment_id \
+                ) AS foo \
+                GROUP BY foo.peptide_id, foo.ptmstr, foo.experiment_id"
+        # Locate those idestimates whch represent best value for both peptide-ptms and idestimate-ptms
+        qq4 = "SELECT DISTINCT t3.id FROM \
+                suppcorrect t1 \
+                INNER JOIN suppavail t2 ON (t2.min = t1.min AND t2.ptmstr = t1.ptmstr) \
+                INNER JOIN allowedides t3 ON (t2.id = t3.id AND t1.min = abs(t3.delta_mass))"
+        # now let us create a master view which contains prepackaged peptide data for display
+        qqmaster = " \
+                "
+        cursor.execute( qq2 )
+        cursor.execute( 'SELECT COUNT(*) FROM suppavail' )
+        print 'suppavail', cursor.fetchall(  )
+        cursor.execute( qq3 )
+        cursor.execute( 'SELECT COUNT(*) FROM suppcorrect' )
+        print 'suppcorrect', cursor.fetchall(  )
+        cursor.execute( qq4 )
+        ides = cursor.fetchall()
+        j = len(ides)
+        cursor.close()
+        #ideobjs = IdEstimate.objects.filter( id__in = [b[0] for b in ides] ).distinct()
+        #ideobjs = ideobjs.filter( 
+        t1 = time.time()
+        #print 'time taken = %f' % t1-t0
         return (ides, t1 - t0, j, exp_id, user_id, perm)
 
     def mkiii_compare_query(self, prim_exp_id, other_exp_ids, user_id, primary_clean = True, others_clean = False, perm = False):
@@ -343,20 +362,10 @@ class QueryOpt( object ):
         t1 = time.time()
         return (ides, t1 - t0, j, exp_id, user_id, perm)
 
-    def dictfetchall(self, cursor):
-        "Returns all rows from a cursor as a dict"
-        desc = cursor.description
-        return [
-            dict(zip([col[0] for col in desc], row))
-            for row in cursor.fetchall()
-        ]
-
     def master_views_query(self, primary_clean = True, others_clean = False, perm = False):
         """docstring for simple_expt_query"""
         t0 = time.time()
         cursor = connection.cursor()
-        cursor.execute( "DROP VIEW IF EXISTS \"found_possies\" CASCADE" )
-        cursor.execute( "DROP VIEW IF EXISTS \"prot_ides\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"possibles\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"comparepossibles\" CASCADE" )
@@ -398,32 +407,25 @@ class QueryOpt( object ):
         #cursor.execute( 'CREATE TEMP VIEW \"allowedides\" AS ' + str( qq1 ) )
         #cursor.execute( 'CREATE TEMP VIEW \"allidescompare\" AS ' + str( qq1_compare ) )
         #cursor.execute( 'CREATE TEMP VIEW \"cleanidescompare\" AS ' + str( qq1_compare_clean ) )
-        qq2 = "CREATE VIEW suppavail_all AS SELECT foo.id, foo.ptmarray, foo.ptmstr, foo.peptide_id \
+        qq2 = "CREATE TEMP VIEW suppavail_all AS SELECT foo.id, foo.ptmarray, foo.ptmstr, foo.peptide_id \
                 FROM (select t1.id, t1.confidence, t1.peptide_id, \
-                t1.delta_mass, array_agg(t2.ptm_id ORDER BY t2.ptm_id) AS ptmarray, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr \
-                FROM pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
-                LEFT OUTER JOIN pepsite_ptm t3 ON ( t3.id = t2.ptm_id ) \
-                GROUP BY t1.id, t1.peptide_id) AS foo \
+                t1.delta_mass, array_agg(t2.ptm_id order by t2.ptm_id) AS ptmarray, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM \
+                pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
+                group by t1.id, t1.peptide_id, t1.peptide_id) AS foo \
                 "
         qq2 = "CREATE VIEW suppavail_all AS SELECT foo.id, foo.ptmarray, foo.ptmstr, foo.peptide_id, foo.ptmz \
                 FROM (select t1.id, t1.confidence, t1.peptide_id, \
                 t1.delta_mass, array_agg(t2.ptm_id ORDER BY t2.ptm_id) AS ptmarray, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr, \
                 array_agg(t3.description order by t3.id) AS ptmz FROM \
                 pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
-                LEFT OUTER JOIN pepsite_ptm t3 ON ( t3.id = t2.ptm_id ) \
-                GROUP BY t1.id, t1.peptide_id) AS foo \
+                INNER JOIN pepsite_ptm t3 ON ( t3.id = t2.ptm_id ) \
+                GROUP BY t1.id, t1.peptide_id, t1.peptide_id) AS foo \
                 "
-        qq2zz = "CREATE TEMP VIEW suppavail_all AS SELECT foo.id, foo.ptmarray, foo.ptmstr, foo.peptide_id \
-                FROM (select t1.id, t1.confidence, t1.peptide_id, \
-                t1.delta_mass, array_agg(t2.ptm_id order by t2.ptm_id) AS ptmarray, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM \
-                pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
-                group by t1.id, t1.peptide_id, t1.peptide_id) AS foo \
-                "
-        qq2a = "CREATE VIEW augmented_ides AS \
+        qq2a = "CREATE TEMP VIEW augmented_ides AS \
                 SELECT t1.id, t1.peptide_id, t1.ptmarray, t1.ptmstr, t2.confidence, t2.delta_mass, \
-                t2.\"isRemoved\", abs(t2.delta_mass) as absdm, t3.charge_state, t3.mz, t3.precursor_mass, t3.retention_time, \
-                t4.confidence_cutoff, t4.id as dataset_id, t4.title as dataset_title, t5.id as experiment_id, t5.title as experiment_title, \
-                t6.id as cell_line_id, t7.sequence as peptide_sequence, char_length( t7.sequence ) as peptide_length \
+                t2.\"isRemoved\", t3.mz, t3.precursor_mass, t3.retention_time, \
+                t4.confidence_cutoff, t4.id as dataset_id, t5.id as experiment_id, \
+                t6.id as cell_line_id \
                 FROM \
                 suppavail_all t1 INNER JOIN pepsite_idestimate t2 ON (t1.id = t2.id) \
                 INNER JOIN pepsite_ion t3 ON (t2.ion_id = t3.id) \
@@ -432,66 +434,40 @@ class QueryOpt( object ):
                 INNER JOIN pepsite_cellline t6 on (t5.cell_line_id = t6.id) \
                 INNER JOIN pepsite_peptide t7 on (t2.peptide_id = t7.id) \
                 "
-        qq2b = "CREATE VIEW found_possies AS \
-                SELECT foo.* FROM \
-                ( \
-                SELECT t1.id, t1.peptide_id, t1.protein_id, array_agg(t2.position_id ORDER BY t2.position_id) as posnarray, \
-                array_to_string( array_agg( CAST(t3.initial_res AS text) || '-' || CAST(t3.final_res AS text) ORDER BY t3.initial_res ), ' ') as posnstr \
-                FROM pepsite_peptoprot t1 \
-                LEFT OUTER JOIN pepsite_peptoprot_positions t2 \
-                ON ( t1.id = t2.peptoprot_id  ) \
-                LEFT OUTER JOIN pepsite_position t3 \
-                ON ( t2.position_id = t3.id ) \
-                GROUP BY t1.id, t1.peptide_id, t1.protein_id ) \
-                AS foo \
-                "
-        qq3 = "CREATE VIEW prot_ides AS \
-                SELECT t1.id as p2p_id, t1.protein_id, t1.posnarray, t1.posnstr, t2.*, t4.description as protein_description FROM found_possies t1 \
+        qq3 = "CREATE TEMP VIEW prot_ides AS \
+                SELECT t1.id as p2p_id, t1.protein_id, t2.* FROM pepsite_peptoprot t1 \
                 INNER JOIN augmented_ides t2 ON \
                 ( t2.peptide_id = t1.peptide_id ) \
-                INNER JOIN pepsite_experiment_proteins t3 ON \
-                ( t3.experiment_id = t2.experiment_id ) \
-                INNER JOIN pepsite_protein t4 \
-                ON ( t4.id = t1.protein_id ) \
-                WHERE t1.protein_id = t3.protein_id \
                 "
-        qq4 = "CREATE VIEW suppcorrect AS SELECT DISTINCT foo.peptide_id, foo.ptmstr, foo.experiment_id, min(abs(foo.delta_mass)) as mindm \
-                FROM (SELECT * FROM prot_ides \
-                ) AS \
-                foo GROUP BY foo.peptide_id, foo.ptmstr, foo.experiment_id \
-                "
-        qq4a = "CREATE VIEW prunage AS SELECT DISTINCT foo.peptide_id, foo.ptmstr, foo.experiment_id, min(foo.id) as minid \
-                FROM (SELECT t1.id, t2.* FROM prot_ides t1 INNER JOIN suppcorrect t2 \
-                ON ( t1.peptide_id = t2.peptide_id AND t1.ptmstr = t2.ptmstr AND t1.experiment_id = t2.experiment_id AND abs(t1.delta_mass) = t2.mindm ) \
-                ) AS \
-                foo GROUP BY foo.peptide_id, foo.ptmstr, foo.experiment_id \
-                "
-        qq5 = "CREATE VIEW suppcorrect_pruned AS SELECT DISTINCT t1.* \
-                FROM prot_ides t1 INNER JOIN prunage t2 ON \
-                ( t1.id = t2.minid ) \
-                "
-        qqresult = "SELECT count(*) FROM prot_ides t1 INNER JOIN suppcorrect t2 ON ( t1.peptide_id = t2.peptide_id AND t1.ptmstr = t2.ptmstr AND t1.experiment_id = t2.experiment_id ) where t1.experiment_id = 1 AND t1.confidence > t1.confidence_cutoff"
-        qqresult2 = "SELECT count(*) FROM suppcorrect_pruned t1 WHERE t1.experiment_id = 1 AND t1.confidence > t1.confidence_cutoff"
+        qqresult = "SELECT * FROM augmented_ides"
         cursor.execute( qq2 )
         cursor.execute( qq2a )
-        #cursor.execute( 'SELECT COUNT (*) FROM pepsite_idestimate' )
-        #print 'idestimate table length =', cursor.fetchall(  )
-        #cursor.execute( 'SELECT COUNT (*) FROM augmented_ides' )
-        #print 'augmented ide view length =', cursor.fetchall(  )
-        cursor.execute( qq2b )
         cursor.execute( qq3 )
-        cursor.execute( qq4 )
-        cursor.execute( qq4a )
-        cursor.execute( qq5 )
-        #cursor.execute( 'SELECT COUNT (*) FROM prot_ides' )
-        #print 'prot ide view length =', cursor.fetchall(  )
-        #cursor.execute( 'SELECT COUNT (*) FROM found_possies' )
-        #print 'found possies view length =', cursor.fetchall(  )
-        #cursor.execute( qqresult )
-        #print 'refined view length =', cursor.fetchall(  )
-        cursor.execute( qqresult2 )
-        print 'further refined view length =', cursor.fetchall(  )
-        #print ides_aug[:4]
+        cursor.execute( 'SELECT COUNT (*) FROM pepsite_idestimate' )
+        print 'idestimate table length =', cursor.fetchall(  )
+        cursor.execute( 'SELECT COUNT (*) FROM augmented_ides' )
+        print 'augmented ide view length =', cursor.fetchall(  )
+        cursor.execute( 'SELECT COUNT (*) FROM prot_ides' )
+        print 'prot ide view length =', cursor.fetchall(  )
+        cursor.execute( qqresult )
+        ides_aug = cursor.fetchall(  )
+        print ides_aug[:4]
+        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail_all\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"augmented_ides\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"possibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"comparepossibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"cleancomparepossibles\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"combinedideproduct\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct2\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"ideproduct3\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"allidescompare\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"cleanidescompare\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"compcorrect\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"sv2\" CASCADE" )
         cursor.close()
         t1 = time.time()
         print 'time taken =', t1-t0
@@ -579,12 +555,12 @@ if __name__=='__main__':
     user_id = 1
     print 'here we go... expecting 1578 returns...\n'
     qo = QueryOpt()
-    q2r = qo.master_views_query( )
-    #ar1 = q2r[0]
+    q2r = qo.mkiv_create_views( 1, 1 )
+    ar1 = q2r[0]
     #print ar1
     #print ar1.count()
     #print dir(q1r[0])
-    #print '\n\nmkii_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r\n\n' %  q2r[1:]   #print 'simple_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r' % qo.simple_expt_query( exp_id, user_id, perm = False)
+    print '\n\nmkii_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r\n\n' %  q2r[1:]   #print 'simple_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r' % qo.simple_expt_query( exp_id, user_id, perm = False)
     #q3r = qo.mkiii_compare_query( exp_id, other_exp_ids, user_id, perm = False)
     #print '\n\nmkiii_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r\n\n' %  q3r[1:]   #print 'simple_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r' % qo.simple_expt_query( exp_id, user_id, perm = False)
     #print q3r[0][:4]

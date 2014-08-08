@@ -355,6 +355,8 @@ class QueryOpt( object ):
         """docstring for simple_expt_query"""
         t0 = time.time()
         cursor = connection.cursor()
+        cursor.execute( "DROP VIEW IF EXISTS \"ides_ptms\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"trimmed\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"found_possies\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"prot_ides\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
@@ -398,42 +400,33 @@ class QueryOpt( object ):
         #cursor.execute( 'CREATE TEMP VIEW \"allowedides\" AS ' + str( qq1 ) )
         #cursor.execute( 'CREATE TEMP VIEW \"allidescompare\" AS ' + str( qq1_compare ) )
         #cursor.execute( 'CREATE TEMP VIEW \"cleanidescompare\" AS ' + str( qq1_compare_clean ) )
-        qq2 = "CREATE VIEW suppavail_all AS SELECT foo.id, foo.ptmarray, foo.ptmstr, foo.peptide_id \
-                FROM (select t1.id, t1.confidence, t1.peptide_id, \
-                t1.delta_mass, array_agg(t2.ptm_id ORDER BY t2.ptm_id) AS ptmarray, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr \
-                FROM pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
-                LEFT OUTER JOIN pepsite_ptm t3 ON ( t3.id = t2.ptm_id ) \
-                GROUP BY t1.id, t1.peptide_id) AS foo \
-                "
-        qq2 = "CREATE VIEW suppavail_all AS SELECT foo.id, foo.ptmarray, foo.ptmstr, foo.peptide_id, foo.ptmz \
-                FROM (select t1.id, t1.confidence, t1.peptide_id, \
+        qq2 = "CREATE VIEW ides_ptms AS SELECT \
+                foo.ptmarray, foo.ptmstr, foo.ptmz, \
+                t4.*, abs( t4.delta_mass ) as absdm, \
+                t5.charge_state, t5.mz, t5.precursor_mass, t5.retention_time, \
+                t6.confidence_cutoff, t6.id as dataset_id, t6.title as dataset_title, \
+                t7.id as experiment_id, t7.title as experiment_title, \
+                t8.id as cell_line_id, t8.name as cell_line_name, \
+                t9.sequence as peptide_sequence, char_length( t9.sequence ) as peptide_length \
+                FROM ( \
+                SELECT t1.id, t1.confidence, t1.peptide_id, \
                 t1.delta_mass, array_agg(t2.ptm_id ORDER BY t2.ptm_id) AS ptmarray, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr, \
-                array_agg(t3.description order by t3.id) AS ptmz FROM \
-                pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
-                LEFT OUTER JOIN pepsite_ptm t3 ON ( t3.id = t2.ptm_id ) \
-                GROUP BY t1.id, t1.peptide_id) AS foo \
-                "
-        qq2zz = "CREATE TEMP VIEW suppavail_all AS SELECT foo.id, foo.ptmarray, foo.ptmstr, foo.peptide_id \
-                FROM (select t1.id, t1.confidence, t1.peptide_id, \
-                t1.delta_mass, array_agg(t2.ptm_id order by t2.ptm_id) AS ptmarray, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr FROM \
-                pepsite_idestimate t1 LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
-                group by t1.id, t1.peptide_id, t1.peptide_id) AS foo \
-                "
-        qq2a = "CREATE VIEW augmented_ides AS \
-                SELECT t1.id, t1.peptide_id, t1.ptmarray, t1.ptmstr, t2.confidence, t2.delta_mass, \
-                t2.\"isRemoved\", abs(t2.delta_mass) as absdm, t3.charge_state, t3.mz, t3.precursor_mass, t3.retention_time, \
-                t4.confidence_cutoff, t4.id as dataset_id, t4.title as dataset_title, t5.id as experiment_id, t5.title as experiment_title, \
-                t6.id as cell_line_id, t7.sequence as peptide_sequence, char_length( t7.sequence ) as peptide_length \
+                array_agg(t3.description order by t3.id) AS ptmz \
                 FROM \
-                suppavail_all t1 INNER JOIN pepsite_idestimate t2 ON (t1.id = t2.id) \
-                INNER JOIN pepsite_ion t3 ON (t2.ion_id = t3.id) \
-                INNER JOIN pepsite_dataset t4 on (t3.dataset_id = t4.id) \
-                INNER JOIN pepsite_experiment t5 on (t3.experiment_id = t5.id) \
-                INNER JOIN pepsite_cellline t6 on (t5.cell_line_id = t6.id) \
-                INNER JOIN pepsite_peptide t7 on (t2.peptide_id = t7.id) \
+                pepsite_idestimate t1 \
+                LEFT OUTER JOIN pepsite_idestimate_ptms t2 ON (t2.idestimate_id = t1.id) \
+                LEFT OUTER JOIN pepsite_ptm t3 ON ( t3.id = t2.ptm_id ) \
+                GROUP BY t1.id, t1.peptide_id \
+                ) AS foo \
+                INNER JOIN pepsite_idestimate t4 ON ( t4.id = foo.id ) \
+                INNER JOIN pepsite_ion t5 ON (t4.ion_id = t5.id) \
+                INNER JOIN pepsite_dataset t6 on (t5.dataset_id = t6.id) \
+                INNER JOIN pepsite_experiment t7 on (t5.experiment_id = t7.id) \
+                INNER JOIN pepsite_cellline t8 on (t7.cell_line_id = t8.id) \
+                INNER JOIN pepsite_peptide t9 on (foo.peptide_id = t9.id) \
                 "
-        qq2b = "CREATE VIEW found_possies AS \
-                SELECT foo.* FROM \
+        addon = " \
+                LEFT OUTER JOIN \
                 ( \
                 SELECT t1.id, t1.peptide_id, t1.protein_id, array_agg(t2.position_id ORDER BY t2.position_id) as posnarray, \
                 array_to_string( array_agg( CAST(t3.initial_res AS text) || '-' || CAST(t3.final_res AS text) ORDER BY t3.initial_res ), ' ') as posnstr \
@@ -442,55 +435,35 @@ class QueryOpt( object ):
                 ON ( t1.id = t2.peptoprot_id  ) \
                 LEFT OUTER JOIN pepsite_position t3 \
                 ON ( t2.position_id = t3.id ) \
-                GROUP BY t1.id, t1.peptide_id, t1.protein_id ) \
-                AS foo \
+                GROUP BY t1.id, t1.peptide_id, t1.protein_id \
+                ) AS foo2 \
+                ON ( foo2.peptide_id = foo.peptide_id  ) \
+                INNER JOIN pepsite_protein t10 ON ( foo2.protein_id = t10.id ) \
                 "
-        qq3 = "CREATE VIEW prot_ides AS \
-                SELECT t1.id as p2p_id, t1.protein_id, t1.posnarray, t1.posnstr, t2.*, t4.description as protein_description FROM found_possies t1 \
-                INNER JOIN augmented_ides t2 ON \
-                ( t2.peptide_id = t1.peptide_id ) \
-                INNER JOIN pepsite_experiment_proteins t3 ON \
-                ( t3.experiment_id = t2.experiment_id ) \
-                INNER JOIN pepsite_protein t4 \
-                ON ( t4.id = t1.protein_id ) \
-                WHERE t1.protein_id = t3.protein_id \
+        qq_trimmed = "CREATE VIEW trimmed AS \
+                SELECT DISTINCT foo1.* FROM \
+                ( \
+                SELECT * FROM \
+                ides_ptms t1 \
+                WHERE \
+                t1.confidence > t1.confidence_cutoff \
+                ) AS foo1 \
+                LEFT JOIN \
+                ( SELECT t2.experiment_id, t2.peptide_id, t2.ptmstr, min( t2.absdm ) as minabsdm, min( t2.id ) as minid \
+                FROM ides_ptms t2 \
+                GROUP BY t2.experiment_id, t2.peptide_id, t2.ptmstr \
+                ) AS foo2 \
+                ON ( \
+                foo1.absdm = foo2.minabsdm AND foo1.id = foo2.minid \
+                AND foo1.experiment_id = foo2.experiment_id \
+                AND foo1.peptide_id = foo2.peptide_id \
+                AND foo1.ptmstr = foo2.ptmstr ) \
                 "
-        qq4 = "CREATE VIEW suppcorrect AS SELECT DISTINCT foo.peptide_id, foo.ptmstr, foo.experiment_id, min(abs(foo.delta_mass)) as mindm \
-                FROM (SELECT * FROM prot_ides \
-                ) AS \
-                foo GROUP BY foo.peptide_id, foo.ptmstr, foo.experiment_id \
-                "
-        qq4a = "CREATE VIEW prunage AS SELECT DISTINCT foo.peptide_id, foo.ptmstr, foo.experiment_id, min(foo.id) as minid \
-                FROM (SELECT t1.id, t2.* FROM prot_ides t1 INNER JOIN suppcorrect t2 \
-                ON ( t1.peptide_id = t2.peptide_id AND t1.ptmstr = t2.ptmstr AND t1.experiment_id = t2.experiment_id AND abs(t1.delta_mass) = t2.mindm ) \
-                ) AS \
-                foo GROUP BY foo.peptide_id, foo.ptmstr, foo.experiment_id \
-                "
-        qq5 = "CREATE VIEW suppcorrect_pruned AS SELECT DISTINCT t1.* \
-                FROM prot_ides t1 INNER JOIN prunage t2 ON \
-                ( t1.id = t2.minid ) \
-                "
-        qqresult = "SELECT count(*) FROM prot_ides t1 INNER JOIN suppcorrect t2 ON ( t1.peptide_id = t2.peptide_id AND t1.ptmstr = t2.ptmstr AND t1.experiment_id = t2.experiment_id ) where t1.experiment_id = 1 AND t1.confidence > t1.confidence_cutoff"
-        qqresult2 = "SELECT count(*) FROM suppcorrect_pruned t1 WHERE t1.experiment_id = 1 AND t1.confidence > t1.confidence_cutoff"
+        qqresult2 = "SELECT count(*) FROM trimmed t1"
         cursor.execute( qq2 )
-        cursor.execute( qq2a )
-        #cursor.execute( 'SELECT COUNT (*) FROM pepsite_idestimate' )
-        #print 'idestimate table length =', cursor.fetchall(  )
-        #cursor.execute( 'SELECT COUNT (*) FROM augmented_ides' )
-        #print 'augmented ide view length =', cursor.fetchall(  )
-        cursor.execute( qq2b )
-        cursor.execute( qq3 )
-        cursor.execute( qq4 )
-        cursor.execute( qq4a )
-        cursor.execute( qq5 )
-        #cursor.execute( 'SELECT COUNT (*) FROM prot_ides' )
-        #print 'prot ide view length =', cursor.fetchall(  )
-        #cursor.execute( 'SELECT COUNT (*) FROM found_possies' )
-        #print 'found possies view length =', cursor.fetchall(  )
-        #cursor.execute( qqresult )
-        #print 'refined view length =', cursor.fetchall(  )
+        cursor.execute( qq_trimmed )
         cursor.execute( qqresult2 )
-        print 'further refined view length =', cursor.fetchall(  )
+        print 'initial view length =', cursor.fetchall(  )
         #print ides_aug[:4]
         cursor.close()
         t1 = time.time()

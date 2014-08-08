@@ -45,6 +45,8 @@ INSTALLED_APPS = (
     'guardian',
     'news',
     'debug_toolbar.apps.DebugToolbarConfig',
+    #'south',
+    
 )
 
 MIDDLEWARE_CLASSES = (

@@ -318,8 +318,8 @@ class ExptArrayAssemble( BaseSearch ):
         user = User.objects.get( id = user_id )
         print 'check1'
         dsets = Dataset.objects.filter( experiment__id = exp_id ).distinct()
-        print dsets
-        print Experiment.objects.get( id = exp_id ).dataset_set.all()
+        #print dsets
+        #print Experiment.objects.get( id = exp_id ).dataset_set.all()
         for ds in Experiment.objects.get( id = exp_id ).dataset_set.all():
             if not user.has_perm( 'view_dataset', ds ):
                 print dsets.count()
@@ -357,6 +357,7 @@ class ExptArrayAssemble( BaseSearch ):
         cursor.execute( qq4 )
         ides = cursor.fetchall()
         j = len(ides)
+        print 'finished processing with %d outputs' % ( j )
         cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\" CASCADE" )
@@ -491,7 +492,7 @@ class ExptArrayAssemble( BaseSearch ):
         qqresult = "SELECT * FROM combinedideproduct"
         cursor.execute( qq2 )
         cursor.execute( 'SELECT COUNT(*) FROM suppavail' )
-        print cursor.fetchall(  )
+        print 'suppavail', cursor.fetchall(  )
         #cursor.execute( 'SELECT COUNT(foo.peptide_id) FROM (SELECT DISTINCT peptide_id, ptmstr FROM suppavail) as foo' )
         #print cursor.fetchall(  )
         #cursor.execute( qq2a )
@@ -499,8 +500,10 @@ class ExptArrayAssemble( BaseSearch ):
         #print cursor.fetchall(  )
         cursor.execute( qq3 )
         cursor.execute( 'SELECT COUNT(*) FROM suppcorrect' )
-        print cursor.fetchall(  )
+        print 'suppcorrect', cursor.fetchall(  )
         cursor.execute( qq4 )
+        cursor.execute( 'SELECT COUNT(*) FROM possibles' )
+        print 'possibles', cursor.fetchall(  )
         cursor.execute( qq41 )
         cursor.execute( qq42 )
         cursor.execute( qq4a )
@@ -509,7 +512,7 @@ class ExptArrayAssemble( BaseSearch ):
         cursor.execute( qq7 )
         cursor.execute( qqresult )
         ides = cursor.fetchall()
-        j = len(ides)
+        j = 'fetched peptides', len(ides)
         cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"possibles\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"comparepossibles\" CASCADE" )

@@ -153,7 +153,14 @@ class Experiment( models.Model ):
     cell_line = models.ForeignKey( CellLine )
     #lodgement = models.ForeignKey( Lodgement )
     notes = models.TextField( default = '',blank=True, null=True )
-    proteins = models.ManyToManyField( 'Protein' )
+    #morenotes = models.TextField( default = '',blank=True, null=True )
+    proteins = models.ManyToManyField( 'Protein', blank=True, null=True )
+
+    class Meta:
+        permissions = (
+                ( 'view_experiment', 'can view experiment' ),
+                ( 'edit_experiment', 'can edit experiment' ),
+                )
 
     def __str__(self):
 	return self.title
