@@ -658,6 +658,17 @@ class ExptArrayAssemble( BaseSearch ):
         cursor.execute( sql_expt, [ expt_id ] )
         return self.dictfetchall_augmented( cursor )
 
+    def basic_compare_expt_query( self, expt_id ):
+        """
+        """
+        cursor = connection.cursor()
+        sql_expt = "SELECT * \
+                FROM master_compare_allowed \
+                WHERE experiment_id = %s\
+                "
+        cursor.execute( sql_expt, [ expt_id ] )
+        return self.dictfetchall_augmented( cursor )
+
 
     def check_datasets(self, datasets, peptide, ptmcon, cutoffs = False ):
         """docstring for e"""

@@ -393,6 +393,29 @@ def compare_expt_form_ajax( request ):
         context = { 'compare_form' : compare_form }
         return render( request, 'pepsite/compare_expt_form_ajax.html', context)
 
+def comparison_peptides_render_rapid( request ):
+  user = request.user
+  print 'engaging comparison_peptides_render_rapid'
+  if user.id is None:
+    user = User.objects.get( id = -1 )
+  #return HttpResponse( 'Hello!' )
+  if request.POST.has_key( 'expt' ) and request.POST.has_key( 'exptz[]' ):
+            
+            expt1 = request.POST['expt']
+            expt = get_object_or_404( Experiment, id = expt1 )
+            exptz = request.POST.getlist('exptz[]' )
+            exptz2 = [ Experiment.objects.get( id = b ) for b in exptz ]
+            print 'expt =', expt.id, 'exptz =', exptz
+            #return HttpResponse( 'Something!!!' + str( request.POST.keys() )  )
+            #exptz = formdata['exptz']
+            complete = True
+            #for dataset in Dataset.objects.filter( experiment__id__in =  exptz + [ expt1 ] ):
+            #    if ( not user.has_perm( 'view_dataset', dataset ) ):
+            #        complete = False
+            s1 = ExptArrayAssemble()
+            rows = s1.basic_compare_expt_query( expt1 )  
+            return render( request, 'pepsite/compare_peptides_render_rapid.html', { 'rows' : rows, 'compare_expts' : exptz2, 'expt' : expt, 'complete' : complete  })
+
 def comparison_peptides_render( request ):
   user = request.user
   if user.id is None:

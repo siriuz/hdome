@@ -41,6 +41,7 @@ class QueryOpt( object ):
         cursor.execute( "DROP VIEW IF EXISTS \"allowed_comparisons\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"disallowed_comparisons\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"all_compares\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"master_compare_allowed\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
         cursor.execute( "DROP VIEW IF EXISTS \"sv2\"" )
         expt = Experiment.objects.get( id = exp_id )
@@ -165,6 +166,15 @@ class QueryOpt( object ):
                 LEFT OUTER JOIN disallowed_comparisons t3 \
                 ON ( t1.peptide_id = t3.peptide_id AND t1.ptmstr = t3.ptmstr ) \
                 "
+        qqcompallowed = "CREATE MATERIALIZED VIEW master_compare_allowed AS \
+                SELECT DISTINCT ON (t1.peptide_id, t1.ptmstr, t1.experiment_id, t1.protein_id) t1.* \
+                FROM allcompares t1 \
+                INNER JOIN suppcorrect t2 \
+                ON (t1.peptide_id = t2.peptide_id AND t1.ptmstr = t2.ptmstr \
+                AND t1.abdm = t2.minadm ) \
+                WHERE t1.confidence > t1.confidence_cutoff and t1.\"isRemoved\" = false \
+                ORDER BY t1.peptide_id, t1.ptmstr, t1.experiment_id, t1.protein_id, t1.ion_id \
+                "
         cursor.execute( qq2 )
         cursor.execute( 'SELECT COUNT(*) FROM suppavail' )
         print 'suppavail', cursor.fetchall(  )
@@ -195,6 +205,9 @@ class QueryOpt( object ):
         cursor.execute( qqallcompares )
         cursor.execute( 'SELECT COUNT(*) FROM allcompares' )
         print 'allcompares', cursor.fetchall(  )
+        cursor.execute( qqcompallowed )
+        cursor.execute( 'SELECT COUNT(*) FROM master_compare_allowed' )
+        print 'master_compare_allowed', cursor.fetchall(  )
         cursor.execute( qq4 )
         ides = self.dictfetchall( cursor )
         j = len(ides)
@@ -241,6 +254,17 @@ class QueryOpt( object ):
         cursor = connection.cursor()
         sql_expt = "SELECT * \
                 FROM master_allowed \
+                WHERE experiment_id = %s\
+                "
+        cursor.execute( sql_expt, [ expt_id ] )
+        return self.dictfetchall_augmented( cursor )
+
+    def basic_compare_expt_query( self, expt_id ):
+        """
+        """
+        cursor = connection.cursor()
+        sql_expt = "SELECT * \
+                FROM master_compare_allowed \
                 WHERE experiment_id = %s\
                 "
         cursor.execute( sql_expt, [ expt_id ] )
@@ -330,7 +354,7 @@ if __name__=='__main__':
     q2r = qo.mkiv_create_views( 1, 1 )
     ar1 = q2r[0]
     print '\n\nmkii_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r\n\n' %  q2r[1:] 
-    expt_1_rows = qo.basic_expt_query( 1 )
+    expt_1_rows = qo.basic_compare_expt_query( 1 )
     print '\n\n', expt_1_rows[:22], '\n\n'
     print 'expt 1 rows returned = %d' % len( expt_1_rows )
 

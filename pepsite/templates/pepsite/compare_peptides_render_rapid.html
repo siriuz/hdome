@@ -1,23 +1,23 @@
-
-
 {% load template_filter %}
       {% load guardian_tags %}
+{% query_data_perms user expt as complete %}
 
-<h1 class="text-primary center">Peptides detected</h1>
+
+<h2 class="text-primary">Peptides detected</h2>
 
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
-        <tr><th class="hilite">Protein</th><th>UniProt id</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
+        <tr><th class="hilite">Protein</th><th>UniProt code</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th>{% for expt in compare_expts %}<th><strong class="text-warning">Comparison with </strong><span class="text-primary">{{expt.title}}</span></th>{% endfor %}</tr>
     </thead>
-    <tbody id="tb">
+    <tbody>
 
     {% for row in rows %}
-    {% if row.protein_id and row.peptide_id and row.experiment_id %}
-        <tr>
+    <tr>
+
             <td><a href="{% url 'pepsite:protein_peptides' row.protein_id %}" class="link">{{row.protein_description}}</a></td>
-
+            
             <td><a href="http://www.uniprot.org/uniprot/{{row.protein_uniprot_code}}" class="link" target="_blank">{{row.protein_uniprot_code}}</a></td>
-
+            
             <td><a href="{% url 'pepsite:peptide_peptides' row.peptide_id %}" class="link">{{row.peptide_sequence}}</a></td>
             
             <td>{{row.peptide_sequence|length}}</td>
@@ -40,15 +40,17 @@
             
             <td><a href="{% url 'pepsite:expt2_ajax_rapid' row.experiment_id %}" class="link">{{row.experiment_title}}</a></td>
         
-        </tr>
-    {% endif %}
-    {% endfor %}
+            {% for expt in compare_expts %}
+               {% if expt.id in row.allowed_array %}
+               <td><strong class="text-primary">2</strong></td>
+               {% elif expt.id in row.disallowed_array %}
+               <td><strong class="text-danger">1</strong></td>
+               {% else %}
+               <td/>
+               {% endif %}
+           {% endfor %}
+   </tr>
+  {% endfor %}
     </tbody>
     </table>
-
-
-<br>
-
-
-
 

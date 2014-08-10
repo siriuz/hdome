@@ -78,7 +78,9 @@ function getCookie(name) {
 var csrftoken = getCookie('csrftoken');
 
 function reset_tablesort() {       
-
+    
+    var cols = $("#cssTable").find("tr:first td").length;
+    
     $("#cssTable").tablesorter({ 
         // pass the headers argument and assing a object 
         headers: { 
@@ -86,7 +88,11 @@ function reset_tablesort() {
             1: { 
                 // disable it by setting the property sorter to false 
                 //sorter: false 
-            }, 
+            },
+            //for (i = 13; i < cols; i++) {
+            //    i: { sorter: false
+            //    },
+            //} 
         } 
     });
 }
