@@ -139,6 +139,9 @@ class QueryOpt( object ):
         cursor.execute( "DROP VIEW IF EXISTS \"grand_master\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"master_allowed\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"master_disallowed\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"allowed_comparisons\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"disallowed_comparisons\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"all_compares\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
         cursor.execute( "DROP VIEW IF EXISTS \"sv2\"" )
         expt = Experiment.objects.get( id = exp_id )
@@ -150,17 +153,21 @@ class QueryOpt( object ):
         # Generate SQL for finding idestimate-ptms combo with lowest possible abs(delta_mass) [per experiment] 
         # NOTE: This contins one row per IdEstimate - it can be a starting point for a 'master' view
         qq2 = "CREATE VIEW suppavail AS SELECT foo.id, foo.ptmstr, foo.experiment_id, \
-                min(abs(foo.delta_mass)) minadm FROM \
+                min(abs(foo.delta_mass)) minadm, foo.ptmarray, foo.ptmdescarray FROM \
                 ( select t1.id, t1.peptide_id, t3.experiment_id, \
-                t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr \
+                t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr, \
+                array_agg(t2.ptm_id order by t2.ptm_id) AS ptmarray, \
+                array_agg(t4.description order by t2.ptm_id) AS ptmdescarray \
                 FROM pepsite_idestimate t1 \
                 LEFT OUTER JOIN pepsite_idestimate_ptms t2 \
                 ON (t2.idestimate_id = t1.id) \
+                LEFT OUTER JOIN pepsite_ptm t4 \
+                ON ( t2.ptm_id = t4.id ) \
                 INNER JOIN pepsite_ion t3 \
                 ON ( t1.ion_id = t3.id ) \
                 GROUP BY t1.id, t1.peptide_id, t3.experiment_id \
                 ) AS foo \
-                GROUP BY foo.id, foo.ptmstr, foo.experiment_id \
+                GROUP BY foo.id, foo.ptmstr, foo.ptmarray, foo.ptmdescarray, foo.experiment_id \
                 "
         # Find peptide-ptms combo with lowest possible abs(delta_mass) [per experiment]
         qq3 = "CREATE VIEW suppcorrect AS SELECT DISTINCT \
@@ -196,7 +203,7 @@ class QueryOpt( object ):
         qqsemimaster = "CREATE VIEW semi_master AS \
                 SELECT t1.*, t2.peptide_id, t2.delta_mass, abs( t2.delta_mass ) as abdm, \
                 t2.confidence, t2.\"isRemoved\",  t2.ion_id, \
-                t3.title, t4.sequence as peptide_sequence, \
+                t3.title as experiment_title, t4.sequence as peptide_sequence, \
                 char_length( t4.sequence ) as peptide_length, \
                 t5.charge_state, t5.retention_time, t5.dataset_id, \
                 t6.confidence_cutoff \
@@ -236,6 +243,24 @@ class QueryOpt( object ):
                 EXCEPT \
                 SELECT * FROM master_allowed \
                 "
+        qqallowcompare = "CREATE VIEW allowed_comparisons AS \
+                SELECT t1.peptide_id, t1.ptmstr, array_agg( DISTINCT t1.experiment_id ORDER BY t1.experiment_id ) AS allowed_array  \
+                FROM master_allowed t1 \
+                GROUP BY t1.peptide_id, t1.ptmstr \
+                "
+        qqdisallowcompare = "CREATE VIEW disallowed_comparisons AS \
+                SELECT t1.peptide_id, t1.ptmstr, array_agg( DISTINCT t1.experiment_id ORDER BY t1.experiment_id ) AS disallowed_array \
+                FROM master_disallowed t1 \
+                GROUP BY t1.peptide_id, t1.ptmstr \
+                "
+        qqallcompares = "CREATE MATERIALIZED VIEW allcompares AS \
+                SELECT t1.*, t2.allowed_array, t3.disallowed_array \
+                FROM grand_master t1 \
+                LEFT OUTER JOIN allowed_comparisons t2 \
+                ON ( t1.peptide_id = t2.peptide_id AND t1.ptmstr = t2.ptmstr ) \
+                LEFT OUTER JOIN disallowed_comparisons t3 \
+                ON ( t1.peptide_id = t3.peptide_id AND t1.ptmstr = t3.ptmstr ) \
+                "
         dummy = "WITH _ides AS \
                 ( SELECT t1.id \
                 FROM grand_master t1 \
@@ -268,6 +293,15 @@ class QueryOpt( object ):
         cursor.execute( qqdisallowed )
         cursor.execute( 'SELECT COUNT(*) FROM master_disallowed' )
         print 'master_disallowed', cursor.fetchall(  )
+        cursor.execute( qqallowcompare )
+        cursor.execute( 'SELECT COUNT(*) FROM allowed_comparisons' )
+        print 'allowed_comparisons', cursor.fetchall(  )
+        cursor.execute( qqdisallowcompare )
+        cursor.execute( 'SELECT COUNT(*) FROM disallowed_comparisons' )
+        print 'disallowed_comparisons', cursor.fetchall(  )
+        cursor.execute( qqallcompares )
+        cursor.execute( 'SELECT COUNT(*) FROM allcompares' )
+        print 'allcompares', cursor.fetchall(  )
         cursor.execute( qq4 )
         ides = cursor.fetchall()
         j = len(ides)
