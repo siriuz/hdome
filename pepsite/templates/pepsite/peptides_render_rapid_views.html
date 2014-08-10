@@ -1,0 +1,56 @@
+
+
+{% load template_filter %}
+      {% load guardian_tags %}
+
+<h1 class="text-primary center">Peptides detected</h1>
+
+    <table class="table table-striped tablesorter" id="cssTable">
+    <thead>
+        <tr><th class="hilite">Protein</th><th>UniProt id</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
+    </thead>
+    <tbody id="tb">
+
+    {% for row in rows %}
+        <tr>
+            <td><a href="{% url 'pepsite:protein_peptides' row.protein_id %}" class="link">{{row.protein_description}}</a></td>
+
+            <td><a href="http://www.uniprot.org/uniprot/{{row.protein_uniprot_code}}" class="link" target="_blank">{{row.protein_uniprot_code}}</a></td>
+
+            <td><a href="{% url 'pepsite:peptide_peptides' row.peptide_id %}" class="link">{{row.peptide_sequence}}</a></td>
+            
+            <td>{{row.peptide_sequence|length}}</td>
+            
+            <td>{{ row.posnstr }}</td>
+            
+            <td>{% for ptm in row.ptmarray %}
+                {% if ptm.0 %}
+                <a href="{% url 'pepsite:ptm_peptides' ptm.0 %}" class="link">{{ptm.1}}</a> 
+                {% endif %}
+                {% endfor %}</td>
+            
+            <td>{{ row.delta_mass }}</td>
+            
+            <td>{{ row.confidence }}</td>
+            
+            <td>{{ row.mz }}</td>
+            
+            <td>{{ row.charge_state }}</td>
+            
+            <td>{{ row.retention_time }}</td>
+            
+            <td>{{ row.precursor_mass }}</td>
+            
+            <td><a href="{% url 'pepsite:expt2_ajax_rapid' row.experiment_id %}" class="link">{{row.experiment_title}}</a></td>
+        
+        </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+
+
+<br>
+
+
+
+

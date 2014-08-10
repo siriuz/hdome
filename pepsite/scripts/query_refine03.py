@@ -27,19 +27,6 @@ import pepsite.uploaders
 
 class QueryOpt( object ):
 
-    def dictfetchall(self, cursor):
-        "Returns all rows from a cursor as a dict"
-        t0 = time.time()
-        desc = cursor.description
-        returndic = [
-            dict(zip([col[0] for col in desc], row))
-            for row in cursor.fetchall()
-        ]
-        t1 = time.time()
-        tt = t1 - t0
-        print 'dict assembly time taken = %f' % tt 
-        return returndic
-
     def mkiv_create_views(self, exp_id, user_id, perm = False):
         """docstring for simple_expt_query"""
         t0 = time.time()
@@ -68,7 +55,7 @@ class QueryOpt( object ):
                 min(abs(foo.delta_mass)) minadm, foo.ptmarray, foo.ptmdescarray FROM \
                 ( select t1.id, t1.peptide_id, t3.experiment_id, \
                 t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr, \
-                array_agg(t2.ptm_id order by t2.ptm_id) AS ptmarray, \
+                array_agg((t2.ptm_id, t4.description)::text order by t2.ptm_id) AS ptmarray, \
                 array_agg(t4.description order by t2.ptm_id) AS ptmdescarray \
                 FROM pepsite_idestimate t1 \
                 LEFT OUTER JOIN pepsite_idestimate_ptms t2 \
@@ -103,13 +90,16 @@ class QueryOpt( object ):
         # Assign correct protein identifications and peptide positionings on a per experiment basis
         qqprot = "CREATE VIEW prot_expt AS SELECT DISTINCT \
                 t1.id as p2p_id, t1.peptide_id, t1.protein_id, array_agg(t2.position_id ORDER BY t2.position_id) as posnarray, \
-                array_to_string( array_agg( CAST(t3.initial_res AS text) || '-' || CAST(t3.final_res AS text) ORDER BY t3.initial_res ), ' ') as posnstr \
+                array_to_string( array_agg( CAST(t3.initial_res AS text) || '-' || CAST(t3.final_res AS text) ORDER BY t3.initial_res ), ' ') as posnstr, \
+                t4.description AS protein_description, t4.prot_id as protein_uniprot_code \
                 FROM pepsite_peptoprot t1 \
                 LEFT OUTER JOIN pepsite_peptoprot_positions t2 \
                 ON ( t1.id = t2.peptoprot_id  ) \
-                INNER JOIN pepsite_position t3 \
+                LEFT OUTER JOIN pepsite_position t3 \
                 ON ( t2.position_id = t3.id ) \
-                GROUP BY t1.id, t1.peptide_id, t1.protein_id \
+                LEFT OUTER JOIN pepsite_protein t4 \
+                ON ( t1.protein_id = t4.id ) \
+                GROUP BY t1.id, t1.peptide_id, t1.protein_id, t4.description, t4.prot_id \
                 "
         # now let us create a master view which contains prepackaged peptide data for display
         qqsemimaster = "CREATE VIEW semi_master AS \
@@ -134,7 +124,8 @@ class QueryOpt( object ):
                 "
         qqmaster = "CREATE MATERIALIZED VIEW grand_master AS \
                 SELECT t1.*, \
-                t3.protein_id, t3.posnarray, t3.posnstr \
+                t3.protein_id, t3.posnarray, t3.posnstr, \
+                t3.protein_description, t3.protein_uniprot_code \
                 FROM semi_master t1\
                 INNER JOIN pepsite_experiment_proteins t2 \
                 ON ( t1.experiment_id = t2.experiment_id ) \
@@ -142,13 +133,13 @@ class QueryOpt( object ):
                 ON ( t3.protein_id = t2.protein_id AND t3.peptide_id = t1.peptide_id ) \
                 "
         qqallowed = "CREATE MATERIALIZED VIEW master_allowed AS \
-                SELECT DISTINCT ON (t1.id) t1.* \
+                SELECT DISTINCT ON (t1.peptide_id, t1.ptmstr, t1.experiment_id, t1.protein_id) t1.* \
                 FROM grand_master t1 \
                 INNER JOIN suppcorrect t2 \
                 ON (t1.peptide_id = t2.peptide_id AND t1.ptmstr = t2.ptmstr \
                 AND t1.abdm = t2.minadm ) \
                 WHERE t1.confidence > t1.confidence_cutoff and t1.\"isRemoved\" = false \
-                ORDER BY t1.id, t1.ion_id \
+                ORDER BY t1.peptide_id, t1.ptmstr, t1.experiment_id, t1.protein_id, t1.ion_id \
                 "
         qqdisallowed = "CREATE MATERIALIZED VIEW master_disallowed AS \
                 SELECT * FROM grand_master \
@@ -210,6 +201,39 @@ class QueryOpt( object ):
         t1 = time.time()
         return (ides, t1 - t0, j, exp_id, user_id, perm)
 
+    def dictfetchall(self, cursor):
+        "Returns all rows from a cursor as a dict"
+        t0 = time.time()
+        desc = cursor.description
+        returndic = [
+            dict(zip([col[0] for col in desc], row))
+            for row in cursor.fetchall()
+        ]
+        t1 = time.time()
+        tt = t1 - t0
+        print 'dict assembly time taken = %f' % tt 
+        return returndic
+        
+    
+    def dictfetchall_augmented(self, cursor):
+        "Returns all rows from a cursor as a dict"
+        t0 = time.time()
+        desc = cursor.description
+        returnlist = []
+        for row in cursor.fetchall():
+            local = {}
+            for key, val in zip( [col[0] for col in desc], row ):
+                if key == 'ptmarray':
+                    local[ key ] = [ b.strip('(').strip(')').split(',') for b in val ]
+                else:
+                    local[ key ] = val
+            returnlist.append( local )
+        t1 = time.time()
+        tt = t1 - t0
+        print 'dict assembly augmented time taken = %f' % tt 
+        return returnlist
+
+
     def basic_expt_query( self, expt_id ):
         """
         """
@@ -219,7 +243,7 @@ class QueryOpt( object ):
                 WHERE experiment_id = %s\
                 "
         cursor.execute( sql_expt, [ expt_id ] )
-        return self.dictfetchall( cursor )
+        return self.dictfetchall_augmented( cursor )
 
 
     def rapid_array(self, valuz, expt_id):
@@ -302,10 +326,10 @@ if __name__=='__main__':
     user_id = 1
     print 'here we go... expecting 1578 returns...\n'
     qo = QueryOpt()
-    #q2r = qo.mkiv_create_views( 1, 1 )
-    #ar1 = q2r[0]
-    #print '\n\nmkii_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r\n\n' %  q2r[1:] 
+    q2r = qo.mkiv_create_views( 1, 1 )
+    ar1 = q2r[0]
+    print '\n\nmkii_expt_query ran in %f seconds with %d outputs for expt_id = %d, user_id = %d, permission checking = %r\n\n' %  q2r[1:] 
     expt_1_rows = qo.basic_expt_query( 1 )
-    print '\n\n', expt_1_rows[:3], '\n\n'
+    print '\n\n', expt_1_rows[:22], '\n\n'
     print 'expt 1 rows returned = %d' % len( expt_1_rows )
 

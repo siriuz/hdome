@@ -616,6 +616,49 @@ class ExptArrayAssemble( BaseSearch ):
         t1 = time.time()
         return rows
 
+    def dictfetchall(self, cursor):
+        "Returns all rows from a cursor as a dict"
+        t0 = time.time()
+        desc = cursor.description
+        returndic = [
+            dict(zip([col[0] for col in desc], row))
+            for row in cursor.fetchall()
+        ]
+        t1 = time.time()
+        tt = t1 - t0
+        print 'dict assembly time taken = %f' % tt 
+        return returndic
+    
+    def dictfetchall_augmented(self, cursor):
+        "Returns all rows from a cursor as a dict"
+        t0 = time.time()
+        desc = cursor.description
+        returnlist = []
+        for row in cursor.fetchall():
+            local = {}
+            for key, val in zip( [col[0] for col in desc], row ):
+                if key == 'ptmarray':
+                    local[ key ] = [ [ c.strip('\"').strip('\"') for c in b.strip('(').strip(')').split(',')] for b in val ]
+                else:
+                    local[ key ] = val
+            returnlist.append( local )
+        t1 = time.time()
+        tt = t1 - t0
+        print 'dict assembly augmented time taken = %f' % tt 
+        return returnlist
+
+    def basic_expt_query( self, expt_id ):
+        """
+        """
+        cursor = connection.cursor()
+        sql_expt = "SELECT * \
+                FROM master_allowed \
+                WHERE experiment_id = %s\
+                "
+        cursor.execute( sql_expt, [ expt_id ] )
+        return self.dictfetchall_augmented( cursor )
+
+
     def check_datasets(self, datasets, peptide, ptmcon, cutoffs = False ):
         """docstring for e"""
         td = []

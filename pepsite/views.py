@@ -935,6 +935,21 @@ def expt2_ajax( request, expt_id ):
         lodgements = False
     return render( request, 'pepsite/expt2_ajax.html', { 'expt' : expt, 'lodgements' : lodgements, 'complete' : complete, 'publications' : publications, 'paginate' : False })
 
+def expt2_ajax_rapid( request, expt_id ):
+    user = request.user
+    #initial_quota = 25
+    #proteins = Protein.objects.filter( peptide__ion__experiment__id = expt_id).distinct()
+    expt = get_object_or_404( Experiment, id = expt_id )
+    publications = expt.get_publications()
+    lodgements = Lodgement.objects.filter( dataset__experiment = expt )
+    complete = True
+    for dataset in expt.dataset_set.all():
+        if ( not user.has_perm( 'view_dataset', dataset ) ):
+            complete = False
+    if not( len(lodgements)):
+        lodgements = False
+    return render( request, 'pepsite/expt2_ajax_rapid.html', { 'expt' : expt, 'lodgements' : lodgements, 'complete' : complete, 'publications' : publications, 'paginate' : False })
+
 def peptides_render( request, expt_id ):
     user = request.user
     print 'user = ', user, user.id, user.username
@@ -946,6 +961,18 @@ def peptides_render( request, expt_id ):
     rows = s1.mkiii_expt_query(  expt.id, user.id )
     print len(rows)
     return render( request, 'pepsite/peptides_render_rapid.html', { 'expt' : expt, 'rows' : rows }) 
+
+def peptides_render_rapid( request, expt_id ):
+    user = request.user
+    print 'user = ', user, user.id, user.username
+    if user.id is None:
+        user = User.objects.get( id = -1 )
+    print 'user = ', user, user.id, user.username
+    expt = get_object_or_404( Experiment, id = expt_id )
+    s1 = ExptArrayAssemble()
+    rows = s1.basic_expt_query(  expt.id )
+    print len(rows)
+    return render( request, 'pepsite/peptides_render_rapid_views.html', { 'expt' : expt, 'rows' : rows }) 
 
 def peptides_render_sql_improved( request, expt_id ):
     pass
