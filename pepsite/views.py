@@ -852,11 +852,17 @@ def ptm_expts( request, ptm_id ):
 def ptm_peptides( request, ptm_id ):
     user = request.user
     ptm1 = get_object_or_404( Ptm, id = ptm_id )
+    complete = True
+    excluded_ids = []
+    for expt in Experiment.objects.filter( ion__idestimate__ptms__id = ptm_id ):
+        if ( not user.has_perm( 'view_experiment', expt ) ):
+            complete = False
+            excluded_ids.append( expt.id )
     text_input = ptm1.description
-    s1 = MassSearch()
-    ides = s1.get_peptide_array_from_ptm( ptm1, user )
-    context = { 'text_input' : text_input, 'query_on' : 'Ptm', 'query_obj' : ptm1, 'rows' : ides, 'search' : False }
-    return render( request, 'pepsite/found_peptides.html', context)
+    s1 = ExptArrayAssemble()
+    rows = s1.ptm_peptides( ptm_id, excluded_ids )
+    context = { 'text_input' : text_input, 'query_on' : 'Ptm', 'query_obj' : ptm1, 'rows' : rows, 'search' : False, 'complete' : complete }
+    return render( request, 'pepsite/found_peptides_rapid.html', context)
 
 #@login_required
 def protein_peptides( request, protein_id ):
@@ -878,11 +884,18 @@ def protein_peptides( request, protein_id ):
 def peptide_peptides( request, peptide_id ):
     user = request.user
     pep = get_object_or_404( Peptide, id = peptide_id )
+    complete = True
+    excluded_ids = []
+    for expt in Experiment.objects.filter( ion__idestimate__peptide__id = peptide_id ).distinct():
+        if ( not user.has_perm( 'view_experiment', expt ) ):
+            complete = False
+            excluded_ids.append( expt.id )
+    print 'excluded =', excluded_ids
     text_input = pep.sequence
-    s1 = MassSearch()
-    ides = s1.get_peptide_array_from_peptide( pep, user )
-    context = { 'text_input' : text_input, 'query_on' : 'Peptide', 'query_obj' : pep, 'rows' : ides }
-    return render( request, 'pepsite/found_peptides.html', context)
+    s1 = ExptArrayAssemble()
+    rows = s1.peptide_peptides( peptide_id, excluded_ids  )
+    context = { 'text_input' : text_input, 'query_on' : 'Peptide', 'query_obj' : pep, 'rows' : rows, 'complete' : complete  }
+    return render( request, 'pepsite/found_peptides_rapid.html', context)
 
 #@login_required
 def allele_expts( request, allele_id ):
