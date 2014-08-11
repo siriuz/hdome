@@ -27,7 +27,6 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 <form action="{% url 'pepsite:mass_search' %}" method="get" >
 
-    {% csrf_token %}
     {% for field in massform %}
         <div class="fieldWrapper">
             {{ field.errors }}

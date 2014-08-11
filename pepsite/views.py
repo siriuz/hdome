@@ -75,8 +75,8 @@ def protein_browse_ajax( request ):
     if user.id is None:
         user = User.objects.get( id = -1 )
     complete = True
-    for ds in Dataset.objects.all():
-        if not user.has_perm( 'view_dataset', ds ):
+    for expt in Experiment.objects.all():
+        if not user.has_perm( 'view_experiment', expt ):
             complete = False
             break
     return render( request, 'pepsite/protein_browse_ajax.html', {'complete' : complete})
@@ -87,6 +87,14 @@ def browsable_proteins_render(request):
     proteins = Protein.objects.all().distinct()
     context = { 'proteins' : proteins }
     return render( request, 'pepsite/render_proteins_for_browse.html', context)
+
+def browsable_proteins_render_quicker(request):
+    """docstring for browsable_proteins_render"""
+    print '\n\nActivated QUICKER!!!\n\n'
+    s1 = ExptArrayAssemble()
+    rows = s1.protein_browse()
+    context = { 'rows' : rows }
+    return render( request, 'pepsite/render_proteins_for_browse_quicker.html', context)
 
 
 #@login_required
@@ -470,6 +478,29 @@ def comparison_peptides_render( request ):
             return render( request, 'pepsite/compare_peptides_render.html', {"proteins": proteins, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz, 'protein_ids' : protein_ids, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False, 'expt_cm' : comp_exz, 'compare_ds' : compare_ds  })
   else:
       return HttpResponse( 'Nothing!!!' + str( request.POST.keys() )  )
+
+def searched_peptides_render_quicker( request ):
+    user = request.user
+    complete = True
+    excluded_ids = []
+    for expt in Experiment.objects.all().distinct():
+        if ( not user.has_perm( 'view_experiment', expt ) ):
+            complete = False
+            excluded_ids.append( expt.id )
+  
+    #return HttpResponse( 'Hello!' )
+    if request.POST.has_key( 'stype' ) and request.POST.has_key( 'sargs[]' ):
+            
+            stype = request.POST['stype']
+            #expt = get_object_or_404( Experiment, id = expt1 )
+            sargs = request.POST.getlist('sargs[]' )
+            sargs.append( excluded_ids )
+            print 'stype =', stype, 'sargs =', sargs
+            #return HttpResponse( 'Something!!!' + str( request.POST.keys() )  )
+            #exptz = formdata['exptz']
+            s1 = MassSearch()
+            rows = s1.get_unique_peptide_ides_views( stype, sargs ) 
+            return render( request, 'pepsite/peptides_render_rapid_views.html', { 'rows' : rows  })
 
 def searched_peptides_render( request ):
   user = request.user

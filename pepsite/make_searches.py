@@ -637,7 +637,7 @@ class ExptArrayAssemble( BaseSearch ):
         for row in cursor.fetchall():
             local = {}
             for key, val in zip( [col[0] for col in desc], row ):
-                if key == 'ptmarray':
+                if key in ('ptmarray', 'exptarray'):
                     local[ key ] = [ [ c.strip('\"').strip('\"') for c in b.strip('(').strip(')').split(',')] for b in val ]
                 else:
                     local[ key ] = val
@@ -667,6 +667,17 @@ class ExptArrayAssemble( BaseSearch ):
                 WHERE experiment_id = %s\
                 "
         cursor.execute( sql_expt, [ expt_id ] )
+        return self.dictfetchall_augmented( cursor )
+
+    def protein_browse( self ):
+        cursor = connection.cursor()
+        sql_pr_browse = "WITH foo AS (SELECT DISTINCT protein_id, protein_description, \
+                experiment_id, experiment_title from master_allowed) \
+                SELECT protein_id, protein_description, \
+                array_agg( (experiment_id,experiment_title)::text order by experiment_id  ) AS exptarray \
+                FROM foo \
+                GROUP BY protein_id, protein_description"
+        cursor.execute( sql_pr_browse )
         return self.dictfetchall_augmented( cursor )
 
     def protein_peptides(self, prot_id, excluded_ids = [] ):
@@ -791,10 +802,11 @@ class MassSearch( ExptArrayAssemble ):
 
     """
     def get_ides_from_mass( self, mass, tolerance ):
+
         ides = IdEstimate.objects.filter( ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ).order_by( 'peptide__sequence' ) 
 	return ides
 
-    def get_unique_peptide_ides( self, search_on, arglist ):
+    def get_unique_peptide_ides_views( self, search_on, arglist ):
         if search_on == 'mz':
             return self.get_unique_peptide_ides_from_mz( *[ float(arglist[0]), float(arglist[1]), arglist[2] ] )
         elif search_on == 'mass':
@@ -802,7 +814,19 @@ class MassSearch( ExptArrayAssemble ):
         elif search_on == 'sequence':
             return self.get_unique_peptide_ides_from_sequence( *arglist )
 
-    def get_unique_peptide_ides_from_mass( self, mass, tolerance, user ):
+    def get_unique_peptide_ides_from_mass( self, mass, tolerance, excluded_ids  ):
+        cursor = connection.cursor()
+        sql_expt = "SELECT * \
+                FROM master_allowed \
+                WHERE precursor_mass >= %s\
+                AND precursor_mass <= %s \
+                EXCEPT \
+                SELECT * \
+                FROM master_allowed \
+                WHERE experiment_id = ANY(%s) \
+                "
+        cursor.execute( sql_expt, [ str(mass-tolerance), str(mass+tolerance), excluded_ids ] )
+        return self.dictfetchall_augmented( cursor )
         ml = []
         ides = IdEstimate.objects.filter( ion__precursor_mass__lte = mass + tolerance,  ion__precursor_mass__gte = mass - tolerance ).distinct().order_by( 'peptide__sequence' ) 
         peptides = set( [ b.peptide for b in ides ] )
@@ -817,13 +841,36 @@ class MassSearch( ExptArrayAssemble ):
                             break
 	return ml
 
-    def get_unique_peptide_ides_from_mz( self, mass, tolerance, user ):
+    def get_unique_peptide_ides_from_mz( self, mz, tolerance, excluded_ids ):
+        cursor = connection.cursor()
+        sql_expt = "SELECT * \
+                FROM master_allowed \
+                WHERE mz >= %s\
+                AND mz <= %s \
+                EXCEPT \
+                SELECT * \
+                FROM master_allowed \
+                WHERE experiment_id = ANY(%s) \
+                "
+        cursor.execute( sql_expt, [ str(mz-tolerance), str(mz+tolerance), excluded_ids ] )
+        return self.dictfetchall_augmented( cursor )
         ml = []
         ides = IdEstimate.objects.filter( ion__mz__lte = mass + tolerance,  ion__mz__gte = mass - tolerance ).distinct().order_by( 'peptide__sequence' ) 
         #peptides = set( [ b.peptide for b in ides ] )
         return self.get_peptide_array( ides, user, ion__mz__lte = mass + tolerance,  ion__mz__gte = mass - tolerance )
 
-    def get_unique_peptide_ides_from_sequence( self, sequence, user ):
+    def get_unique_peptide_ides_from_sequence( self, sequence, excluded_ids ):
+        cursor = connection.cursor()
+        sql_expt = "SELECT * \
+                FROM master_allowed \
+                WHERE peptide_sequence ~* %s\
+                EXCEPT \
+                SELECT * \
+                FROM master_allowed \
+                WHERE experiment_id = ANY(%s) \
+                "
+        cursor.execute( sql_expt, [ sequence, excluded_ids ] )
+        return self.dictfetchall_augmented( cursor )
         ml = []
         ides = IdEstimate.objects.filter( peptide__sequence__icontains = sequence ).distinct().order_by( 'peptide__sequence' ) 
         #peptides = set( [ b.peptide for b in ides ] )
