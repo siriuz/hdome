@@ -128,7 +128,7 @@ class QueryOpt( object ):
                 SELECT t1.*, \
                 t3.protein_id, t3.posnarray, t3.posnstr, \
                 t3.protein_description, t3.protein_uniprot_code \
-                FROM semi_master t1\
+                FROM semi_master t1 \
                 INNER JOIN pepsite_experiment_proteins t2 \
                 ON ( t1.experiment_id = t2.experiment_id ) \
                 INNER JOIN prot_expt t3 \

@@ -136,9 +136,12 @@ function table_exportable() {
 //  });
 }
 
+var complete = "{{complete|safe}}";
+//var complete = "True";
 
 
 //    for (i = 0; i < protein_ids.length; i++) { 
+    if (complete === "True") {
         $.ajax({
                         url : render_url, 
                         type : "POST",
@@ -164,8 +167,11 @@ function table_exportable() {
                             }
                     });
 //   }	
+     } else {
+                                $('.div-1').css(( "z-index" ), -100 );
+                                $('#loader').hide();
 
-
+                            }
 });
 
 </script>
@@ -206,16 +212,17 @@ A comparison score of <strong class="text-primary">2</strong> indicates that an 
 
 </ul>
 
-</div> <!-- container --> 
 <div id="testpoint"></div>
 
 {% load template_filter %}
 
 
 
+{% if message %}{{message|safe}}{% endif %}
 
-{% if not complete %}<p class="text-info">{{complete}} You do not have permission to view some or all of this data </p>{% endif %}
+{% if not complete %}<p><h1 class="text-danger center">You do not have permission to view some or all of this data </h1></p>{% endif %}
 
+</div> <!-- container --> 
 
 
 <br>

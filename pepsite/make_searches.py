@@ -669,6 +669,19 @@ class ExptArrayAssemble( BaseSearch ):
         cursor.execute( sql_expt, [ expt_id ] )
         return self.dictfetchall_augmented( cursor )
 
+    def protein_peptides(self, prot_id, excluded_ids = [] ):
+        """docstring for protein_peptides"""
+        cursor = connection.cursor()
+        sql_expt = "SELECT * \
+                FROM master_allowed \
+                WHERE protein_id = %s\
+                EXCEPT \
+                SELECT * \
+                FROM master_allowed \
+                WHERE experiment_id != ANY(%s) \
+                "
+        cursor.execute( sql_expt, [ prot_id, excluded_ids ] )
+        return self.dictfetchall_augmented( cursor )
 
     def check_datasets(self, datasets, peptide, ptmcon, cutoffs = False ):
         """docstring for e"""

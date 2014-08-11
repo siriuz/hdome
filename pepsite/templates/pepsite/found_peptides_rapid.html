@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load template_filter %}
+
+{% block headline %}
+
+<style>
+#cssTable td 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+#cssTable th 
+{
+    text-align:center; 
+    vertical-align:middle;
+}
+
+.hilite:hover
+{
+background-color:yellow;
+}
+.hilite
+{
+cursor:pointer;
+}
+
+.table_body
+{
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+
+
+</style>
+
+
+<script>
+
+/*
+$(document).ready(function() {
+
+
+
+$('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+$('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+
+
+//$("#cssTable").tablesorter(); 
+    $("#cssTable").tablesorter({ 
+        // pass the headers argument and assing a object 
+        headers: { 
+            // assign the secound column (we start counting zero) 
+            1: { 
+                // disable it by setting the property sorter to false 
+                sorter: false 
+            }, 
+            // assign the third column (we start counting zero) 
+            //2: { 
+            //    // disable it by setting the property sorter to false 
+            //    sorter: false 
+            //} 
+        } 
+    });
+
+});
+*/
+
+    $(document).ready(function() {
+        $('#header').load( "{% url 'pepsite:nav_buttons' %}" );
+        $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
+        var search = "{{search}}";
+
+        if ( search === "True" ) {
+            search = true;
+            } else {
+            search = false;
+        }
+
+        var query_on = "{{query_on}}";
+        var queryObjId = "1";
+
+        if ( !search ) {
+            var queryObjId = "{{query_obj.id}}";
+            var a = "1";
+            var url1 = "{% url 'pepsite:model_info' query_on "1"  %}";
+            var url2 = url1.replace( "1", queryObjId );
+
+            $('#summary').load( url2 );
+            //$('#summary').html( url2 );
+            }
+            
+        $("#cssTable").tablesorter({
+            textExtraction : 'complex',
+            sortMultiSortKey: 'none'
+        });
+
+
+
+function table_exportable() {
+
+// $('table').each(function() {
+    //var $table = $(this);
+    var $table = $('#cssTable');
+ 
+    var $button1 = $("<button type='button' class='btn btn-lg btn-success'>");
+    var $button2 = $("<button type='button' class='btn btn-lg btn-success'>");
+    $button1.text("Export to spreadsheet");
+    $button2.text("Export to spreadsheet");
+    $button1.insertBefore($table);
+    $button2.insertAfter($table);
+ 
+    $button1.click(function() {
+      var csv = $table.table2CSV({delivery:'value'});
+      window.location.href = 'data:text/csv;charset=UTF-8,'
+                            + encodeURIComponent(csv);
+    });
+ 
+    $button2.click(function() {
+      var csv = $table.table2CSV({delivery:'value'});
+      window.location.href = 'data:text/csv;charset=UTF-8,'
+                            + encodeURIComponent(csv);
+    });
+//  });
+}
+
+table_exportable();
+
+
+    });
+
+</script>
+
+
+
+</head>
+
+
+
+{% if search %}
+
+{% if heading %}
+
+<h1>Search results for <span class="text-primary">{{ heading }}</span> search on <span class="text-info">{{text_input}}</span></h1>
+<p class="text-info">Interactive results page</p>
+
+{% else %}
+
+<h1>Search results for <span class="text-primary">{{ query_on }}</span> search on <span class="text-info">{{text_input}}</span></h1>
+<p class="text-info">Interactive results page</p>
+
+{% endif %}
+
+{% else %}
+
+<h1><span class="text-primary">{{ query_on }}</span> = <span class="text-info">{{text_input}}</span></h1>
+<p class="text-info">Interactive results page</p>
+
+
+{% endif %}
+
+{% endblock %}
+
+{% block content %}
+
+
+<div id="summary"></div>
+
+{% if not complete %}<p><h1 class="text-danger center">You do not have permission to view some or all of this data </h1></p>{% endif %}
+
+</div> <!--  container  -->
+
+    <table class="table table-striped tablesorter" id="cssTable">
+    <thead>
+        <tr><th class="hilite">Protein</th><th>UniProt ID</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
+    </thead>
+    <tbody>
+    {% for row in rows %}
+        <tr>
+
+            <td><a href="{% url 'pepsite:protein_peptides' row.protein_id %}" class="link">{{row.protein_description}}</a></td>
+            
+            <td><a href="http://www.uniprot.org/uniprot/{{row.protein_uniprot_code}}" class="link" target="_blank">{{row.protein_uniprot_code}}</a></td>
+            
+            <td><a href="{% url 'pepsite:peptide_peptides' row.peptide_id %}" class="link">{{row.peptide_sequence}}</a></td>
+            
+            <td>{{row.peptide_sequence|length}}</td>
+            
+            <td>{{ row.posnstr }}</td>
+            
+            <td>{% for ptm in row.ptmarray %}{% if ptm.0 %}<a href="{% url 'pepsite:ptm_peptides' ptm.0 %}" class="link">{{ptm.1}}</a>{% endif %} {% endfor %}</td>
+            
+            <td>{{ row.delta_mass | floatformat:4 }}</td>
+            
+            <td>{{ row.confidence | floatformat:2 }}</td>
+            
+            <td>{{ row.mz | floatformat:2 }}</td>
+            
+            <td>{{ row.charge_state }}</td>
+            
+            <td>{{ row.retention_time | floatformat:2 }}</td>
+            
+            <td>{{ row.precursor_mass | floatformat:2 }}</td>
+            
+            <td><a href="{% url 'pepsite:expt2_ajax_rapid' row.experiment_id %}" class="link">{{row.experiment_title}}</a></td>
+
+        </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+
+{% endblock %}
+
+

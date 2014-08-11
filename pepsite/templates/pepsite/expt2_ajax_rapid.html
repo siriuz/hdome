@@ -217,6 +217,7 @@ function table_exportable() {
 
 <div id="testpoint"></div>
 
+{% if not complete %}<p><h1 class="text-danger">You do not have permission to view some or all of this data </h1></p>{% endif %}
 
 </div> <!-- container --> 
 
@@ -226,7 +227,6 @@ function table_exportable() {
 <div class="table_body">
 
 
-{% if not complete %}<p class="text-info">You do not have permission to view some or all of this data {% endif %} </p>
 
 <div class="div-1">
 <img id="loader" class="center" src="{% static 'animations/ajax_loader_blue_512.gif' %}"/>

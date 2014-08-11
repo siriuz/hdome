@@ -2,6 +2,10 @@
       {% load guardian_tags %}
 {% query_data_perms user expt as complete %}
 
+{% if message %}<p><h1 class="text-danger">{{message}}</h1></p>
+{% if not complete %}<p class="text-info">You do not have permission to view some or all of this data </p>{% endif %}
+
+{% else %}
 
 <h2 class="text-primary">Peptides detected</h2>
 
@@ -52,5 +56,6 @@
    </tr>
   {% endfor %}
     </tbody>
-    </table>
+</table>
 
+{% endif %}
