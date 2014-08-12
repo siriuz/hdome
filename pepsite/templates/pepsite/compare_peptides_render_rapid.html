@@ -5,7 +5,9 @@
 {% if message %}<p><h1 class="text-danger">{{message}}</h1></p>
 {% if not complete %}<p class="text-info">You do not have permission to view some or all of this data </p>{% endif %}
 
+
 {% else %}
+{% if view_disallowed %}<p><a class="btn btn-lg btn-primary" href="{% url 'pepsite:send_csv' expt.id %}">Download full data</a></p>{% endif %}
 
 <h2 class="text-primary">Peptides detected</h2>
 

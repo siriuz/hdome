@@ -426,10 +426,15 @@ def comparison_peptides_render_rapid( request ):
             #        complete = False
             s1 = ExptArrayAssemble()
             rows = s1.basic_compare_expt_query( expt1 ) 
-            context = { 'rows' : rows, 'compare_expts' : exptz2, 'expt' : expt, 'complete' : complete  }
+            allrows = s1.all_peptides_compare_expt_query( expt1 ) 
+            view_disallowed = False
+            if user.has_perm('pepsite.view_experiment_disallowed'):
+                view_disallowed = True
+            view_disallowed = True
+            context = { 'rows' : rows, 'allrows' : allrows, 'view_disallowed' : view_disallowed, 'compare_expts' : exptz2, 'expt' : expt, 'complete' : complete  }
             if not complete:
                 context['message'] = message
-            return render( request, 'pepsite/compare_peptides_render_rapid.html', { 'rows' : rows, 'compare_expts' : exptz2, 'expt' : expt, 'complete' : complete  })
+            return render( request, 'pepsite/compare_peptides_render_rapid.html', context ) #{ 'rows' : rows, 'compare_expts' : exptz2, 'expt' : expt, 'complete' : complete  })
 
 def comparison_peptides_render( request ):
   user = request.user
@@ -1114,6 +1119,25 @@ def send_expt_csv(request, expt_id ):
         response['Content-Disposition'] = "attachment; filename=%s"%download_name
         return response
 
+def send_csv2(request ):
+    pass
+
+def send_csv(request, expt_id ):
+
+    filestump = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    download_name = filestump + "_HaploDome_download.csv"
+    header, bodtrows = allrows[0], allrows[1:]
+    with tempfile.NamedTemporaryFile() as f:
+	f.write( header + '\n' )
+        for row in bodyrows:
+            f.write( row )
+	f.seek(0)
+        wrapper      = FileWrapper( f )
+        content_type = 'text/csv'
+        response     = HttpResponse(wrapper,content_type=content_type)
+        response['Content-Length']      = f.tell()
+        response['Content-Disposition'] = "attachment; filename=%s"%download_name
+        return response
 
 #@login_required
 def footer( request ):

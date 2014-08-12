@@ -159,6 +159,7 @@ class Experiment( models.Model ):
     class Meta:
         permissions = (
                 ( 'view_experiment', 'can view experiment' ),
+                ( 'view_experiment_disallowed', 'can view all experiment entries' ),
                 ( 'edit_experiment', 'can edit experiment' ),
                 )
 

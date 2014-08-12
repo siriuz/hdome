@@ -629,10 +629,11 @@ class ExptArrayAssemble( BaseSearch ):
         print 'dict assembly time taken = %f' % tt 
         return returndic
     
-    def dictfetchall_augmented(self, cursor):
+    def dictfetchall_augmented(self, cursor, return_header = False):
         "Returns all rows from a cursor as a dict"
         t0 = time.time()
         desc = cursor.description
+        header = [b[0] for b in desc]
         returnlist = []
         for row in cursor.fetchall():
             local = {}
@@ -645,7 +646,29 @@ class ExptArrayAssemble( BaseSearch ):
         t1 = time.time()
         tt = t1 - t0
         print 'dict assembly augmented time taken = %f' % tt 
+        if return_header:
+            return ( returnlist, header )
         return returnlist
+
+    def convert_to_csv( self, cursor ):
+        t0 = time.time()
+        mlist = []
+        mlist.append( [ b[0] for b in cursor.description ] )
+        for row in cursor.fetchall():
+            local = {}
+            for key, val in zip( [col[0] for col in desc], row ):
+                if key in ('ptmarray', 'exptarray'):
+                    local[ key ] = [ [ c.strip('\"').strip('\"') for c in b.strip('(').strip(')').split(',')] for b in val ]
+                else:
+                    local[ key ] = val
+            returnlist.append( local )
+        t1 = time.time()
+        tt = t1 - t0
+        pass
+
+
+
+
 
     def basic_expt_query( self, expt_id ):
         """
@@ -656,6 +679,44 @@ class ExptArrayAssemble( BaseSearch ):
                 WHERE experiment_id = %s\
                 "
         cursor.execute( sql_expt, [ expt_id ] )
+        return self.dictfetchall_augmented( cursor )
+
+    def all_peptides_expt_query( self, expt_id ):
+        """
+        """
+        cursor = connection.cursor()
+        sql_expt = "WITH foo AS \
+                ( SELECT *, 1 as ranking, \'displayed\' as spec \
+                FROM master_allowed \
+                WHERE experiment_id = %s \
+                UNION \
+                SELECT *, 2 as ranking, \'not displayed\' as spec \
+                FROM master_disallowed \
+                WHERE experiment_id = %s \
+                ) \
+                SELECT * FROM foo \
+                ORDER BY ranking ASC \
+                "
+        cursor.execute( sql_expt, [ expt_id, expt_id ] )
+        return self.dictfetchall_augmented( cursor )
+
+    def all_peptides_compare_expt_query( self, expt_id ):
+        """
+        """
+        cursor = connection.cursor()
+        sql_expt = "WITH foo AS \
+                ( SELECT t1.*, 1 as ranking, \'displayed\' as spec \
+                FROM master_compare_allowed t1 \
+                WHERE experiment_id = %s \
+                UNION \
+                SELECT t2.*, 2 as ranking, \'not displayed\' as spec \
+                FROM master_compare_disallowed t2 \
+                WHERE experiment_id = %s \
+                ) \
+                SELECT * FROM foo \
+                ORDER BY ranking ASC \
+                "
+        cursor.execute( sql_expt, [ expt_id, expt_id ] )
         return self.dictfetchall_augmented( cursor )
 
     def basic_compare_expt_query( self, expt_id ):

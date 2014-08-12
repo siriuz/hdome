@@ -176,6 +176,13 @@ class QueryOpt( object ):
                 WHERE t1.confidence > t1.confidence_cutoff and t1.\"isRemoved\" = false \
                 ORDER BY t1.peptide_id, t1.ptmstr, t1.experiment_id, t1.protein_id, t1.ion_id \
                 "
+        qqcompdisallowed = "CREATE MATERIALIZED VIEW master_compare_disallowed AS \
+                SELECT * \
+                FROM allcompares t1 \
+                EXCEPT \
+                SELECT * \
+                FROM master_compare_allowed t2 \
+                "
         cursor.execute( qq2 )
         cursor.execute( 'SELECT COUNT(*) FROM suppavail' )
         print 'suppavail', cursor.fetchall(  )
@@ -209,6 +216,9 @@ class QueryOpt( object ):
         cursor.execute( qqcompallowed )
         cursor.execute( 'SELECT COUNT(*) FROM master_compare_allowed' )
         print 'master_compare_allowed', cursor.fetchall(  )
+        cursor.execute( qqcompdisallowed )
+        cursor.execute( 'SELECT COUNT(*) FROM master_compare_disallowed' )
+        print 'master_compare_disallowed', cursor.fetchall(  )
         cursor.execute( qq4 )
         ides = self.dictfetchall( cursor )
         j = len(ides)
