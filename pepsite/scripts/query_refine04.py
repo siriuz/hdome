@@ -53,9 +53,10 @@ class QueryOpt( object ):
         # Generate SQL for finding idestimate-ptms combo with lowest possible abs(delta_mass) [per experiment] 
         # NOTE: This contins one row per IdEstimate - it can be a starting point for a 'master' view
         qq2 = "CREATE VIEW suppavail AS SELECT foo.id, foo.ptmstr, foo.experiment_id, \
-                min(abs(foo.delta_mass)) minadm, foo.ptmarray, foo.ptmidarray, foo.ptmdescarray FROM \
+                min(abs(foo.delta_mass)) minadm, foo.ptmarray, foo.ptmidarray, foo.ptmdescarray, foo.ptmdescstr FROM \
                 ( select t1.id, t1.peptide_id, t3.experiment_id, \
                 t1.delta_mass, array_to_string(array_agg(t2.ptm_id order by t2.ptm_id),'+') AS ptmstr, \
+                array_to_string(array_agg(t4.description order by t2.ptm_id),',') AS ptmdescstr, \
                 array_agg((t2.ptm_id, t4.description)::text order by t2.ptm_id) AS ptmarray, \
                 array_agg(t2.ptm_id order by t2.ptm_id) AS ptmidarray, \
                 array_agg(t4.description order by t2.ptm_id) AS ptmdescarray \
@@ -68,7 +69,7 @@ class QueryOpt( object ):
                 ON ( t1.ion_id = t3.id ) \
                 GROUP BY t1.id, t1.peptide_id, t3.experiment_id \
                 ) AS foo \
-                GROUP BY foo.id, foo.ptmstr, foo.ptmarray, foo.ptmdescarray, foo.ptmidarray, foo.experiment_id \
+                GROUP BY foo.id, foo.ptmstr, foo.ptmarray, foo.ptmdescarray, foo.ptmdescstr, foo.ptmidarray, foo.experiment_id \
                 "
         # Find peptide-ptms combo with lowest possible abs(delta_mass) [per experiment]
         qq3 = "CREATE VIEW suppcorrect AS SELECT DISTINCT \

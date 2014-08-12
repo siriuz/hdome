@@ -681,7 +681,7 @@ class ExptArrayAssemble( BaseSearch ):
         cursor.execute( sql_expt, [ expt_id ] )
         return self.dictfetchall_augmented( cursor )
 
-    def all_peptides_expt_query( self, expt_id ):
+    def all_peptides_expt_query( self, expt_id, return_header = False ):
         """
         """
         cursor = connection.cursor()
@@ -698,9 +698,9 @@ class ExptArrayAssemble( BaseSearch ):
                 ORDER BY ranking ASC \
                 "
         cursor.execute( sql_expt, [ expt_id, expt_id ] )
-        return self.dictfetchall_augmented( cursor )
+        return self.dictfetchall_augmented( cursor, return_header )
 
-    def all_peptides_compare_expt_query( self, expt_id ):
+    def all_peptides_compare_expt_query( self, expt_id, return_header = False ):
         """
         """
         cursor = connection.cursor()
@@ -717,7 +717,7 @@ class ExptArrayAssemble( BaseSearch ):
                 ORDER BY ranking ASC \
                 "
         cursor.execute( sql_expt, [ expt_id, expt_id ] )
-        return self.dictfetchall_augmented( cursor )
+        return self.dictfetchall_augmented( cursor, return_header )
 
     def basic_compare_expt_query( self, expt_id ):
         """

@@ -109,10 +109,43 @@ function reset_tablesort() {
 //    $('#testpoint').append( 'hello<br>' );
 //reset_tablesort();
 
-function table_exportable() {
+var view_disallowed = "{{view_disallowed}}";
 
-// $('table').each(function() {
-    //var $table = $(this);
+//$("#summary").html( "<h1>view_disallowed = " + view_disallowed +" </h1>" );
+
+function get_full_csv () {
+    var retrieve_url = "/pepsite/send_csv";
+    var param1 = "compare";
+    $.ajax({
+                        url : retrieve_url, 
+                        type : "POST",
+                        dataType: "html", 
+                        data : {
+                            'exptz' : exptz,
+                            'expt' : expt1,
+                            'param1' : param1,
+                            csrfmiddlewaretoken: csrftoken
+                            },
+                            success : function(retdat) {
+                                $("#summary" ).html( "<br>" + retdat + "<br>" );
+                                //reset_tablesort();
+                                //table_exportable(view_disallowed);
+                                //$('.div-1').css(( "z-index" ), -100 );
+                                //$('#loader').hide();
+                                //$('#cssTable tr:last').after(retdat);
+                                //$("#testpoint" ).append( "<br>" + "complete" + "<br>" );
+                                //$('.tablesorter').trigger('update'); //this is absolute GOLD!!!
+                                //reset_tablesort();
+                            },
+                            error : function(xhr,errmsg,err) {
+                                alert(xhr.status + ": " + xhr.responseText);
+                            }
+                        });
+                    }
+
+
+function table_exportable( view_disallowed ) {
+
     var $table = $('#cssTable');
  
     var $button1 = $("<button type='button' class='btn btn-lg btn-success'>");
@@ -133,6 +166,8 @@ function table_exportable() {
       window.location.href = 'data:text/csv;charset=UTF-8,'
                             + encodeURIComponent(csv);
     });
+    
+
 //  });
 }
 
@@ -154,7 +189,7 @@ var complete = "{{complete|safe}}";
                             success : function(retdat) {
                                 $("#emptyslot" ).append( "<br>" + retdat + "<br>" );
                                 reset_tablesort();
-                                table_exportable();
+                                table_exportable(view_disallowed);
                                 $('.div-1').css(( "z-index" ), -100 );
                                 $('#loader').hide();
                                 //$('#cssTable tr:last').after(retdat);
@@ -172,6 +207,9 @@ var complete = "{{complete|safe}}";
                                 $('#loader').hide();
 
                             }
+
+
+
 });
 
 </script>
@@ -193,8 +231,18 @@ A comparison score of <strong class="text-primary">2</strong> indicates that an 
 
 <div id="summary"></div>
 
+{% if view_disallowed %}
+
+<form id="kr01" action="{% url 'pepsite:send_csv' %}" method='post'>
+    {% csrf_token %}
+    <input type="hidden" name="exptz[]" value="{{exptz|safe}}"/>
+    <input type="hidden" name="expt" value="{{expt1}}"/>
+    <input type="hidden" name="param1" value="compare"/>
+    <input id="commit_upload" class="btn btn-lg btn-primary" type="submit" value="Download FULL comparison spreadsheet"/>
+</form>
 
 
+{% endif %}
 
 <div id="summary"></div>
 

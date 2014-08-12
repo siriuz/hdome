@@ -333,7 +333,7 @@ def compare_expt_form_ajax( request ):
 	    exptz = form.cleaned_data['exptz'] 
             print 'exptz =', exptz
             exptz2 = [ int(b) for b in exptz ]
-            exptz2_objs = [ Experiment.objects.get( id = b ) for b in exptz2 ]
+            exptz2_objs = Experiment.objects.filter( id__in = exptz2 ).distinct()
             print 'invalid exptz =', exptz
             expt = get_object_or_404( Experiment, id = expt1 )
             all_exp = [ expt ]
@@ -350,13 +350,18 @@ def compare_expt_form_ajax( request ):
                 if ( not user.has_perm( 'view_experiment', experiment ) ):
                     complete = False
                     message2 += '<li class=\"text-info\">' + experiment.title + '</li>'
+                    exptz2_objs = exptz2_objs.exclude( id = experiment.id )
+            exptz3 = [b.id for b in exptz2_objs ]
             message2 += '</ul></h1></p>'
+            view_disallowed = False
+            if user.has_perm('pepsite.view_experiment_disallowed'):
+                view_disallowed = True
             if ( not user.has_perm( 'view_experiment', expt ) ):
                 message = '<h1 class=\"text-danger\"><p>You do not have permission to view primary Experiment: <span class=\"text-info\">%s</span>' % ( expt.title )
                 if not complete:
                     message += "</h1></p>" + message2
-                return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications, 'message' : message, 'complete' : complete  })
-            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'complete' : complete, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications  })
+                return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'view_disallowed' : view_disallowed, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications, 'message' : message, 'complete' : complete  })
+            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'complete' : complete, 'view_disallowed' : view_disallowed, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications  })
 	else:
             context = {}
             for f in form.fields.keys():
@@ -384,6 +389,22 @@ def compare_expt_form_ajax( request ):
                 if ( not user.has_perm( 'view_experiment', experiment ) ):
                     complete = False
                     message2 += '<li class=\"text-info\">' + experiment.title + '</li>'
+                    exptz2_objs = exptz2_objs.exclude( id = experiment.id )
+            exptz3 = [b.id for b in exptz2_objs ]
+            message2 += '</ul></h1></p>'
+            view_disallowed = False
+            if user.has_perm('pepsite.view_experiment_disallowed'):
+                view_disallowed = True
+            if ( not user.has_perm( 'view_experiment', expt ) ):
+                message = '<h1 class=\"text-danger\"><p>You do not have permission to view primary Experiment: <span class=\"text-info\">%s</span>' % ( expt.title )
+                if not complete:
+                    message += "</h1></p>" + message2
+                return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'view_disallowed' : view_disallowed, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications, 'message' : message, 'complete' : complete  })
+            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'complete' : complete, 'view_disallowed' : view_disallowed, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications  })
+            for experiment in exptz2_objs:
+                if ( not user.has_perm( 'view_experiment', experiment ) ):
+                    complete = False
+                    message2 += '<li class=\"text-info\">' + experiment.title + '</li>'
             message2 += '</ul></h1></p>'
             if ( not user.has_perm( 'view_experiment', expt ) ):
                 message = '<h1 class=\"text-danger\"><p>You do not have permission to view primary Experiment: <span class=\"text-info\">%s</span>' % ( expt.title )
@@ -407,7 +428,7 @@ def comparison_peptides_render_rapid( request ):
             expt1 = request.POST['expt']
             expt = get_object_or_404( Experiment, id = expt1 )
             exptz = request.POST.getlist('exptz[]' )
-            exptz2 = [ Experiment.objects.get( id = b ) for b in exptz ]
+            exptz2 = Experiment.objects.filter( id__in = exptz ).distinct()
             print 'expt =', expt.id, 'exptz =', exptz
             #return HttpResponse( 'Something!!!' + str( request.POST.keys() )  )
             #exptz = formdata['exptz']
@@ -421,6 +442,7 @@ def comparison_peptides_render_rapid( request ):
                 if ( not user.has_perm( 'view_experiment', experiment ) ):
                     complete = False
                     message += experiment.title + ' '
+                    exptz2 = exptz2.exclude( id = experiment.id ) 
             #for dataset in Dataset.objects.filter( experiment__id__in =  exptz + [ expt1 ] ):
             #    if ( not user.has_perm( 'view_dataset', dataset ) ):
             #        complete = False
@@ -430,8 +452,9 @@ def comparison_peptides_render_rapid( request ):
             view_disallowed = False
             if user.has_perm('pepsite.view_experiment_disallowed'):
                 view_disallowed = True
-            view_disallowed = True
-            context = { 'rows' : rows, 'allrows' : allrows, 'view_disallowed' : view_disallowed, 'compare_expts' : exptz2, 'expt' : expt, 'complete' : complete  }
+            final_compar = [ b.id for b in exptz2 ]
+            params = [ 'compare', expt1, final_compar ]
+            context = { 'rows' : rows, 'params' : params, 'allrows' : allrows, 'view_disallowed' : view_disallowed, 'compare_expts' : exptz2, 'expt' : expt, 'complete' : complete  }
             if not complete:
                 context['message'] = message
             return render( request, 'pepsite/compare_peptides_render_rapid.html', context ) #{ 'rows' : rows, 'compare_expts' : exptz2, 'expt' : expt, 'complete' : complete  })
@@ -1033,7 +1056,10 @@ def expt2_ajax_rapid( request, expt_id ):
             complete = False
     if not( len(lodgements)):
         lodgements = False
-    return render( request, 'pepsite/expt2_ajax_rapid.html', { 'expt' : expt, 'lodgements' : lodgements, 'complete' : complete, 'publications' : publications, 'paginate' : False })
+    view_disallowed = False
+    if user.has_perm('pepsite.view_experiment_disallowed'):
+        view_disallowed = True
+    return render( request, 'pepsite/expt2_ajax_rapid.html', { 'expt' : expt, 'view_disallowed': view_disallowed, 'lodgements' : lodgements, 'complete' : complete, 'publications' : publications, 'paginate' : False })
 
 def peptides_render( request, expt_id ):
     user = request.user
@@ -1120,24 +1146,66 @@ def send_expt_csv(request, expt_id ):
         return response
 
 def send_csv2(request ):
-    pass
+    return HttpResponse( '<h1>POO!!!</h1>' ) 
 
-def send_csv(request, expt_id ):
+def send_csv(request ):
+    """
+    """
+    if request.POST.has_key( 'expt' ) and request.POST.has_key( 'exptz[]' ) and request.POST.has_key( 'param1' ):
+        expt = request.POST[ 'expt' ]
+        exptz = request.POST[ 'exptz[]' ].strip('[').strip(']').split(',')
+        #exptz_ob = Experiment.objects.filter( id__in = exptz ).distinct().order_by('id')
+        param = request.POST[ 'param1' ]
+        print 'exptz =', exptz, type(exptz)
+        filestump = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        download_name = filestump + "_HaploDome_download.csv"
+        
+        s1 = ExptArrayAssemble()
+        allrows, header = [], []
+        if param == 'compare':
+            allrows, header = s1.all_peptides_compare_expt_query( expt, return_header = True ) 
+        elif param == 'single':
+            allrows, header = s1.all_peptides_expt_query( expt, return_header = True ) 
+        
+        #header, bodtrows = allrows[0], allrows[1:]
+        with tempfile.NamedTemporaryFile() as f:
+            f.write( 'Protein description\tUniProt code\tPeptide sequence\tPeptide length\tPosition(s) in protein\
+                    \tPTM(s)\tDelta mass\tConfidence\tm/z\tCharge state\tRetention time\tPrecursor mass\tExperiment\t')
+            if param == 'compare':
+                for exno in exptz:
+                    f.write( 'Compare with: %s\t' % ( Experiment.objects.get( id = exno ).title ) )
+            f.write('Display status\n')
+            for row in allrows:
+                f.write( '%s\t%s\t%s\t%d\t%s\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t' % ( row['protein_description'], row['protein_uniprot_code'], 
+                    row['peptide_sequence'], row['peptide_length'],
+                    row['posnstr'], row['ptmdescstr'], row['delta_mass'], row['confidence'], row['mz'], row['charge_state'], row['retention_time'],
+                    row['precursor_mass'], row['experiment_title'] ) )
+                if param == 'compare':
+                    for exid in exptz:
+                        #print exid, row['allowed_array'], row['disallowed_array']
+                        try:
+                            assert(int(exid) in row['allowed_array'])
+                            f.write( '2\t' )
+                        except:
+                            try:
+                                assert(int(exid) in row['disallowed_array'])
+                                f.write( '1\t' )
+                            except:
+                                f.write( '\t' )
+                f.write( '%s\n' % row['spec'] )
 
-    filestump = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    download_name = filestump + "_HaploDome_download.csv"
-    header, bodtrows = allrows[0], allrows[1:]
-    with tempfile.NamedTemporaryFile() as f:
-	f.write( header + '\n' )
-        for row in bodyrows:
-            f.write( row )
-	f.seek(0)
-        wrapper      = FileWrapper( f )
-        content_type = 'text/csv'
-        response     = HttpResponse(wrapper,content_type=content_type)
-        response['Content-Length']      = f.tell()
-        response['Content-Disposition'] = "attachment; filename=%s"%download_name
-        return response
+
+                #f.write( str(row) + '\n' )
+            f.seek(0)
+            wrapper      = FileWrapper( f )
+            content_type = 'text/csv'
+            response     = HttpResponse(wrapper,content_type=content_type)
+            response['Content-Length']      = f.tell()
+            response['Content-Disposition'] = "attachment; filename=%s"%download_name
+            return response
+    else:
+        return HttpResponse( '<h1>DIDN\'T WORK!!!</h1>' ) 
+
 
 #@login_required
 def footer( request ):

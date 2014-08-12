@@ -219,6 +219,20 @@ function table_exportable() {
 
 {% if not complete %}<p><h1 class="text-danger">You do not have permission to view some or all of this data </h1></p>{% endif %}
 
+{% if view_disallowed %}
+
+<form id="kr01" action="{% url 'pepsite:send_csv' %}" method='post'>
+    {% csrf_token %}
+    <input type="hidden" name="exptz[]" value="[]"/>
+    <input type="hidden" name="expt" value="{{expt.id}}"/>
+    <input type="hidden" name="param1" value="single"/>
+    <input id="commit_upload" class="btn btn-lg btn-primary" type="submit" value="Download FULL spreadsheet"/>
+</form>
+
+
+{% endif %}
+
+
 </div> <!-- container --> 
 
 

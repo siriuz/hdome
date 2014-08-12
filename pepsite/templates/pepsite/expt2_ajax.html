@@ -218,6 +218,20 @@ function table_exportable() {
 <div id="testpoint"></div>
 
 
+{% if view_disallowed %}
+
+<form id="kr01" action="{% url 'pepsite:send_csv' %}" method='post'>
+    {% csrf_token %}
+    <input type="hidden" name="exptz[]" value="{{exptz|safe}}"/>
+    <input type="hidden" name="expt" value="{{expt1}}"/>
+    <input type="hidden" name="param1" value="compare"/>
+    <input id="commit_upload" class="btn btn-lg btn-primary" type="submit" value="Download FULL comparison spreadsheet"/>
+</form>
+
+
+{% endif %}
+
+
 </div> <!-- container --> 
 
 
