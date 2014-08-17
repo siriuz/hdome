@@ -44,7 +44,9 @@ INSTALLED_APPS = (
     'django_extensions',
     'guardian',
     'news',
-    'debug_toolbar.apps.DebugToolbarConfig',
+    "djcelery_email",
+    #'debug_toolbar.apps.DebugToolbarConfig',
+    'djcelery',
     #'south',
     
 )
@@ -64,12 +66,29 @@ AUTHENTICATION_BACKENDS = (
     'guardian.backends.ObjectPermissionBackend',
 )
 
+
+FIXTURE_DIRS = (
+   '/home/rimmer/praccie/hdome/pepsite/fixtures/',
+)
+
 ANONYMOUS_USER_ID = -1
 
 ROOT_URLCONF = 'hdome.urls'
 
 WSGI_APPLICATION = 'hdome.wsgi.application'
 
+
+# CELERY SETTINGS
+BROKER_URL = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+#CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
+#CELERY_RESULT_BACKEND='djcelery.backends.cache:CacheBackend'
+#BROKER_URL = 'redis://localhost:6379/0'
+#BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}  # 1 hour - same as default
+#CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
 # Database
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
@@ -85,6 +104,17 @@ DATABASES = {
         # 'PORT': '5432', # if we wanna use TCP sockets
     }
 }
+
+
+#EMAIL_BACKEND = 'djcelery_email.backends.CeleryEmailBackend'
+
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'kieranrimmer'
+EMAIL_HOST_PASSWORD = 'kingysback'
+EMAIL_USE_TLS = True
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/dev/topics/i18n/

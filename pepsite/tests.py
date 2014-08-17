@@ -59,6 +59,7 @@ class ImportSpeedTest(TestCase):
         bi1.insert_update_antibodies( MDIC )
         bi1.create_experiment( MDIC, cl )
         self.filepath = os.path.join( CURDIR, 'scripts/Time_Trial_Import4_PeptideSummary.trial' )
+        #self.filepath = os.path.join( CURDIR, 'scripts/twentyk_trial.csv' )
         self.bi1 = bi1
 
     def test_user1( self):

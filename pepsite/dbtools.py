@@ -5,6 +5,7 @@ of Django object instances
 
 """
 
+from django.db import IntegrityError, transaction
 
 class Error(Exception):
     """Base class for exceptions in this module."""
@@ -63,11 +64,13 @@ class DBTools(object):
         <saved arbitrary Django model object> | Error
         """
         try:
-            return obj_type.objects.get( **conditions )
-        except:
+            with transaction.atomic():
+                return obj_type.objects.get( **conditions )
+        except IntegrityError:
             try:
-                return obj_type.objects.create( **conditions )
-            except:
+                with transaction.atomic():
+                    return obj_type.objects.create( **conditions )
+            except IntegrityError:
                 if not len( obj_type.objects.filter( **conditions ) ):
                     raise NonUniqueError(  )
                 elif len( obj_type.objects.filter( **conditions ) ) > 1:

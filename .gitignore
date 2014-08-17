@@ -18,5 +18,7 @@ info.txt
 db.*
 autocomplete/
 migrations/
+pepsite/fixtures/
+hdome/settings.py
 *egg-info/
 

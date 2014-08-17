@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from pepsite.pepsite_forms import *
+from pepsite.pepsite_forms import * # need to comment this out during migrations
 from pepsite.make_searches import *
 from pepsite.models import *
 import sys
@@ -7,6 +7,10 @@ import os, tempfile, zipfile
 from django.core.servers.basehttp import FileWrapper
 from django.conf import settings
 import mimetypes
+from django.db import IntegrityError, transaction
+
+# celery tasks:
+from pepsite.tasks import *
 
 import datetime
 from django.http import HttpResponse
@@ -24,7 +28,8 @@ import pickle
 
 #@login_required
 def index( request ):
-	return render( request, 'pepsite/index.html', {})
+    test.delay('This test was generated becuase you visited \'/pepsite/index\'!')
+    return render( request, 'pepsite/index.html', {})
 
 #@login_required
 def formdump( request ):
@@ -260,6 +265,7 @@ def upload_manual_curations( request ):
             formdata = form.cleaned_data
 	    ul.setup_curation( formdata, cur )
 	    ul.auto_curation(  )
+            ul.refresh_materialized_views()
             return render( request, 'pepsite/curation_outcome.html', { 'upload' : ul }  ) # Redirect after POST
 	else:
             ul = pepsite.uploaders.Curate( user = user )
@@ -616,12 +622,14 @@ def clean_compare_expt_form( request ):
         return render( request, 'pepsite/compare_expt_form.html', context)
 
 @login_required
+@transaction.atomic
 def commit_upload_ss( request ):
     """
     """
     user = request.user
     elems = request.session['ul_supp']
     if request.method == 'POST':
+        upload_ss_celery.delay( user, elems, request.POST )
         keys = request.POST.keys()
         ul = pepsite.uploaders.Uploads( user = user )
         ul.repopulate( elems )
@@ -629,9 +637,10 @@ def commit_upload_ss( request ):
         #with open( '/home/rimmer/praccie/hdome/background/trial_ul_01.pickle', 'wb' ) as f:
         #    pickle.dump( ul, f )
         context = { 'data' : request.POST['data'], 'ul' : ul, 'keys' : keys }
-        ul.get_protein_metadata(  )
+        #ul.get_protein_metadata(  )
         ul.prepare_upload_simple( )
         ul.upload_simple()
+        ul.refresh_materialized_views()
         return render( request, 'pepsite/ss_uploading.html', context)
     else:
         textform = UploadSSForm()

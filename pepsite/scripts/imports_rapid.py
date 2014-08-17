@@ -136,14 +136,11 @@ class BackgroundImports(dbtools.DBTools):
             tissue_type = rowdic['Tissue/cell type']
         description += ' %s' %( rowdic['Tissue/cell type'] )
         title = rowdic['Cell line name']
-        cl = self.get_model_object( CellLine, name = title )
-        cl.description = description
-        cl.isTissue = isTissue
-        cl.tissue_type = tissue_type
-        cl.save()
+        defaults = { 'description' : description, 'isTissue' : isTissue,
+                'tissue_type' : tissue_type }
+        cl, _ = CellLine.objects.update_or_create( name = title, defaults = defaults )
         if host_ind:
-            self.add_if_not_already( host_ind, cl.individuals )
-            cl.save()
+            cl.individuals.add( host_ind )
         return cl
 
     def get_host(self, rowdic ):
@@ -164,115 +161,78 @@ class BackgroundImports(dbtools.DBTools):
         for k in keys:
             codes = rowdic[k].split(delimiter)
             if k.strip().upper() == 'HLA A*B*C*' and bool( rowdic[k].strip() ):
-                gene = self.get_model_object( Gene, name = 'HLA Class I', gene_class=1, description = 'Human HLA class I'   )
-                gene.save()
+                gene, _ = Gene.objects.get_or_create(  name = 'HLA Class I', gene_class=1, description = 'Human HLA class I'   )
                 for code in codes:
-                    allele = self.get_model_object( Allele, code = code, gene = gene, isSer = False )
-                    allele.save()
-                    expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
-                    expr.save()
+                    allele, _ = Allele.objects.get_or_create( code = code, gene = gene, isSer = False )
+                    expr, _ = Expression.objects.get_or_create( allele = allele, cell_line = cl_obj ) #expression assumed 100%
             if k.strip().upper() == 'HLA CLASS I SEROLOGY' and bool( rowdic[k].strip() ):
-                gene = self.get_model_object( Gene, name = 'HLA Class I', gene_class=1, description = 'Human HLA class I'   )
-                gene.save()
+                gene, _ = Gene.objects.get_or_create(  name = 'HLA Class I', gene_class=1, description = 'Human HLA class I'   )
                 for code in codes:
-                    allele = self.get_model_object( Allele, code = code, gene = gene, isSer = True )
-                    allele.save()
-                    expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
-                    expr.save()
+                    allele, _ = Allele.objects.get_or_create( code = code, gene = gene, isSer = True )
+                    expr, _ = Expression.objects.get_or_create( allele = allele, cell_line = cl_obj ) #expression assumed 100%
             elif k.strip().upper() == 'HLA DR,DQ,DP' and bool( rowdic[k].strip() ):
-                gene = self.get_model_object( Gene, name = 'HLA Class II', gene_class=2, description = 'Human HLA class II'  )
-                gene.save()
+                gene, _ = Gene.objects.get_or_create(  name = 'HLA Class II', gene_class=2, description = 'Human HLA class II'  )
                 for code in codes:
-                    allele = self.get_model_object( Allele, code = code, gene = gene, isSer = False )
-                    allele.save()
-                    expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
-                    expr.save()
+                    allele, _ = Allele.objects.get_or_create( code = code, gene = gene, isSer = False )
+                    expr, _ = Expression.objects.get_or_create( allele = allele, cell_line = cl_obj ) #expression assumed 100%
             elif k.strip().upper() == 'HLA CLASS II SEROLOGY' and bool( rowdic[k].strip() ):
-                gene = self.get_model_object( Gene, name = 'HLA Class II', gene_class=2, description = 'Human HLA cLass II'  )
-                gene.save()
+                gene, _ = Gene.objects.get_or_create(  name = 'HLA Class II', gene_class=2, description = 'Human HLA cLass II'  )
                 for code in codes:
-                    allele = self.get_model_object( Allele, code = code, gene = gene, isSer = True )
-                    allele.save()
-                    expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
-                    expr.save()
+                    allele, _ = Allele.objects.get_or_create( code = code, gene = gene, isSer = True )
+                    expr, _ = Expression.objects.get_or_create( allele = allele, cell_line = cl_obj ) #expression assumed 100%
             elif k.strip().upper() == 'H2 CLASS I' and bool( rowdic[k].strip() ):
-                gene = self.get_model_object( Gene, name = 'H2 Class I', gene_class=1, description = 'Mouse H2 Class I'  )
-                gene.save()
+                gene, _ = Gene.objects.get_or_create(  name = 'H2 Class I', gene_class=1, description = 'Mouse H2 Class I'  )
                 for code in codes:
-                    allele = self.get_model_object( Allele, code = code, gene = gene, isSer = True )
-                    allele.save()
-                    expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
-                    expr.save()
+                    allele, _ = Allele.objects.get_or_create( code = code, gene = gene, isSer = True )
+                    expr, _ = Expression.objects.get_or_create( allele = allele, cell_line = cl_obj ) #expression assumed 100%
             elif k.strip().upper() == 'H2 CLASS II' and bool( rowdic[k].strip() ):
-                gene = self.get_model_object( Gene, name = 'H2 Class I', gene_class=2, description = 'Mouse H2 Class II'  )
-                gene.save()
+                gene, _ = Gene.objects.get_or_create(  name = 'H2 Class I', gene_class=2, description = 'Mouse H2 Class II'  )
                 for code in codes:
-                    allele = self.get_model_object( Allele, code = code, gene = gene, isSer = True )
-                    allele.save()
-                    expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
-                    expr.save()
+                    allele, _ = Allele.objects.get_or_create( code = code, gene = gene, isSer = True )
+                    expr, _ = Expression.objects.get_or_create( allele = allele, cell_line = cl_obj ) #expression assumed 100%
             elif k.strip().upper() == 'H2 D' and bool( rowdic[k].strip() ):
-                gene = self.get_model_object( Gene, name = 'H2 ', description = 'Mouse H2 D'  )
-                gene.save()
+                gene, _ = Gene.objects.get_or_create(  name = 'H2 ', description = 'Mouse H2 D'  )
                 for code in codes:
-                    allele = self.get_model_object( Allele, code = code, gene = gene, isSer = True )
-                    allele.save()
-                    expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
-                    expr.save()
+                    allele, _ = Allele.objects.get_or_create( code = code, gene = gene, isSer = True )
+                    expr, _ = Expression.objects.get_or_create( allele = allele, cell_line = cl_obj ) #expression assumed 100%
             elif k.strip().upper() == 'H2 L' and bool( rowdic[k].strip() ):
-                gene = self.get_model_object( Gene, name = 'H2 L', description = 'Mouse H2 L'  )
-                gene.save()
+                gene, _ = Gene.objects.get_or_create(  name = 'H2 L', description = 'Mouse H2 L'  )
                 for code in codes:
-                    allele = self.get_model_object( Allele, code = code, gene = gene, isSer = True )
-                    allele.save()
-                    expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
-                    expr.save()
+                    allele, _ = Allele.objects.get_or_create( code = code, gene = gene, isSer = True )
+                    expr, _ = Expression.objects.get_or_create( allele = allele, cell_line = cl_obj ) #expression assumed 100%
             elif k.strip().upper() == 'H2 IA' and bool( rowdic[k].strip() ):
-                gene = self.get_model_object( Gene, name = 'H2 IA', description = 'Mouse H2 IA'  )
-                gene.save()
+                gene, _ = Gene.objects.get_or_create(  name = 'H2 IA', description = 'Mouse H2 IA'  )
                 for code in codes:
-                    allele = self.get_model_object( Allele, code = code, gene = gene, isSer = True )
-                    allele.save()
-                    expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
-                    expr.save()
+                    allele, _ = Allele.objects.get_or_create( code = code, gene = gene, isSer = True )
+                    expr, _ = Expression.objects.get_or_create( allele = allele, cell_line = cl_obj ) #expression assumed 100%
             elif k.strip().upper() == 'H2 IE' and bool( rowdic[k].strip() ):
-                gene = self.get_model_object( Gene, name = 'H2 IE', description = 'Mouse H2 IE'  )
-                gene.save()
+                gene, _ = Gene.objects.get_or_create(  name = 'H2 IE', description = 'Mouse H2 IE'  )
                 for code in codes:
-                    allele = self.get_model_object( Allele, code = code, gene = gene, isSer = True )
-                    allele.save()
-                    expr = self.get_model_object( Expression, allele = allele, cell_line = cl_obj ) #expression assumed 100%
-                    expr.save()
+                    allele, _ = Allele.objects.get_or_create( code = code, gene = gene, isSer = True )
+                    expr, _ = Expression.objects.get_or_create( allele = allele, cell_line = cl_obj ) #expression assumed 100%
 
     def insert_update_antibodies(self, rowdic, delimiter = ',' ):
         """docstring for insert_antibodies"""
         ab_name = rowdic['Elution Ab'] #eventually, we could be dealing with plural Abs here
         url = rowdic['Link to Ab info']
-        ab1 = self.get_model_object( Antibody, name = ab_name )
-        ab1.save()
+        ab1, _ = Antibody.objects.get_or_create( name = ab_name )
         #print rowdic.keys()
         for allele_code in rowdic['Ab binds in these samples (allele)'].strip().split( delimiter ):
             if allele_code.strip():
-                allele = self.get_model_object( Allele, code = allele_code.strip(), isSer = False )
-                #allele.save()
-                self.add_if_not_already( allele, ab1.alleles )
-                ab1.save()
+                allele, _ = Allele.objects.get_or_create( code = allele_code.strip(), isSer = False )
+                ab1.alleles.add( allele )
         for sero_code in rowdic['Ab binds in these samples (serological)'].strip().split( delimiter ):
             if sero_code.strip():
-                sero = self.get_model_object( Allele, code = sero_code.strip(), isSer = True )
-                #sero.save()
-                self.add_if_not_already( sero, ab1.alleles )
-                ab1.save()
+                sero, _ = Allele.objects.get_or_create( code = sero_code.strip(), isSer = True )
+                ab1.alleles.add( sero )
 
     def create_experiment(self, rowdic, cl ):
         """docstring for create_experiment"""
         ab_name = rowdic['Elution Ab'] #eventually, we could be dealing with plural Abs here
-        ab1 = self.get_model_object( Antibody, name = ab_name )
-        #ab1.save()
-        expt = self.get_model_object( Experiment, title = rowdic['Experiment name'], 
+        ab1, _ = Antibody.objects.get_or_create(  name = ab_name )
+        expt, _ = Experiment.objects.get_or_create( title = rowdic['Experiment name'], 
                 description = rowdic['Experiment description'],  cell_line = cl )
-        expt.save()
-        self.add_if_not_already( expt, ab1.experiments )
+        ab1.experiments.add( expt )
 
     #########################################################################################
 
@@ -361,7 +321,7 @@ class BackgroundImports(dbtools.DBTools):
         print 'uploading'
         ul.upload_simple()
 
-    @transaction.atomic
+    #@transaction.atomic
     def single_upload_from_ss(self, username, local, lodgement_title, filepath):
         """docstring for single_upload_from_ss"""
         t0 = time.time()
@@ -376,9 +336,6 @@ class BackgroundImports(dbtools.DBTools):
             print 'done', user_id, f.__str__(), expt_id, ab_ids, lodgement_title, cf_cutoff 
             self.upload_ss_single( user_id, f, expt_id, ab_ids, lodgement_title, cf_cutoff = cf_cutoff )
             t1 = time.time()
-            #IdEstimate.objects.filter( ion__experiment = expt_obj ).delete()
-            #Ion.objects.filter( experiment = expt_obj ).delete()
-            #expt_obj.delete()
             return t1 -t0
 
             
