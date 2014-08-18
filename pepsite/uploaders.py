@@ -131,8 +131,11 @@ class Uploads(dbtools.DBTools):
             self.instrument_id = cleaned_data[ 'inst' ] 
             self.cell_line = self.get_model_object( CellLine, id = cleaned_data[ 'cl1' ] )
             self.instrument = self.get_model_object( Instrument, id = cleaned_data[ 'inst' ] )
-            #for ab in cleaned_data.getlist( 'ab1'):
-            for ab in cleaned_data[ 'ab1' ]:
+            try:
+                ab1 = cleaned_data.getlist( 'ab1')
+            except:
+                ab1 = cleaned_data[ 'ab1' ]
+            for ab in ab1:
                 ab_obj = self.get_model_object( Antibody, id = ab ) 
                 self.antibodies.append( ab_obj )
                 self.antibody_ids.append( ab )
@@ -370,6 +373,7 @@ class Uploads(dbtools.DBTools):
                 self.expt.antibody_set.add( ab )
         if not self.lodgement:
             self.lodgement, _ = Lodgement.objects.get_or_create( user = self.user, title = self.lodgement_title, datetime = self.now, datafilename=self.lodgement_filename )
+            assign_perm( 'edit_lodgement', self.user, self.lodgement )
             if self.publications:
                 for pl in self.publications:
                     pbln = Publication.objects.get( id=pl )
@@ -588,12 +592,13 @@ class Curate( Uploads ):
         self.preprocess_ss_simple( fileobj )
 
     def auto_curation(self):
-        for ldg_obj in self.lodgements:
-            self.curation_simple( ldg_obj )
+        for ldg_id in self.lodgement_ids:
+            self.curation_simple( ldg_id )
 
-    def curation_simple( self, ldg_obj ):
+    def curation_simple( self, ldg_id ):
         """None -> None
         """
+        ldg_obj = Lodgement.objects.get( id = ldg_id )
         for k in self.uldict.keys():
             local = self.uldict[k]
             pep, _ = Peptide.objects.get_or_create( sequence = local['peptide_sequence'] )

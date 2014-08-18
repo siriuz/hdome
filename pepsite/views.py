@@ -8,6 +8,7 @@ from django.core.servers.basehttp import FileWrapper
 from django.conf import settings
 import mimetypes
 from django.db import IntegrityError, transaction
+from django.contrib.auth.models import User
 
 # celery tasks:
 from pepsite.tasks import *
@@ -264,15 +265,19 @@ def upload_manual_curations( request ):
             cur = request.FILES['cur']
             formdata = form.cleaned_data
 	    ul.setup_curation( formdata, cur )
-	    ul.auto_curation(  )
-            ul.refresh_materialized_views()
+            ul_supp = { 'lodgement_ids' : ul.lodgement_ids, 'uldict' : ul.uldict, 'dataset_nos' : ul.dataset_nos, 'allstr' : ul.allstr }
+            curate_ss_celery.delay( user.id, ul_supp )
+	    #ul.auto_curation(  )
+            #ul.refresh_materialized_views()
             return render( request, 'pepsite/curation_outcome.html', { 'upload' : ul }  ) # Redirect after POST
 	else:
             ul = pepsite.uploaders.Curate( user = user )
             cur = request.FILES['cur']
             formdata = request.POST
 	    ul.setup_curation( formdata, cur )
-	    ul.auto_curation(  )
+            ul_supp = { 'lodgement_ids' : ul.lodgement_ids, 'uldict' : ul.uldict, 'dataset_nos' : ul.dataset_nos, 'allstr' : ul.allstr }
+            curate_ss_celery.delay( user.id, ul_supp )
+	    #ul.auto_curation(  )
             #request.session['ss'] = ss
             #upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
             #        'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
@@ -282,7 +287,6 @@ def upload_manual_curations( request ):
             #request.session['ul_supp'] = upload_dict
             #return HttpResponse( 'poo' )
             return render( request, 'pepsite/curation_outcome.html', { 'upload' : ul }  ) # Redirect after POST
- 
     else:
         textform = CurationForm(user=user)
         lodgements_avail = True
@@ -629,7 +633,7 @@ def commit_upload_ss( request ):
     user = request.user
     elems = request.session['ul_supp']
     if request.method == 'POST':
-        upload_ss_celery.delay( user, elems, request.POST )
+        upload_ss_celery.delay( user.id, elems, request.POST )
         keys = request.POST.keys()
         ul = pepsite.uploaders.Uploads( user = user )
         ul.repopulate( elems )
@@ -638,9 +642,9 @@ def commit_upload_ss( request ):
         #    pickle.dump( ul, f )
         context = { 'data' : request.POST['data'], 'ul' : ul, 'keys' : keys }
         #ul.get_protein_metadata(  )
-        ul.prepare_upload_simple( )
-        ul.upload_simple()
-        ul.refresh_materialized_views()
+        #ul.prepare_upload_simple( )
+        #ul.upload_simple()
+        #ul.refresh_materialized_views()
         return render( request, 'pepsite/ss_uploading.html', context)
     else:
         textform = UploadSSForm()

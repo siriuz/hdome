@@ -13,5 +13,8 @@ django.setup() #required
 
 from django.contrib.auth.models import User
 from pepsite.models import *
+from pepsite.tasks import *
+from guardian.shortcuts import assign_perm
+from django.db import connection
 
 
