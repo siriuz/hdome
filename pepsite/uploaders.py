@@ -373,7 +373,6 @@ class Uploads(dbtools.DBTools):
                 self.expt.antibody_set.add( ab )
         if not self.lodgement:
             self.lodgement, _ = Lodgement.objects.get_or_create( user = self.user, title = self.lodgement_title, datetime = self.now, datafilename=self.lodgement_filename )
-            assign_perm( 'edit_lodgement', self.user, self.lodgement )
             if self.publications:
                 for pl in self.publications:
                     pbln = Publication.objects.get( id=pl )
@@ -493,6 +492,8 @@ class Uploads(dbtools.DBTools):
         """
         i = 0
         t0 = time.time()
+        assign_perm( 'edit_lodgement', self.user, self.lodgement )
+        print 'edit_lodgement, user = %s, lodgement = %s' % ( self.user.username, self.lodgement.title )
         for k in self.uldict.keys():
             with transaction.atomic():
                 i += 1

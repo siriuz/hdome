@@ -11,6 +11,7 @@ from django.db import IntegrityError, transaction
 from django.contrib.auth.models import User
 
 # celery tasks:
+from celery import chain
 from pepsite.tasks import *
 
 import datetime
@@ -25,11 +26,15 @@ from django.contrib.auth.decorators import login_required
 
 import re
 
+from django.core.mail import send_mail
+
 import pickle
 
 #@login_required
 def index( request ):
-    test.delay('This test was generated becuase you visited \'/pepsite/index\'!')
+    #test2.delay('yo')
+    #chain( test2.s( 'This test was generated becuase you visited \'/pepsite/index\'!'), protein_seq_update_celery.apply_async(send_mail('You just visited HaploDome.com search site', 'This is how to send a gmail via smtp using django.mail and settings.py\n\nBest Regards,\n\nThe HaploDome Team\nwww.haplodome.com', 'kieranrimmer@gmail.com', ['kieranrimmer@gmail.com'], fail_silently=False), full_batch = False) ) 
+    #test.delay('This test was generated becuase you visited \'/pepsite/index\'!')
     return render( request, 'pepsite/index.html', {})
 
 #@login_required
