@@ -141,6 +141,7 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
     #'/var/www/static/',
 )
+ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 SHELL_PLUS_PRE_IMPORTS = (
     'pprint',
