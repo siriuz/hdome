@@ -104,7 +104,7 @@ class DatasetAdmin(GuardedModelAdmin):
             )
 class InstrumentAdmin(admin.ModelAdmin):
     inlines = [
-        DatasetInLine,
+        #DatasetInLine,
         #PlLodgeInLine,
     ]
 

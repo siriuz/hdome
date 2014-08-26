@@ -302,6 +302,16 @@
                     {% endfor %}
                 </td>
             </tr>
+            <tr>
+                <th>
+                    Spreadsheet(s) Uploaded
+                </th>
+                <td>
+                    {% for lodgement in lodgements %}
+                    {{lodgement.datafilename}}
+                    {% endfor %}
+                </td>
+            </tr>
         </tbody>
     </table>
     <hr>

@@ -133,6 +133,8 @@ def model_info( request, model_type, model_id ):
         if model_type == 'Peptide':
             context['pep_ptms'] = instance.get_ptms
             context['pep_prots'] = instance.get_proteins
+        elif model_type == 'Experiment':
+            context['lodgements'] = instance.get_lodgements
 	def get_class2( obj ):
 	    return obj.__class__
 	instance.get_class2 = get_class2

@@ -182,6 +182,9 @@ class Experiment( models.Model ):
         """docstring for get_publications"""
         return list( set( Publication.objects.filter( lodgements__dataset__experiment = self ) ) )
 
+    def get_lodgements(self):
+        return Lodgement.objects.filter( dataset__experiment__id = self.id ).distinct().order_by('datafilename')
+
 
 
 
@@ -427,7 +430,7 @@ class LookupCode(models.Model):
 
     def __str__(self):
         """docstring for __str__"""
-        return self.code
+        return self.code + '|' + self.externaldb.db_name
 
 
 class Publication(models.Model):
