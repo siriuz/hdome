@@ -66,7 +66,7 @@ def comp_results( request ):
 
 #@login_required
 def allele_browse( request ):
-	alleles = Allele.objects.all().distinct()
+	alleles = Allele.objects.all().distinct().order_by('code')
 	context = { 'alleles' : alleles }
 	return render( request, 'pepsite/allele_browse.html', context)
 

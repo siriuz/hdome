@@ -4,6 +4,7 @@ import datetime
 from django.utils.timezone import utc
 import re
 import os
+from django.utils.encoding import force_unicode
 
 NOW = models.DateTimeField( default = datetime.datetime.utcnow().replace(tzinfo=utc) )
 
@@ -362,9 +363,9 @@ class Instrument(models.Model):
     description = models.TextField(blank=True,null=True)
     manufacturer = models.ForeignKey(Manufacturer,blank=True, null=True)
 
-    def __str__(self):
+    def __unicode__(self):
         """docstring for __str__"""
-        return self.name
+        return force_unicode(self.name)
         
 
 class Dataset(models.Model):
@@ -432,7 +433,6 @@ class LookupCode(models.Model):
         """docstring for __str__"""
         return self.code + '|' + self.externaldb.db_name
 
-
 class Publication(models.Model):
     """docstring for Publication"""
     title = models.TextField(blank=True, null=True)
@@ -442,9 +442,9 @@ class Publication(models.Model):
     cell_lines = models.ManyToManyField( CellLine )
     lookupcode = models.OneToOneField( LookupCode, null=True, blank=True )
 
-    def __str__(self):
+    def __unicode__(self):
         """docstring for _"""
-        return self.title + '|' + self.journal
+        return force_unicode(self.title) + '|' + force_unicode(self.journal)
 
     def refresh_display(self):
         """docstring for refresh_display

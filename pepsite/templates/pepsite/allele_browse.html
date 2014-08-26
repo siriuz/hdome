@@ -67,45 +67,6 @@ cursor:pointer;
 
 
 {% if alleles %}
-    <h3><span class="text-primary">DNA</span> alleles:</h3>
-    </br>
-
-    <table class="table table-striped tablesorter" id="cssTable1">
-    <thead>
-    <tr>
-    <th>Allele</th><th>Cell Lines</th><th>Antibodies</th><th>Experiments</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for allele in alleles %}
-	{% if not allele.isSer %}
-        <tr>
-	<td><a href="{% url 'pepsite:allele_expts' allele.id %}">{{ allele.code }}</a></td>
-	<td>
-	{% for cell_line in allele.cellline_set.all %}
-	    <a href="{% url 'pepsite:cell_line_expts' cell_line.id %}">{{cell_line.name}}</a> 
-	{% endfor %}
-	</td>
-	<td>
-	
-	{% for ab in allele.antibody_set.all %}
-		<a href="{% url 'pepsite:antibody_expts' ab.id %}">{{ ab.name }}</a>
-	{% endfor %}
-	
-	</td>
-	<td>
-	{% for expt in allele.get_experiments %}
-		<a href="{% url 'pepsite:expt2_ajax' expt.id %}">{{ expt.title }}</a>
-	{% endfor %}
-	
-	</td>
-        </tr>
-	{% endif %}
-    {% endfor %}
-    </tbody>
-    </table>
-
-    <br><hr><br>
 
     <h3><span class="text-primary">Serotypes</span>:</h3>
     </br>
@@ -146,6 +107,46 @@ cursor:pointer;
     </table>
 
     <br><hr>
+
+    <h3><span class="text-primary">DNA</span> alleles:</h3>
+    </br>
+
+    <table class="table table-striped tablesorter" id="cssTable1">
+    <thead>
+    <tr>
+    <th>Allele</th><th>Cell Lines</th><th>Antibodies</th><th>Experiments</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for allele in alleles %}
+	{% if not allele.isSer %}
+        <tr>
+	<td><a href="{% url 'pepsite:allele_expts' allele.id %}">{{ allele.code }}</a></td>
+	<td>
+	{% for cell_line in allele.cellline_set.all %}
+	    <a href="{% url 'pepsite:cell_line_expts' cell_line.id %}">{{cell_line.name}}</a> 
+	{% endfor %}
+	</td>
+	<td>
+	
+	{% for ab in allele.antibody_set.all %}
+		<a href="{% url 'pepsite:antibody_expts' ab.id %}">{{ ab.name }}</a>
+	{% endfor %}
+	
+	</td>
+	<td>
+	{% for expt in allele.get_experiments %}
+		<a href="{% url 'pepsite:expt2_ajax' expt.id %}">{{ expt.title }}</a>
+	{% endfor %}
+	
+	</td>
+        </tr>
+	{% endif %}
+    {% endfor %}
+    </tbody>
+    </table>
+
+    <br><hr><br>
 
 {% else %}
   <h3 class="text-danger">No Alleles found</h3>
