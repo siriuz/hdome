@@ -350,7 +350,7 @@ def compare_expt_form_ajax( request ):
 	    exptz = form.cleaned_data['exptz'] 
             print 'exptz =', exptz
             exptz2 = [ int(b) for b in exptz ]
-            exptz2_objs = Experiment.objects.filter( id__in = exptz2 ).distinct()
+            exptz2_objs = Experiment.objects.filter( id__in = exptz2 ).distinct().order_by('title')
             print 'invalid exptz =', exptz
             expt = get_object_or_404( Experiment, id = expt1 )
             all_exp = [ expt ]
@@ -377,8 +377,8 @@ def compare_expt_form_ajax( request ):
                 message = '<h1 class=\"text-danger\"><p>You do not have permission to view primary Experiment: <span class=\"text-info\">%s</span>' % ( expt.title )
                 if not complete:
                     message += "</h1></p>" + message2
-                return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'view_disallowed' : view_disallowed, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications, 'message' : message, 'complete' : complete  })
-            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'complete' : complete, 'view_disallowed' : view_disallowed, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications  })
+                return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'view_disallowed' : view_disallowed, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications, 'message' : message, 'complete' : complete, 'exptz_objs' : exptz2_objs  })
+            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'complete' : complete, 'view_disallowed' : view_disallowed, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications, 'exptz_objs' : exptz2_objs   })
 	else:
             context = {}
             for f in form.fields.keys():
@@ -389,7 +389,8 @@ def compare_expt_form_ajax( request ):
 	    expt1 = context['expt1'][0]
 	    exptz = context['exptz']
             exptz2 = [ int(b) for b in exptz ]
-            exptz2_objs = [ Experiment.objects.get( id = b ) for b in exptz2 ]
+            #exptz2_objs = [ Experiment.objects.get( id = b ) for b in exptz2 ]
+            exptz2_objs = Experiment.objects.filter( id__in = exptz2 ).distinct().order_by('title')
             print 'invalid exptz =', exptz
             expt = get_object_or_404( Experiment, id = expt1 )
             all_exp = [ expt ]
@@ -416,8 +417,8 @@ def compare_expt_form_ajax( request ):
                 message = '<h1 class=\"text-danger\"><p>You do not have permission to view primary Experiment: <span class=\"text-info\">%s</span>' % ( expt.title )
                 if not complete:
                     message += "</h1></p>" + message2
-                return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'view_disallowed' : view_disallowed, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications, 'message' : message, 'complete' : complete  })
-            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'complete' : complete, 'view_disallowed' : view_disallowed, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications  })
+                return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'view_disallowed' : view_disallowed, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications, 'message' : message, 'complete' : complete, 'exptz_objs' : exptz2_objs   })
+            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'complete' : complete, 'view_disallowed' : view_disallowed, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications, 'exptz_objs' : exptz2_objs   })
             for experiment in exptz2_objs:
                 if ( not user.has_perm( 'view_experiment', experiment ) ):
                     complete = False

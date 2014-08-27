@@ -219,7 +219,15 @@ var complete = "{{complete|safe}}";
 </head>
 
 
-<h1 class="text-primary">Comparing Experiments</h1>
+<h1 class="text-default">Comparing Experiments: comparison of "<span class="text-primary">{{expt.title}}</span>" with 
+    {% for exper in exptz_objs %}
+    {% if forloop.counter < exptz_objs|length %}
+    "<span class="text-primary">{{exper.title}}</span>" &
+    {% else %}
+    "<span class="text-primary">{{exper.title}}</span>"
+    {% endif %}
+    {% endfor %}
+</h1>
 <p class="text-info">
 A comparison score of <strong class="text-primary">2</strong> indicates that an equivalent peptide/PTM permutation exists in the dataset, within 95% FDR limits.  A score of <strong class="text-danger">1</strong> indicates a hit outisde the limits
 </p>
@@ -230,6 +238,8 @@ A comparison score of <strong class="text-primary">2</strong> indicates that an 
 {% block content %}
 
 <div id="summary"></div>
+
+<a class="btn btn-lg btn-info" href="{% url 'pepsite:compare_expt_form_ajax' %}">Make another comparison</a>
 
 {% if view_disallowed %}
 
@@ -289,5 +299,7 @@ A comparison score of <strong class="text-primary">2</strong> indicates that an 
 
 
 <div class="container">
+    
+    <a class="btn btn-lg btn-info" href="{% url 'pepsite:compare_expt_form_ajax' %}">Make another comparison</a>
 
 {% endblock %}

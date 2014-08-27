@@ -22,7 +22,8 @@ $('#header').load( "{% url 'pepsite:nav_buttons' %}" );
 $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
 
 
-            $("#add").click(function() {
+//$("#add").click(
+function create_multi_field() {
         var intId = $("#buildyourform div").length + 1;
         var fieldWrapper = $("<div class=\"fieldwrapper\" id=\"field" + intId + "\"/>");
         var fName = $("<input type=\"text\" class=\"fieldname\" />");
@@ -38,7 +39,12 @@ $('#footer').load( "{% url 'pepsite:nav_buttons' %}" );
         //fieldWrapper.append(fType2);
         fieldWrapper.append(removeButton);
         $("#buildyourform").append(fieldWrapper);
-    });
+    }
+    
+create_multi_field();
+
+$("#add").click( function() { create_multi_field();} );
+
     $("#preview").click(function() {
         $("#yourform").remove();
         var fieldSet = $("<fieldset id=\"yourform\" hidden><legend></legend></fieldset>");
