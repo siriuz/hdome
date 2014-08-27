@@ -170,6 +170,8 @@ table_exportable();
 
 </div> <!--  container  -->
 
+{% if rows %}
+
     <table class="table table-striped tablesorter" id="cssTable">
     <thead>
         <tr><th class="hilite">Protein</th><th>UniProt ID</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th></tr>
@@ -208,6 +210,18 @@ table_exportable();
     {% endfor %}
     </tbody>
     </table>
+
+{% else %}
+
+<div class="container">
+
+<h1 class="text-danger">No peptides available for display</h1>
+
+</div>
+
+{% endif %}
+
+<div class="container">
 
 {% endblock %}
 
