@@ -709,7 +709,7 @@ def ptm_search( request ):
 	    text_input = form.cleaned_data['text_input']
 	    s1 = PtmSearch()
 	    expts = s1.get_experiments_basic( text_input )
-            context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Cell Line'  }
+            context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Ptm', 'search' : True, 'heading' : 'PTM'  }
             return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
 	else:
             textform = TextOnlyForm()
@@ -719,7 +719,7 @@ def ptm_search( request ):
     else:
         textform = TextOnlyForm()
         context = { 'textform' : textform }
-        return render( request, 'pepsite/cell_line_search.html', context)
+        return render( request, 'pepsite/ptm_search.html', context)
 
 #@login_required
 def protein_search( request ):
