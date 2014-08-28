@@ -49,6 +49,7 @@ class Uploads(dbtools.DBTools):
         self.nowstring = self.now.strftime('%H:%M:%S.%f %d %B %Y %Z')
         self.delim = '\t'
         self.indexmap = []
+        self.allfields = None
         self.allstr = ''
         self.uldict = None
         self.valid = False
@@ -296,6 +297,13 @@ class Uploads(dbtools.DBTools):
         allstr += '</tr></thead><tbody>'
         j = 0
         uldict = {}
+        proteinfields = []
+        peptidefields = []
+        datasetfields = []
+        ionfields = []
+        idestimatefields = []
+        ptmfields = []
+
         for line in fileobj:
             if j:
                 uldict[j] = {}
@@ -350,11 +358,22 @@ class Uploads(dbtools.DBTools):
                         allstr += '</td>'
                         uldict[j][m] = entries
                 allstr += '</tr>'
+                ## tuples for bulk sql inserts later
+                peptidefields.append( ( uldict[j]['peptide_sequence'], ) )
+                proteinfields.append( [ [x[0], x[1]] for x in zip(uldict[j]['uniprot_ids'], uldict[j]['proteins']) ]   )
+                datasetfields.append( uldict[j]['dataset'] )
+                ionfields.append( ( uldict[j]['charge'], uldict[j]['precursor_mass'], uldict[j]['retention_time'], uldict[j]['mz'], uldict[j]['spectrum'] ) ) 
+                idestimatefields.append( ( uldict[j]['confidence'], uldict[j]['delta_mass'] ) )
+                ptmfields.append( [ b for b in uldict[j]['ptms'] ] )
+                ##
             j += 1
         allstr += '</tbody></table>'
         self.allstr = allstr
         self.uldict = uldict
+        self.allfields = { 'peptidefields' : peptidefields, 'proteinfields' : proteinfields, 'datasetfields' : datasetfields, 
+                'ionfields' : ionfields, 'idestimatefields' : idestimatefields, 'ptmfields' : ptmfields } 
         self.dataset_nos = sorted( self.dataset_nos )
+
 
     #@transaction.atomic
     def prepare_upload_simple(self):
@@ -522,6 +541,89 @@ class Uploads(dbtools.DBTools):
         t1 = time.time()
         tt = t1-t0
         print 'upload time taken =%f' % (tt) 
+
+    def upload_rapid(self):
+        """docstring for upload_rapid"""
+        cursor = connection.cursor()
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_protein' )
+        print cursor.fetchall()
+        for b in self.allfields['proteinfields']:
+            for x in range( len(b) ):
+                proteinstr = '(\'%s\', \'%s\')' % ( b[x][0], b[x][1] )
+                sqlprot = 'INSERT INTO pepsite_protein (description, name, prot_id)\
+                SELECT i.field1 description, i.field1 \"name\", i.field2 prot_id \
+                FROM (VALUES %s) AS i(field1, field2) \
+                LEFT JOIN pepsite_protein as existing \
+                ON (existing.description = i.field1 AND existing.prot_id = i.field2) \
+                WHERE existing.id IS NULL \
+                ' % ( proteinstr )
+                cursor.execute( sqlprot )
+
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_protein' )
+        print cursor.fetchall()
+
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptide' )
+        print cursor.fetchall()
+        for b in self.allfields['peptidefields']:
+            peptidestr = '(\'%s\')' % b
+            sqlpep = 'INSERT INTO pepsite_peptide (\"sequence\") \
+            SELECT i.field1 \"sequence\" \
+            FROM (VALUES %s) AS i(field1) \
+            LEFT JOIN pepsite_peptide as existing \
+            ON (existing.\"sequence\" = i.field1) \
+            WHERE existing.id IS NULL \
+            ' % ( peptidestr )
+            cursor.execute( sqlpep )
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptide' )
+        print cursor.fetchall()
+        
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_ptm' )
+        print cursor.fetchall()
+        for b in self.allfields['ptmfields']:
+            if b:
+                ptmstr = ''
+                for x in b:
+                    ptmstr += '(\'%s\'), ' % x
+                ptmstr = ptmstr.strip(', ')
+                sqlptm = 'INSERT INTO pepsite_ptm (\"description\", \"name\") \
+                SELECT i.field1 \"description\", i.field1 \"name\" \
+                FROM (VALUES %s) AS i(field1) \
+                LEFT JOIN pepsite_ptm as existing \
+                ON (existing.\"description\" = i.field1) \
+                WHERE existing.id IS NULL \
+                ' % ( ptmstr )
+                cursor.execute( sqlptm )
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_ptm' )
+        print cursor.fetchall()[0]
+
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_ion' )
+        print cursor.fetchall()
+        for b, c in zip(self.allfields['ionfields'], self.allfields['datasetfields']):
+            title = 'Dataset #%s from %s' % ( c, self.lodgement_title )
+            cursor.execute('SELECT id FROM pepsite_dataset WHERE \"title\" = \'%s\'' % title  )
+            dsid = cursor.fetchall()[0][0]
+            ionstr = '(%s, %s, %s, %s, \'%s\', %s, %s)' % ( b[0], b[1], b[2], b[3], b[4], dsid, self.expt.id )
+            sqlion = 'INSERT INTO pepsite_ion (\"charge_state\", \"precursor_mass\", \"retention_time\", \"mz\", \
+                    \"spectrum\", \"dataset_id\", \"experiment_id\" ) \
+            SELECT i.field1 \"charge_state\", i.field2 \"precursor_mass\", i.field3 \"retention_time\", i.field4 \"mz\", \
+            i.field5 \"spectrum\", i.field6 \"dataset_id\", i.field7 \"experiment_id\"  \
+            FROM (VALUES %s) AS i(field1, field2, field3, field4, field5, field6, field7) \
+            LEFT JOIN pepsite_ion as existing \
+            ON (existing.\"charge_state\" = i.field1 AND existing.\"precursor_mass\" = i.field2 AND existing.\"retention_time\" = i.field3 AND \
+            existing.\"mz\" = i.field4 AND existing.\"spectrum\" = i.field5 AND existing.\"dataset_id\" = i.field6 \
+            AND existing.\"experiment_id\" = i.field7 ) \
+            WHERE existing.id IS NULL \
+            ' % ( ionstr )
+            cursor.execute( sqlion )
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_ion' )
+        print cursor.fetchall()
+        
+        #        peptidefields.append( ( uldict[j]['peptide_sequence'], ) )
+        #        proteinfields.append( [ [x[0], x[1]] for x in zip(uldict[j]['uniprot_ids'], uldict[j]['proteins']) ]   )
+        #        datasetfields.append( ( uldict[j]['dataset'], ) )
+        #        ionfields.append( ( uldict[j]['charge'], uldict[j]['precursor_mass'], uldict[j]['retention_time'], uldict[j]['mz'], uldict[j]['spectrum'] ) ) 
+        #        idestimatefields.append( ( uldict[j]['confidence'], uldict[j]['delta_mass'] ) )
+        #        ptmfields.append( [ b for b in uldict[j]['ptms'] ] )
 
     def refresh_materialized_views( self ):
         t0 = time.time()
