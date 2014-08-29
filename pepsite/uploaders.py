@@ -652,6 +652,8 @@ class Uploads(dbtools.DBTools):
 
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptoprot' )
         print cursor.fetchall()
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_experiment_proteins' )
+        print cursor.fetchall()
         for b, c, d, f, g, h in zip(self.allfields['ionfields'], self.allfields['datasetfields'], self.allfields['peptidefields'], self.allfields['idestimatefields'], self.allfields['ptmfields'], self.allfields['proteinfields'] ):
             title = 'Dataset #%s from %s' % ( c, self.lodgement_title )
             cursor.execute('SELECT id FROM pepsite_dataset WHERE \"title\" = \'%s\'' % title  )
@@ -693,15 +695,21 @@ class Uploads(dbtools.DBTools):
             cursor.execute( peptoprotsql )
             exptprotsql = 'WITH g(\"prot_id\", \"description\") AS\
                     (SELECT * FROM (VALUES %s) AS foo) \
-                    INSERT INTO pepsite_peptoprot \
-                    SELECT \"protein as \"protein_id\", \
-                    h.\"peptide_id\" \
-                    FROM pepsite_protein t1(id AS \"protein_id\", *), ( VALUES(%s) ) AS h(\"peptide_id\"), g \
-                    WHERE t1.\"prot_id\" = g.\"prot_id\" AND\
-                    t1.\"description\" = g.\"description\" \
-                    ' % ( proteinstr, peptideid )
-            #cursor.execute( proteinsql )
+                    INSERT INTO pepsite_experiment_proteins ( \"protein_id\", \"experiment_id\" ) \
+                    SELECT foo2.id as \"protein_id\", foo2.\"experiment_id\" \
+                    FROM (SELECT * FROM pepsite_protein t1 \
+                    LEFT JOIN g \
+                    ON (t1.\"prot_id\" = g.\"prot_id\" AND\
+                    t1.\"description\" = g.\"description\" ) \
+                    , ( VALUES(%s) ) AS h(\"experiment_id\") ) AS foo2 \
+                    LEFT JOIN pepsite_experiment_proteins existing \
+                    ON ( foo2.id = existing.\"protein_id\" AND foo2.\"experiment_id\" = existing.\"experiment_id\"  ) \
+                    WHERE existing.id IS NULL \
+                    ' % ( proteinstr, self.expt.id )
+            cursor.execute( exptprotsql )
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptoprot' )
+        print cursor.fetchall()
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_experiment_proteins' )
         print cursor.fetchall()
         
         #        peptidefields.append( ( uldict[j]['peptide_sequence'], ) )
