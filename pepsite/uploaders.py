@@ -617,6 +617,36 @@ class Uploads(dbtools.DBTools):
             cursor.execute( sqlion )
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_ion' )
         print cursor.fetchall()
+
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate' )
+        print cursor.fetchall()
+        for b, c, d, f in zip(self.allfields['ionfields'], self.allfields['datasetfields'], self.allfields['peptidefields'], self.allfields['idestimatefields']):
+            title = 'Dataset #%s from %s' % ( c, self.lodgement_title )
+            cursor.execute('SELECT id FROM pepsite_dataset WHERE \"title\" = \'%s\'' % title  )
+            dsid = cursor.fetchall()[0][0]
+            ionsql = 'SELECT id FROM pepsite_ion WHERE \
+                pepsite_ion.\"charge_state\" = %s AND pepsite_ion.\"precursor_mass\" = %s AND pepsite_ion.\"retention_time\" = %s AND \
+                pepsite_ion.\"mz\" = %s AND pepsite_ion.\"spectrum\" = \'%s\' AND pepsite_ion.\"dataset_id\" = %s \
+                AND pepsite_ion.\"experiment_id\" = %s \
+                ' % ( b[0], b[1], b[2], b[3], b[4], dsid, self.expt.id )
+            cursor.execute( ionsql )
+            ionid = cursor.fetchall()[0][0]
+            cursor.execute( 'SELECT id FROM pepsite_peptide WHERE \"sequence\" = \'%s\'' % ( d ) )
+            peptideid = cursor.fetchall()[0][0]
+            idestimatestr = '(%s, %s, %s, %s, %s, %s)' % ( f[0], f[1], ionid, peptideid, 'false', 'false' )
+            sqlidestimate = 'INSERT INTO pepsite_idestimate (\"confidence\", \"delta_mass\", \"ion_id\", \"peptide_id\", \
+            \"isRemoved\", \"isValid\") \
+            SELECT i.field1 \"confidence\", i.field2 \"delta_mass\", i.field3 \"ion_id\", i.field4 \"peptide_id\", \
+            i.field5 \"isRemoved\", i.field6 \"isValid\" \
+            FROM (VALUES %s) AS i(field1, field2, field3, field4, field5, field6) \
+            LEFT JOIN pepsite_idestimate as existing \
+            ON (existing.\"confidence\" = i.field1 AND existing.\"delta_mass\" = i.field2 AND existing.\"ion_id\" = i.field3 AND \
+            existing.\"peptide_id\" = i.field4 )\
+            WHERE existing.id IS NULL \
+            ' % ( idestimatestr )
+            cursor.execute( sqlidestimate )
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate' )
+        print cursor.fetchall()
         
         #        peptidefields.append( ( uldict[j]['peptide_sequence'], ) )
         #        proteinfields.append( [ [x[0], x[1]] for x in zip(uldict[j]['uniprot_ids'], uldict[j]['proteins']) ]   )
