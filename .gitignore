@@ -14,7 +14,8 @@ env/
 *egg/
 build/
 dist/
-info.txt
+*.txt
+!requirements.txt
 db.*
 autocomplete/
 migrations/
