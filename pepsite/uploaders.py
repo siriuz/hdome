@@ -549,7 +549,7 @@ class Uploads(dbtools.DBTools):
         print cursor.fetchall()
         for b in self.allfields['proteinfields']:
             for x in range( len(b) ):
-                proteinstr = '(\'%s\', \'%s\')' % ( b[x][0], b[x][1] )
+                proteinstr = '(\'%s\', \'%s\')' % ( b[x][1], b[x][0] )
                 sqlprot = 'INSERT INTO pepsite_protein (description, name, prot_id)\
                 SELECT i.field1 description, i.field1 \"name\", i.field2 prot_id \
                 FROM (VALUES %s) AS i(field1, field2) \
@@ -558,6 +558,8 @@ class Uploads(dbtools.DBTools):
                 WHERE existing.id IS NULL \
                 ' % ( proteinstr )
                 cursor.execute( sqlprot )
+        cursor.execute( 'SELECT \"description\", \"prot_id\" FROM pepsite_protein' )
+        print cursor.fetchall()
 
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_protein' )
         print cursor.fetchall()
@@ -646,6 +648,60 @@ class Uploads(dbtools.DBTools):
             ' % ( idestimatestr )
             cursor.execute( sqlidestimate )
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate' )
+        print cursor.fetchall()
+
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptoprot' )
+        print cursor.fetchall()
+        for b, c, d, f, g, h in zip(self.allfields['ionfields'], self.allfields['datasetfields'], self.allfields['peptidefields'], self.allfields['idestimatefields'], self.allfields['ptmfields'], self.allfields['proteinfields'] ):
+            title = 'Dataset #%s from %s' % ( c, self.lodgement_title )
+            cursor.execute('SELECT id FROM pepsite_dataset WHERE \"title\" = \'%s\'' % title  )
+            dsid = cursor.fetchall()[0][0]
+            ionsql = 'SELECT id FROM pepsite_ion WHERE \
+                pepsite_ion.\"charge_state\" = %s AND pepsite_ion.\"precursor_mass\" = %s AND pepsite_ion.\"retention_time\" = %s AND \
+                pepsite_ion.\"mz\" = %s AND pepsite_ion.\"spectrum\" = \'%s\' AND pepsite_ion.\"dataset_id\" = %s \
+                AND pepsite_ion.\"experiment_id\" = %s \
+                ' % ( b[0], b[1], b[2], b[3], b[4], dsid, self.expt.id )
+            cursor.execute( ionsql )
+            ionid = cursor.fetchall()[0][0]
+            cursor.execute( 'SELECT id FROM pepsite_peptide WHERE \"sequence\" = \'%s\'' % ( d ) )
+            peptideid = cursor.fetchall()[0][0]
+            #idestimatestr = '(%s, %s, %s, %s)' % ( f[0], f[1], ionid, peptideid )
+            sqlidestimate = 'SELECT id FROM pepsite_idestimate \
+            WHERE \"confidence\" = %s AND \"delta_mass\" = %s AND \"ion_id\" = %s AND \
+            \"peptide_id\" = %s \
+            ' % ( f[0], f[1], ionid, peptideid ) #( idestimatestr )
+            cursor.execute( sqlidestimate )
+            idestimateid = cursor.fetchall()[0][0]
+            proteinstr = ''
+            for pr in h:
+                proteinstr += '(\'%s\', \'%s\'), ' % ( pr[0], pr[1] )
+            proteinstr = proteinstr.strip(', ')
+            #print proteinstr
+            peptoprotsql = 'WITH g(\"prot_id\", \"description\") AS\
+                    (SELECT * FROM (VALUES %s) AS foo) \
+                    INSERT INTO pepsite_peptoprot ( \"protein_id\", \"peptide_id\" ) \
+                    SELECT foo2.id as \"protein_id\", foo2.\"peptide_id\" \
+                    FROM (SELECT * FROM pepsite_protein t1 \
+                    LEFT JOIN g \
+                    ON (t1.\"prot_id\" = g.\"prot_id\" AND\
+                    t1.\"description\" = g.\"description\" ) \
+                    , ( VALUES(%s) ) AS h(\"peptide_id\") ) AS foo2 \
+                    LEFT JOIN pepsite_peptoprot existing \
+                    ON ( foo2.id = existing.\"protein_id\" AND foo2.\"peptide_id\" = existing.\"peptide_id\"  ) \
+                    WHERE existing.id IS NULL \
+                    ' % ( proteinstr, peptideid )
+            cursor.execute( peptoprotsql )
+            exptprotsql = 'WITH g(\"prot_id\", \"description\") AS\
+                    (SELECT * FROM (VALUES %s) AS foo) \
+                    INSERT INTO pepsite_peptoprot \
+                    SELECT \"protein as \"protein_id\", \
+                    h.\"peptide_id\" \
+                    FROM pepsite_protein t1(id AS \"protein_id\", *), ( VALUES(%s) ) AS h(\"peptide_id\"), g \
+                    WHERE t1.\"prot_id\" = g.\"prot_id\" AND\
+                    t1.\"description\" = g.\"description\" \
+                    ' % ( proteinstr, peptideid )
+            #cursor.execute( proteinsql )
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptoprot' )
         print cursor.fetchall()
         
         #        peptidefields.append( ( uldict[j]['peptide_sequence'], ) )
