@@ -368,7 +368,7 @@ class Uploads(dbtools.DBTools):
                 ptmfields.append( [ b for b in uldict[j]['ptms'] ] )
                 ##
                 singlerows.append( [ uldict[j]['peptide_sequence'], uldict[j]['charge'], uldict[j]['precursor_mass'], 
-                        uldict[j]['retention_time'], uldict[j]['mz'], uldict[j]['spectrum'], uldict[j]['dataset'], self.expt.id ] )
+                        uldict[j]['retention_time'], uldict[j]['mz'], uldict[j]['confidence'], uldict[j]['delta_mass'], uldict[j]['spectrum'], uldict[j]['dataset'], self.expt.id ] )
             j += 1
         allstr += '</tbody></table>'
         exptids = [self.expt.id] * len(peptidefields)
@@ -566,7 +566,7 @@ class Uploads(dbtools.DBTools):
                 try:
                     retstr += '%f, ' % float(elem)
                 except ValueError:
-                    retstr += '\'%s\', ' % elem
+                    retstr += 'E\'%s\', ' % elem.replace('\'', '\\\'')
         retstr = retstr.strip(', ') + ' ), '
         return retstr
 
@@ -598,16 +598,14 @@ class Uploads(dbtools.DBTools):
         for b, c in zip(self.allfields['ionfields'], self.allfields['datasetfields']):
             title = 'Dataset #%s from %s' % ( c, self.lodgement_title )
             ionstr += '(%d, %f, %f, %f, \'%s\', \'%s\', %d ), ' % ( int(b[0]), float(b[1]), float(b[2]), float(b[3]), b[4], title, int(self.expt.id) )
+
         ionstr = ionstr.strip(', ')
 
-        idestimatestr = ''
+        
         dsstr = ''
-        for a, b, c, d in zip(self.allfields['idestimatefields'], self.allfields['ionfields'], self.allfields['datasetfields'], self.allfields['peptidefields']):
+        for d in self.allfields['datasetfields']:
             title = 'Dataset #%s from %s' % ( c, self.lodgement_title )
             dsstr += '(\'%s\', %d), ' % (title, self.expt.id) 
-            #idestimatestr += '(%f, %f, \'false\', \'false\', %d, %f, %f, %f, \'%s\', \'%s\', %d, \'%s\' ), ' % ( a[0], a[1], int(b[0]), float(b[1]), float(b[2]), float(b[3]), b[4], title, int(self.expt.id), d )
-            #idestimatestr = '(%s, %s, %s, %s), ' % ( b[0], b[1], 'false', 'false' )
-        idestimatestr = idestimatestr.strip(', ')
         dsstr = dsstr.strip(', ')
 
         cursor = connection.cursor()
@@ -685,27 +683,9 @@ class Uploads(dbtools.DBTools):
 
         masterstr = self.reformat_to_str(self.singlerows).strip(', ')[1:-1]
 
-
-        sqlion_old = 'with f(charge_state, precursor_mass, retention_time, mz, spectrum, dataset_id, experiment_id) as \
-                (select foo2.charge_state::integer, foo2.precursor_mass::double precision, foo2.retention_time::double precision, \
-                foo2.mz:: double precision, foo2.spectrum, foo2.id, foo2.expt_id \
-                from ( with g(charge_state, precursor_mass, retention_time, mz, spectrum, ds_title, expt_id) AS \
-                (select foo.charge_state, foo.precursor_mass, foo.retention_time, foo.mz, foo.spectrum, foo.ds_title, foo.expt_id from (VALUES %s ) \
-                AS foo(charge_state, precursor_mass, retention_time, mz, spectrum, ds_title, expt_id) ) \
-                select * from  g INNER JOIN pepsite_dataset t1 ON \
-                ( g.\"ds_title\" = t1.\"title\" AND g.\"expt_id\" = t1.\"experiment_id\" ) ) AS foo2 \
-                ) \
-                INSERT INTO pepsite_ion (charge_state, precursor_mass, retention_time, mz, spectrum, dataset_id, experiment_id) \
-                select f.charge_state::integer, f.precursor_mass, f.retention_time::double precision, f.mz, f.spectrum, f.experiment_id, f.dataset_id \
-                from f  \
-                LEFT JOIN pepsite_ion AS existing \
-                ON (f.dataset_id = existing.dataset_id AND f.charge_state = existing.charge_state AND f.retention_time = existing.retention_time \
-                AND f.mz = existing.mz AND f.spectrum = existing.spectrum AND f.experiment_id = existing.experiment_id) \
-                where existing.id IS NULL\
-                ' % ( ionstr )
         sqlion_new = 'WITH f AS \
             (SELECT foo.* FROM  (VALUES %s ) AS foo(peptide_sequence, charge_state, precursor_mass, \
-            retention_time, mz, spectrum, dataset_title, experiment_id, dataset_id, peptide_id ) ) \
+            retention_time, mz, confidence, delta_mass, spectrum, dataset_title, experiment_id, dataset_id, peptide_id ) ) \
             INSERT INTO pepsite_ion (charge_state, precursor_mass, retention_time, mz, spectrum, dataset_id, experiment_id) \
             SELECT f.charge_state, f.precursor_mass, f.retention_time, f.mz, f.spectrum, f.dataset_id, f.experiment_id \
             FROM f LEFT JOIN pepsite_ion AS existing \
@@ -717,35 +697,123 @@ class Uploads(dbtools.DBTools):
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_ion' )
         print 'ion', cursor.fetchall()
 
+        sqlionfind = 'WITH f AS \
+            (SELECT foo.* FROM  (VALUES %s ) AS foo(peptide_sequence, charge_state, precursor_mass, \
+            retention_time, mz, confidence, delta_mass, spectrum, dataset_title, experiment_id, dataset_id, peptide_id ) ) \
+            SELECT existing.id \
+            FROM f LEFT JOIN pepsite_ion AS existing \
+            ON (f.dataset_id = existing.dataset_id AND f.charge_state = existing.charge_state AND f.retention_time = existing.retention_time \
+            AND f.mz = existing.mz AND f.spectrum = existing.spectrum AND f.experiment_id = existing.experiment_id) \
+            ' % ( masterstr )
+        cursor.execute( sqlionfind )
+        newmastercol = cursor.fetchall()
+        for row, new in zip( self.singlerows, [b[0] for b in newmastercol ] ) :
+            row.append( new )
+
         print self.singlerows[:5]
 
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate' )
         print 'idestimate', cursor.fetchall()
 
+        masterstr = self.reformat_to_str(self.singlerows).strip(', ')[1:-1]
 
-        sqlide_old = 'with f(charge_state, precursor_mass, retention_time, mz, spectrum, dataset_id, experiment_id) as \
-                (select foo2.charge_state::integer, foo2.precursor_mass::double precision, foo2.retention_time::double precision, \
-                foo2.mz:: double precision, foo2.spectrum, foo2.id, foo2.expt_id \
-                from ( with g(charge_state, precursor_mass, retention_time, mz, spectrum, ds_title, expt_id) AS \
-                (select foo.charge_state, foo.precursor_mass, foo.retention_time, foo.mz, foo.spectrum, foo.ds_title, foo.expt_id from (VALUES %s ) \
-                AS foo(charge_state, precursor_mass, retention_time, mz, spectrum, ds_title, expt_id) ) \
-                select * from  g INNER JOIN pepsite_dataset t1 ON \
-                ( g.\"ds_title\" = t1.\"title\" AND g.\"expt_id\" = t1.\"experiment_id\" ) ) AS foo2 \
-                ) \
-                INSERT INTO pepsite_idestimate (peptide_id, ion_id, delta_mass, (values (\'false\', \'false\') as foo(\"isRemoved\", \"isValid\") ) \
-                select f.peptide_id, f.ion_id, f.delta_mass, f.confidence, goo.\"isRemoved\", goo.\"isValid\" \
-                from f, (values (\'false\', \'false\') as goo(\"isRemoved\", \"isValid\") )  \
+        sqlide_new = 'WITH f AS \
+                (SELECT * FROM  (VALUES %s ) AS foo(peptide_sequence, charge_state, precursor_mass, \
+                retention_time, mz, confidence, delta_mass, spectrum, dataset_title, experiment_id, dataset_id, peptide_id, ion_id ),  \
+                (VALUES ( false, false )) AS goo(\"isRemoved\", \"isValid\") ) \
+                INSERT INTO pepsite_idestimate (peptide_id, ion_id, delta_mass, confidence, \"isRemoved\", \"isValid\") \
+                select f.peptide_id, f.ion_id, f.delta_mass, f.confidence, f.\"isRemoved\", f.\"isValid\" \
+                from f \
                 LEFT JOIN pepsite_idestimate AS existing \
                 ON (f.peptide_id = existing.peptide_id AND f.ion_id = existing.ion_id AND f.confidence = existing.confidence \
                 AND f.delta_mass = existing.delta_mass ) \
                 where existing.id IS NULL\
-                ' % ( idestimatestr )
-        #cursor.execute( sqlide_old )
+                ' % ( masterstr )
+        cursor.execute( sqlide_new )
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate' )
         print 'idestimate', cursor.fetchall()
 
+        sqlidefind = 'WITH f AS \
+                (SELECT * FROM  (VALUES %s ) AS foo(peptide_sequence, charge_state, precursor_mass, \
+                retention_time, mz, confidence, delta_mass, spectrum, dataset_title, experiment_id, dataset_id, peptide_id, ion_id ) )  \
+                SELECT existing.id \
+                from f \
+                LEFT JOIN pepsite_idestimate AS existing \
+                ON (f.peptide_id = existing.peptide_id AND f.ion_id = existing.ion_id AND f.confidence = existing.confidence \
+                AND f.delta_mass = existing.delta_mass ) \
+                ' % ( masterstr )
+        cursor.execute( sqlidefind )
+        newmastercol = cursor.fetchall()
+        for row, new in zip( self.singlerows, [b[0] for b in newmastercol ] ) :
+            row.append( new )
+
+        ideptmlist = []
+        for row, ptms in zip( self.singlerows, self.allfields['ptmfields'] ):
+            if ptms:
+                for ptm in ptms:
+                    ideptmlist.append( [ row[-1], ptm ] )
+
+        ideptmstr = self.reformat_to_str(ideptmlist).strip(', ')[1:-1]
+
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate_ptms' )
+        print 'idestimate_ptms', cursor.fetchall()
+        ideptmsql = 'WITH f as  \
+                (SELECT foo.idestimate_id, goo.id AS ptm_id FROM (VALUES %s ) AS foo(idestimate_id, ptm_description ) \
+                INNER JOIN pepsite_ptm AS goo ON ( foo.ptm_description = goo.description ) ) \
+                INSERT INTO pepsite_idestimate_ptms ( idestimate_id, ptm_id ) \
+                SELECT DISTINCT f.idestimate_id, f.ptm_id \
+                FROM f LEFT JOIN pepsite_idestimate_ptms existing \
+                ON ( f.idestimate_id = existing.idestimate_id AND f.ptm_id = existing.ptm_id ) \
+                WHERE existing.id IS NULL \
+                ' % ideptmstr
+        cursor.execute( ideptmsql )
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate_ptms' )
+        print 'idestimate_ptms', cursor.fetchall()
+
+        peptoprotlist = []
+        for row, proteins in zip( self.singlerows, self.allfields['proteinfields'] ):
+            if proteins:
+                for prot in proteins:
+                    peptoprotlist.append( [ row[9], row[11], prot[0], prot[1] ] )
+                #proteinstr += '(E\'%s\', E\'%s\'), ' % ( b[x][1].replace('\'', '\\\''), b[x][0].replace('\'', '\\\'') )
+
+        peptoprotstr = self.reformat_to_str(peptoprotlist).strip(', ')[1:-1]
+
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptoprot' )
+        print 'peptoprot', cursor.fetchall()
+        peptoprotsql = 'WITH f as  \
+                (SELECT foo.peptide_id, goo.id AS protein_id FROM (VALUES %s ) AS foo(experiment_id, peptide_id, \
+                prot_id, description  ) \
+                INNER JOIN pepsite_protein AS goo ON ( foo.description = goo.description \
+                AND foo.prot_id = goo.prot_id ) ) \
+                INSERT INTO pepsite_peptoprot ( peptide_id, protein_id ) \
+                SELECT f.peptide_id, f.protein_id \
+                FROM f LEFT JOIN pepsite_peptoprot existing \
+                ON ( f.peptide_id = existing.peptide_id AND f.protein_id = existing.protein_id ) \
+                WHERE existing.id IS NULL \
+                ' % peptoprotstr
+        cursor.execute( peptoprotsql )
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptoprot' )
+        print 'peptoprot', cursor.fetchall()
 
 
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_experiment_proteins' )
+        print 'experiment_proteins', cursor.fetchall()
+        exptprotsql = 'WITH f as  \
+                (SELECT foo.experiment_id, goo.id AS protein_id FROM (VALUES %s ) AS foo(experiment_id, peptide_id, \
+                prot_id, description  ) \
+                INNER JOIN pepsite_protein AS goo ON ( foo.description = goo.description \
+                AND foo.prot_id = goo.prot_id ) ) \
+                INSERT INTO pepsite_experiment_proteins ( experiment_id, protein_id ) \
+                SELECT DISTINCT f.experiment_id, f.protein_id \
+                FROM f LEFT JOIN pepsite_experiment_proteins existing \
+                ON ( f.experiment_id = existing.experiment_id AND f.protein_id = existing.protein_id ) \
+                WHERE existing.id IS NULL \
+                ' % peptoprotstr
+        cursor.execute( exptprotsql )
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_experiment_proteins' )
+        print 'experiment_proteins', cursor.fetchall()
+    
     
 
     def upload_rapid(self):
