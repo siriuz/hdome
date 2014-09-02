@@ -59,8 +59,12 @@ class ImportSpeedTest(TestCase):
         bi1.insert_update_antibodies( MDIC )
         bi1.create_experiment( MDIC, cl )
         self.filepath = os.path.join( CURDIR, 'scripts/Time_Trial_Import4_PeptideSummary.trial' )
+        #self.filepath = os.path.join( CURDIR, 'scripts/sample_large_ss.csv' )
         #self.filepath = os.path.join( CURDIR, 'scripts/twentyk_trial.csv' )
         self.bi1 = bi1
+
+    def test_ion_write(self):
+        zz = [(3, 2192.08813476563, 45.0244, 731.7033, u'7.1.1.3747.4', 1, 22), (2, 1435.80944824219, 41.9072, 718.912, u'13.1.1.6524.16', 1, 5), (3, 1295.75793457031, 13.6884, 432.9266, u'18.1.1.2089.14', 1, 10), (2, 1158.69287109375, 23.1558, 580.3537, u'2.1.1.2770.31', 1, 12), (2, 1079.44030761719, 41.0175, 540.7274, u'21.1.1.10245.3', 1, 14)]
 
     def test_user1( self):
         #user1 = User.objects.get( id = 1 )

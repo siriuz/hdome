@@ -320,7 +320,7 @@ class BackgroundImports(dbtools.DBTools):
         ul.prepare_upload_simple( )
         print 'uploading'
         #ul.upload_simple()
-        ul.upload_rapid()
+        ul.upload_megarapid()
 
     #@transaction.atomic
     def single_upload_from_ss(self, username, local, lodgement_title, filepath):
