@@ -112,9 +112,9 @@ class Uploads(dbtools.DBTools):
 
     def preview_ss_simple(self, cleaned_data):
         """docstring for preview_ss_simple"""
-        if int(cleaned_data[ 'expt1' ]) != -1: 
-	    self.expt = self.get_model_object( Experiment, id = cleaned_data[ 'expt1' ] )
-	    self.expt_desc = self.expt.description
+        if int(cleaned_data[ 'expt1' ]) != -1:
+            self.expt = self.get_model_object( Experiment, id = cleaned_data[ 'expt1' ] )
+            self.expt_desc = self.expt.description
             self.expt_title = self.expt.title
             self.expt_id = cleaned_data[ 'expt1' ] 
             self.instrument_id = cleaned_data[ 'inst' ] 
@@ -145,9 +145,9 @@ class Uploads(dbtools.DBTools):
             for pl in cleaned_data[ 'pl1' ]:
                 self.publications.append( pl )
         try:
-            self.lodgement_title = cleaned_data[ 'ldg' ]
+            self.lodgement_title = 'Filename = \"%s\", %s' % (  cleaned_data['filename'], cleaned_data[ 'ldg' ] )
         except:
-            self.lodgement_title = '%s Lodgement for %s' % ( self.nowstring, self.expt_title )
+            self.lodgement_title = 'Filename = \"%s\", Datetime = %s, Lodgement for Experiment = \"%s\"' % ( cleaned_data['filename'], self.nowstring, self.expt_title )
         self.dataset_title = 'Combined dataset for Lodgement: %s' % ( self.lodgement_title )
         try:
             a = cleaned_data[ 'rel' ]
@@ -198,7 +198,7 @@ class Uploads(dbtools.DBTools):
             fileobj = filelist[i]
             ldg_name = 'Auto Lodgement #%d from Bulk Lodgement: %s' % ( i + 1, self.lodgement_title )
             ldg_no = i
-            self.ldg_details.append( [ ldg_no, ldg_name, fileobj.__str__() ] )
+            self.ldg_details.append( [ ldg_no, ldg_name, fileobj.name ] )
             self.preprocess_ss_from_bulk( fileobj, ldg_name, ldg_no )
         self.allstr += '</tbody></table>'
 
@@ -287,7 +287,7 @@ class Uploads(dbtools.DBTools):
 
     def preprocess_ss_simple( self, fileobj ):
         #with open( ss_files
-        self.lodgement_filename = fileobj.__str__()
+        self.lodgement_filename = fileobj.name
         allstr = '<table id=\"cssTable\" class=\"table table-striped tablesorter\">'
         headers = fileobj.readline().split( self.delim )
         self.translate_headers( headers )
@@ -368,16 +368,13 @@ class Uploads(dbtools.DBTools):
                 ptmfields.append( [ b for b in uldict[j]['ptms'] ] )
                 ##
                 singlerows.append( [ uldict[j]['peptide_sequence'], uldict[j]['charge'], uldict[j]['precursor_mass'], 
-                        uldict[j]['retention_time'], uldict[j]['mz'], uldict[j]['confidence'], uldict[j]['delta_mass'], uldict[j]['spectrum'], uldict[j]['dataset'], self.expt.id ] )
+                        uldict[j]['retention_time'], uldict[j]['mz'], uldict[j]['confidence'], uldict[j]['delta_mass'], uldict[j]['spectrum'], uldict[j]['dataset'] ] )
             j += 1
         allstr += '</tbody></table>'
-        exptids = [self.expt.id] * len(peptidefields)
         self.allstr = allstr
         self.uldict = uldict
         self.allfields = { 'peptidefields' : peptidefields, 'proteinfields' : proteinfields, 'datasetfields' : datasetfields, 
                 'ionfields' : ionfields, 'idestimatefields' : idestimatefields, 'ptmfields' : ptmfields } 
-        self.megalist = zip( peptidefields, proteinfields, datasetfields, 
-                ionfields, idestimatefields, [[[a] for a in b] for b in ptmfields], exptids  )
         self.singlerows = singlerows
         self.dataset_nos = sorted( self.dataset_nos )
 
@@ -610,6 +607,9 @@ class Uploads(dbtools.DBTools):
 
         cursor = connection.cursor()
 
+        for row in self.singlerows:
+            row.append( self.expt.id )
+
         sqldsfind = 'WITH f AS \
                 (SELECT t2.id AS dataset_id FROM \
                 (VALUES %s) AS ds(ds_title, expt_id) \
@@ -619,7 +619,6 @@ class Uploads(dbtools.DBTools):
                 ' % dsstr
         cursor.execute( sqldsfind )
         newmastercol = cursor.fetchall()
-        #print newmastercol
         for row, new in zip( self.singlerows, [b[0] for b in newmastercol ] ) :
             row.append( new )
 

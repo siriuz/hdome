@@ -308,7 +308,7 @@ class BackgroundImports(dbtools.DBTools):
     def upload_ss_single( self, user_id, fileobj, expt_id, ab_ids, lodgement_title, cf_cutoff = 99.0, publication_objs = [], public = False ):
         user = self.get_model_object( User, id = user_id )
         ul = pepsite.uploaders.Uploads( user = user )
-        metadata = { 'expt1' : expt_id, 'expt2' : None, 'pl1' : publication_objs, 'ab1' : ab_ids, 'ldg' : lodgement_title, 'inst' : 1  }
+        metadata = { 'expt1' : expt_id, 'expt2' : None, 'pl1' : publication_objs, 'ab1' : ab_ids, 'ldg' : lodgement_title, 'inst' : 1, 'filename' : fileobj.name  }
         if public:
             metadata['rel'] = True
         ul = pepsite.uploaders.Uploads( user = user )

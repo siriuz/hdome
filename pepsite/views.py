@@ -172,13 +172,14 @@ def upload_ss_form( request ):
             ul = pepsite.uploaders.Uploads( user = user )
             ss = request.FILES['ss']
             formdata = form.cleaned_data
+            formdata['filename'] = ss.name 
 	    #ul.upload_ss_simple( form.cleaned_data.dict() )
 	    ul.preview_ss_simple( formdata )
 	    ul.preprocess_ss_simple( ss )
             #request.session['ss'] = ss
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
-                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'lodgement_filename' : ul.lodgement_filename, 'expt_desc' : ul.expt_desc }
+                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'lodgement_filename' : ul.lodgement_filename, 'expt_desc' : ul.expt_desc, 'allfields' : ul.allfields, 'singlerows' : ul.singlerows }
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
             #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Cell Line'  }
@@ -188,13 +189,14 @@ def upload_ss_form( request ):
             ul = pepsite.uploaders.Uploads( user = user )
             ss = request.FILES['ss']
             formdata = request.POST
+            formdata['filename'] = ss.name 
 	    #ul.upload_ss_simple( form.cleaned_data.dict() )
 	    ul.preview_ss_simple( formdata )
 	    ul.preprocess_ss_simple( ss )
             #request.session['ss'] = ss
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
-                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'lodgement_filename' : ul.lodgement_filename, 'expt_desc' : ul.expt_desc  }
+                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'lodgement_filename' : ul.lodgement_filename, 'expt_desc' : ul.expt_desc, 'allfields' : ul.allfields, 'singlerows' : ul.singlerows  }
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
             request.session['ul_supp'] = upload_dict
