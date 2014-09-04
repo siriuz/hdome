@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from pepsite.models import *
-from scripts.imports_rapid import BackgroundImports
+from scripts.imports_rapid import BackgroundImports, bulk_main
 import os
 import datetime
 from django.utils.timezone import utc
@@ -58,9 +58,10 @@ class ImportSpeedTest(TestCase):
         bi1.insert_alleles( MDIC, cl_obj = cl )
         bi1.insert_update_antibodies( MDIC )
         bi1.create_experiment( MDIC, cl )
-        self.filepath = os.path.join( CURDIR, 'scripts/Time_Trial_Import4_PeptideSummary.trial' )
+        #self.filepath = os.path.join( CURDIR, 'scripts/Time_Trial_Import4_PeptideSummary.trial' )
         self.filepath = os.path.join( CURDIR, 'scripts/sample_large_ss.csv' )
         #self.filepath = os.path.join( CURDIR, 'scripts/twentyk_trial.csv' )
+        self.BGFILE = os.path.join( CURDIR, '../../background/newdata_with_files_correct.csv' )
         self.bi1 = bi1
 
     def test_ion_write(self):
@@ -70,10 +71,15 @@ class ImportSpeedTest(TestCase):
         #user1 = User.objects.get( id = 1 )
         self.assertEqual( self.user1.username, 'u1' )
 
-    def test_file_process(self):
+    def old_test_file_process(self):
         """docstring for test_file_process"""
         lodgement_title = 'Auto Lodgement for %s at datetime = %s' % ( MDIC['Experiment name'], datetime.datetime.utcnow().replace(tzinfo=utc).__str__() )
         print 'WORKING ON:', MDIC['Experiment name'] 
         t1 = self.bi1.single_upload_from_ss( self.user1.username, MDIC, lodgement_title, self.filepath )
         print '\n\nUpload of Experiment: %s took %f seconds\n\n' % ( MDIC['Experiment name'].strip(), t1 )
         self.assertEqual( os.path.isfile( self.filepath ), True )
+
+    def test_bulk_rapid_upload(self):
+        ss_master = os.path.join( CURDIR, '../background/all_bulk_02.csv')
+        datadir = os.path.join(CURDIR, '../background/all_august')
+        bulk_main(self.user1.username, ss_master, datadir)

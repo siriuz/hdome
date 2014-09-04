@@ -155,6 +155,10 @@ class Uploads(dbtools.DBTools):
             print 'made public'
         except:
             pass
+        try:
+            self.filename = cleaned_data['filename']
+        except:
+            pass
 
     def translate_headers( self, header ):
         coldic = {}
@@ -321,7 +325,9 @@ class Uploads(dbtools.DBTools):
                                 self.dataset_nos.append( ds_no )
 
 
-                        elif m == 'uniprot_ids':
+                        elif m == 'uniprot_ids' and len(elements[k].strip().split('|')) > 1: #not in ( 'Segment', 'RRRRRSegment' ):
+                            
+                            #print 'element = %s' % elements[k]
           
                             allstr += '<td><a href=\"http://www.uniprot.org/uniprot/' + elements[k].split('|')[1] + '\" target=\"_blank\">' + elements[k].split('|')[1] + '</a></td>'
                             uldict[j]['uniprot_ids'] = [ elements[k].split('|')[1] ]
@@ -340,9 +346,9 @@ class Uploads(dbtools.DBTools):
                     else:
                         entries = []
                         allstr += '<td>'
-                        loclist = [ b.strip() for b in elements[k].split(';') ]
+                        loclist = [ b.strip() for b in elements[k].split(';') if b.strip() != 'Segment' ]
                         for subel in loclist:
-                            if m == 'uniprot_ids':
+                            if m == 'uniprot_ids' and len(subel.split('|')) > 1:
                                 allstr += ' <a href=\"http://www.uniprot.org/uniprot/' + subel.split('|')[1] + '\" target=\"_blank\">' + subel.split('|')[1] + '</a> '
                                 entries.append( subel.split('|')[1] )
                                 if subel.split('|')[1] not in self.uniprot_ids:
@@ -395,14 +401,15 @@ class Uploads(dbtools.DBTools):
         for ab in self.antibodies:
                 self.expt.antibody_set.add( ab )
         if not self.lodgement:
-            self.lodgement, _ = Lodgement.objects.get_or_create( user = self.user, title = self.lodgement_title, datetime = self.now, datafilename=self.lodgement_filename )
+            self.lodgement, _ = Lodgement.objects.get_or_create( user = self.user, title = self.lodgement_filename, datetime = self.now, datafilename=self.lodgement_filename )
             if self.publications:
                 for pl in self.publications:
                     pbln = Publication.objects.get( id=pl )
                     self.lodgement.publication_set.add( pl )
+        print 'cf_cutoff = %s' % self.cutoff_mappings['cf_cutoff']
         for dsno in self.dataset_nos:
             ds, _ = Dataset.objects.get_or_create( instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
-                    datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title ), 
+                    datetime = self.now, title = self.entitle_ds(dsno, self.filename), 
                     confidence_cutoff = self.cutoff_mappings['cf_cutoff'] )
             assign_perm('view_dataset', self.user, ds)
             assign_perm('edit_dataset', self.user, ds)
@@ -413,7 +420,9 @@ class Uploads(dbtools.DBTools):
 
 
             self.datasets.append( ds )
-            
+    
+    def entitle_ds(self, dsno, filename):
+        return 'Dataset #%s from %s' % ( dsno, filename )
 
     def prepare_upload_simple_multiple(self ):
         for ldg_no, ldg_name, filename in self.ldg_details:
@@ -483,7 +492,7 @@ class Uploads(dbtools.DBTools):
                 ptms.append( ptm )
             dsno = local['dataset']
             dataset = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
-                    datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title )  )
+                    datetime = self.now, title = self.entitle_ds( dsno, self.filename )  )
             dataset.save()
             ## object permissions:
             assign_perm('view_dataset', self.user, dataset)
@@ -593,7 +602,7 @@ class Uploads(dbtools.DBTools):
 
         ionstr = ''
         for b, c in zip(self.allfields['ionfields'], self.allfields['datasetfields']):
-            title = 'Dataset #%s from %s' % ( c, self.lodgement_title )
+            title = self.entitle_ds( c, self.filename )
             ionstr += '(%d, %f, %f, %f, \'%s\', \'%s\', %d ), ' % ( int(b[0]), float(b[1]), float(b[2]), float(b[3]), b[4], title, int(self.expt.id) )
 
         ionstr = ionstr.strip(', ')
@@ -601,7 +610,7 @@ class Uploads(dbtools.DBTools):
         
         dsstr = ''
         for d in self.allfields['datasetfields']:
-            title = 'Dataset #%s from %s' % ( c, self.lodgement_title )
+            title = self.entitle_ds( c, self.filename )
             dsstr += '(\'%s\', %d), ' % (title, self.expt.id) 
         dsstr = dsstr.strip(', ')
 
@@ -630,6 +639,16 @@ class Uploads(dbtools.DBTools):
                 FROM (VALUES %s) AS i(field1, field2) \
                 LEFT JOIN pepsite_protein as existing \
                 ON (existing.description = i.field1 AND existing.prot_id = i.field2) \
+                WHERE existing.id IS NULL \
+                ' % ( proteinstr )
+        sqlprot = 'WITH f AS \
+                ( SELECT DISTINCT ON (description) i.description, i.description AS \"name\", i.prot_id \
+                FROM (VALUES %s) AS i(description, prot_id) \
+                ORDER BY description, prot_id ) \
+                INSERT INTO pepsite_protein (description, \"name\", prot_id) \
+                SELECT f.description, f.\"name\", f.prot_id FROM f \
+                LEFT JOIN pepsite_protein as existing \
+                ON (existing.description = f.description ) \
                 WHERE existing.id IS NULL \
                 ' % ( proteinstr )
         cursor.execute( sqlprot )
@@ -681,6 +700,7 @@ class Uploads(dbtools.DBTools):
         print 'ion', cursor.fetchall()
 
         masterstr = self.reformat_to_str(self.singlerows).strip(', ')[1:-1]
+        print self.singlerows[:5]
 
         sqlion_new = 'WITH f AS \
             (SELECT foo.* FROM  (VALUES %s ) AS foo(peptide_sequence, charge_state, precursor_mass, \

@@ -104,11 +104,9 @@ class DBTools(object):
         with open( csvfile, 'rb' ) as f:
             info = [ b.strip().split(delimiter) for b in f ] 
             header = [ b.strip() for b in info[0] ]
-            print len(header)
             mdict = {}
             for i in range(1, len(info)):
                 mdict[i] = {}
-                print i, len( info[i] )
                 for j in range(len(header)):
                     try:
                         mdict[i][ header[j] ] = info[ i ][ j ].strip()
