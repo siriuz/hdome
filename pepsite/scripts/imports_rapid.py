@@ -316,7 +316,8 @@ class BackgroundImports(dbtools.DBTools):
     def upload_ss_single( self, user_id, fileobj, expt_id, ab_ids, lodgement_title, cf_cutoff = 99.0, publication_objs = [], public = False ):
         user = self.get_model_object( User, id = user_id )
         ul = pepsite.uploaders.Uploads( user = user )
-        metadata = { 'expt1' : expt_id, 'expt2' : None, 'pl1' : publication_objs, 'ab1' : ab_ids, 'ldg' : lodgement_title, 'inst' : 1, 'filename' : fileobj.name  }
+        inst, _ = Instrument.objects.get_or_create( name = 'HiLine-Pro' )
+        metadata = { 'expt1' : expt_id, 'expt2' : None, 'pl1' : publication_objs, 'ab1' : ab_ids, 'ldg' : lodgement_title, 'inst' : inst.id, 'filename' : fileobj.name  }
         if public:
             metadata['rel'] = True
         ul = pepsite.uploaders.Uploads( user = user )
@@ -384,7 +385,7 @@ def bulk_main(username, ss_master, datadir):
             print 'FILE NOT FOUND FO REAL:', filepath
     tfin = time.time()
     tt = tfin - tini
-    print '\n\n\nFull import of db took %f seconds\n\n\n'
+    print '\n\n\nFull import of db took %f seconds\n\n\n' % tt
 
 def check_files(master_ss, datadir):
     bi1 = BackgroundImports()
@@ -402,8 +403,23 @@ def check_files(master_ss, datadir):
         else:
             print '%s\t%s' % ( os.path.split(filepath)[-1], bi1.mdict[en]['Depositor'] ) 
 
+def bulk_import_with_boilerplate( username, master_ss, datadir ):
+    Manufacturer.objects.all().delete()
+    Instrument.objects.all().delete()
+    ExternalDb.objects.all().delete()
+    man1, _ = Manufacturer.objects.get_or_create( name = 'MZTech' )
+    inst1, _ = Instrument.objects.get_or_create( name = 'HiLine-Pro', description = 'MS/MS Spectrometer', manufacturer = man1 )
+    uniprot, _ = ExternalDb.objects.get_or_create( db_name = 'UniProt', url_stump = 'http://www.uniprot.org/uniprot/')
+    #bi1 = BackgroundImports()
+    #cl = bi1.get_cell_line( MDIC )
+    #bi1.insert_alleles( MDIC, cl_obj = cl )
+    #bi1.insert_update_antibodies( MDIC )
+    #bi1.create_experiment( MDIC, cl )
+    bulk_main( username, master_ss, datadir )
+
 if __name__ == '__main__':
-    check_files(os.path.join( CURDIR, '../../background/all_bulk_02.csv'), os.path.join(CURDIR, '../../background/all_august') )
+    check_files(os.path.join( CURDIR, '../../background/all_bulk_04.csv'), os.path.join(CURDIR, '../../background/all_august') )
+    bulk_import_with_boilerplate( 'admin', os.path.join( CURDIR, '../../background/all_bulk_04.csv'), os.path.join(CURDIR, '../../background/all_august') )
 
 
 
