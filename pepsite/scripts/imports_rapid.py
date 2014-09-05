@@ -366,7 +366,7 @@ def bulk_main(username, ss_master, datadir):
     for en in sorted( bi1.mdict.keys(), key = lambda(a) : int(a) ):
         expt_name = bi1.mdict[en]['Experiment name'].strip() 
         filepath = os.path.join( datadir, bi1.mdict[en]['File name'] )
-        if os.path.isfile( filepath ) and bi1.mdict[en]['File name'][:2] != 'RS':
+        if os.path.isfile( filepath ): # and bi1.mdict[en]['File name'][:2] != 'RS':
             print 'FILE FOUND:', filepath
             #cf_cutoff = float( bi1.mdict[en]['5% FDR'] )
             #expt_obj = bi1.get_model_object( Experiment, title = bi1.mdict[en]['Experiment name'] )

@@ -340,9 +340,13 @@ class Uploads(dbtools.DBTools):
                             else:
                                 uldict[j][m] = [ elements[k] ]
                                 allstr += '<td>%s</td>' % ( elements[k] )
-                        else:
+                        elif m not in ('uniprot_ids'):
                             allstr += '<td>' + elements[k] + '</td>'
                             uldict[j][m] = elements[k]
+                        else:
+                            allstr += '<td></td>'
+                            uldict[j][m] = ['']
+
                     else:
                         entries = []
                         allstr += '<td>'
@@ -351,6 +355,7 @@ class Uploads(dbtools.DBTools):
                             if m == 'uniprot_ids' and len(subel.split('|')) > 1:
                                 allstr += ' <a href=\"http://www.uniprot.org/uniprot/' + subel.split('|')[1] + '\" target=\"_blank\">' + subel.split('|')[1] + '</a> '
                                 entries.append( subel.split('|')[1] )
+                                #uldict[j]['uniprot_ids'] = [ elements[k].split('|')[1] ]
                                 if subel.split('|')[1] not in self.uniprot_ids:
                                     self.uniprot_ids.append( subel.split('|')[1] ) 
                                 #allstr += ' %u ' % ( u'{\% url \'http://www.uniprot.org/uniprot/%u\' \%}' % ( subel.split('|')[1] ) )
@@ -359,9 +364,13 @@ class Uploads(dbtools.DBTools):
                                     entries.append( subel )
                                     allstr += ' %s ' % ( subel )
 
-                            else:
+                            elif m not in ('uniprot_ids'):
                                 allstr += ' %s ' % ( loclist[0] )
                                 entries.append( loclist[0] )
+                            else:
+                                allstr += ' '
+                                entries.append( '' )
+
                         allstr += '</td>'
                         uldict[j][m] = entries
                 allstr += '</tr>'
@@ -585,7 +594,10 @@ class Uploads(dbtools.DBTools):
         proteinstr = ''
         for b in self.allfields['proteinfields']:
             for x in range( len(b) ):
-                proteinstr += '(E\'%s\', E\'%s\'), ' % ( b[x][1].replace('\'', '\\\''), b[x][0].replace('\'', '\\\'') )
+                if b[x][0]:
+                    proteinstr += '(E\'%s\', E\'%s\'), ' % ( b[x][1].replace('\'', '\\\''), b[x][0].replace('\'', '\\\'') )
+                else:
+                    proteinstr += '( E\'%s\', NULL ), ' % ( b[x][1].replace('\'', '\\\'') )
         proteinstr = proteinstr.strip(', ')
 
         peptidestr = ''
@@ -790,10 +802,36 @@ class Uploads(dbtools.DBTools):
         print 'idestimate_ptms', cursor.fetchall()
 
         peptoprotlist = []
+        peptoprotstr = ''
         for row, proteins in zip( self.singlerows, self.allfields['proteinfields'] ):
             if proteins:
                 for prot in proteins:
                     peptoprotlist.append( [ row[9], row[11], prot[0], prot[1] ] )
+                    ## handling files which do not specify uniprot id
+                    if prot[0]:
+                        peptoprotsql = 'WITH f as  \
+                                (SELECT foo.peptide_id, goo.id AS protein_id FROM (VALUES %s ) AS foo(experiment_id, peptide_id, \
+                                prot_id, description  ) \
+                                INNER JOIN pepsite_protein AS goo ON ( foo.description = goo.description \
+                                AND foo.prot_id = goo.prot_id ) ) \
+                                INSERT INTO pepsite_peptoprot ( peptide_id, protein_id ) \
+                                SELECT f.peptide_id, f.protein_id \
+                                FROM f LEFT JOIN pepsite_peptoprot existing \
+                                ON ( f.peptide_id = existing.peptide_id AND f.protein_id = existing.protein_id ) \
+                                WHERE existing.id IS NULL \
+                                ' % peptoprotstr
+                    else:
+                        peptoprotsql = 'WITH f as  \
+                                (SELECT foo.peptide_id, goo.id AS protein_id FROM (VALUES %s ) AS foo(experiment_id, peptide_id, \
+                                prot_id, description  ) \
+                                INNER JOIN pepsite_protein AS goo ON ( foo.description = goo.description \
+                                 ) ) \
+                                INSERT INTO pepsite_peptoprot ( peptide_id, protein_id ) \
+                                SELECT f.peptide_id, f.protein_id \
+                                FROM f LEFT JOIN pepsite_peptoprot existing \
+                                ON ( f.peptide_id = existing.peptide_id AND f.protein_id = existing.protein_id ) \
+                                WHERE existing.id IS NULL \
+                                ' % peptoprotstr
                 #proteinstr += '(E\'%s\', E\'%s\'), ' % ( b[x][1].replace('\'', '\\\''), b[x][0].replace('\'', '\\\'') )
 
         peptoprotstr = self.reformat_to_str(peptoprotlist).strip(', ')[1:-1]
@@ -1052,6 +1090,16 @@ class Uploads(dbtools.DBTools):
         tt = t1 - t0
         print 'time taken to refresh materialized views = %f' % (tt)
                 
+    def drop_materialized_views( self ):
+        t0 = time.time()
+        cursor = connection.cursor()
+        for view in ( 'grand_master', 'master_allowed', 'master_disallowed', 'allcompares', 'master_compare_allowed', 'master_compare_disallowed'  ):
+            refreshsql = "DROP MATERIALIZED VIEW IF EXISTS %s CASCADE" % (view)
+            cursor.execute( refreshsql )
+        t1 = time.time()
+        tt = t1 - t0
+        print 'time taken to drop all materialized views = %f' % (tt)
+
 
     def upload_simple_multiple( self ):
         """None -> None

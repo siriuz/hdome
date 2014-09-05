@@ -216,8 +216,8 @@ class Ptm(models.Model):
 
 
 class Protein(models.Model):
-    prot_id = models.CharField(max_length=200)
-    name = models.CharField(max_length=200)
+    prot_id = models.CharField(max_length=200, blank=True,null=True)
+    name = models.TextField( default = '',blank=True, null=True ) #CharField(max_length=200)
     description = models.TextField( default = '',blank=True, null=True )
     sequence = models.TextField( default = '',blank=True, null=True )
 
