@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from pepsite.models import *
-from scripts.imports_rapid import BackgroundImports, bulk_main
+from scripts.imports_rapid import BackgroundImports, bulk_main, bulk_with_extra
 import os
 import datetime
 from django.utils.timezone import utc
@@ -79,7 +79,12 @@ class ImportSpeedTest(TestCase):
         print '\n\nUpload of Experiment: %s took %f seconds\n\n' % ( MDIC['Experiment name'].strip(), t1 )
         self.assertEqual( os.path.isfile( self.filepath ), True )
 
-    def test_bulk_rapid_upload(self):
+    def dormant_test_bulk_rapid_upload(self):
         ss_master = os.path.join( CURDIR, '../background/all_bulk_02.csv')
         datadir = os.path.join(CURDIR, '../background/all_august')
         bulk_main(self.user1.username, ss_master, datadir)
+
+    def test_bulk_rapid_upload(self):
+        ss_master = os.path.join( CURDIR, '../background/test_bulk_01.csv')
+        datadir = os.path.join(CURDIR, '../background/all_august')
+        bulk_with_extra(self.user1.username, ss_master, datadir)

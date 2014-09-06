@@ -387,6 +387,44 @@ def bulk_main(username, ss_master, datadir):
     tt = tfin - tini
     print '\n\n\nFull import of db took %f seconds\n\n\n' % tt
 
+
+def bulk_with_extra(username, ss_master, datadir):
+    tini = time.time()
+    bi1 = BackgroundImports()
+    bi1.create_full_dic( ss_master )
+    now = datetime.datetime.utcnow().replace(tzinfo=utc)
+    for en in sorted( bi1.mdict.keys(), key = lambda(a) : int(a) ):
+        bi1.dummy_boilerplate()
+        cl = bi1.get_cell_line( bi1.mdict[en] )
+        bi1.insert_alleles( bi1.mdict[en], cl_obj = cl )
+        bi1.insert_update_antibodies( bi1.mdict[en] )
+        bi1.create_experiment( bi1.mdict[en], cl )
+        #pass
+    for en in sorted( bi1.mdict.keys(), key = lambda(a) : int(a) ):
+        expt_name = bi1.mdict[en]['Experiment name'].strip() 
+        filepath = os.path.join( datadir, bi1.mdict[en]['File name'] )
+        if os.path.isfile( filepath ): # and bi1.mdict[en]['File name'][:2] != 'RS':
+            print 'FILE FOUND:', filepath
+            #cf_cutoff = float( bi1.mdict[en]['5% FDR'] )
+            #expt_obj = bi1.get_model_object( Experiment, title = bi1.mdict[en]['Experiment name'] )
+            #expt_id = expt_obj.id
+            #ab_ids = []
+            #for ab_name in bi1.mdict[en]['Elution Ab'].strip().split(','):
+            #    ab_ids.append( bi1.get_model_object( Antibody, name = ab_name.strip() ).id )
+            #print 'got here'
+            #lodgement_title = 'Auto Lodgement for %s at datetime = %s' % ( bi1.mdict[en]['Experiment name'], datetime.datetime.utcnow().replace(tzinfo=utc).__str__() )
+            lodgement_title = 'Filename = \"%s\", Datetime = %s, Lodgement for Experiment = \"%s\"' % ( os.path.split(filepath)[-1], now, bi1.mdict[en]['Experiment name']  )
+            print 'WORKING ON:', bi1.mdict[en]['Experiment name'] 
+            t1 = bi1.single_upload_from_ss( username, bi1.mdict[en], lodgement_title, filepath )
+            print '\n\nUpload of Experiment: %s took %f seconds\n\n' % ( bi1.mdict[en]['Experiment name'].strip(), t1 )
+        else:
+            print 'FILE NOT FOUND FO REAL:', filepath
+    tfin = time.time()
+    tt = tfin - tini
+    print '\n\n\nFull import of db took %f seconds\n\n\n' % tt
+    ul = pepsite.uploaders.Uploads()
+    ul.create_views()
+
 def check_files(master_ss, datadir):
     bi1 = BackgroundImports()
     bi1.create_full_dic( master_ss )
@@ -419,7 +457,9 @@ def bulk_import_with_boilerplate( username, master_ss, datadir ):
 
 if __name__ == '__main__':
     check_files(os.path.join( CURDIR, '../../background/all_bulk_04.csv'), os.path.join(CURDIR, '../../background/all_august') )
-    bulk_import_with_boilerplate( 'admin', os.path.join( CURDIR, '../../background/all_bulk_04.csv'), os.path.join(CURDIR, '../../background/all_august') )
+    bulk_import_with_boilerplate( 'admin', os.path.join( CURDIR, '../../background/test_bulk_01.csv'), os.path.join(CURDIR, '../../background/all_august') )
+    ul = pepsite.uploaders.Uploads()
+    ul.create_views()
 
 
 
