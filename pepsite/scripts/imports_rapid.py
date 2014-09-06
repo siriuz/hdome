@@ -423,7 +423,7 @@ def bulk_with_extra(username, ss_master, datadir):
     tt = tfin - tini
     print '\n\n\nFull import of db took %f seconds\n\n\n' % tt
     ul = pepsite.uploaders.Uploads()
-    ul.create_views()
+    ul.create_views_rapid()
 
 def check_files(master_ss, datadir):
     bi1 = BackgroundImports()
