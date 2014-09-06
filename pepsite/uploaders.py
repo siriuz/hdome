@@ -1069,7 +1069,7 @@ class Uploads(dbtools.DBTools):
         # Generate SQL for finding idestimate-ptms combo with lowest possible abs(delta_mass) [per experiment] 
         # NOTE: This contins one row per IdEstimate - it can be a starting point for a 'master' view
         sqlmega_unagg = 'CREATE MATERIALIZED VIEW mega_unagg AS \
-                SELECT t1.id as idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, \
+                SELECT t1.id as idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, \
                 t2.id as ion_id, t2.charge_state, t2.mz, t2.precursor_mass, t2.retention_time, t2.spectrum, \
                 t3.id as dataset_id, t3.title as dataset_title, t3.confidence_cutoff, \
                 t3a.id as lodgement_id, t3a.title as lodgement_title, t3a.datafilename, t3a.\"isFree", \
@@ -1110,7 +1110,7 @@ class Uploads(dbtools.DBTools):
         print 'mega_unagg', cursor.fetchall(  )
         sqlmega_agg = 'CREATE VIEW mega_posns AS \
                 SELECT \
-                foo.idestimate_id, foo.\"isRemoved\", foo.\"isValid\", foo.reason, \
+                foo.idestimate_id, foo.\"isRemoved\", foo.\"isValid\", foo.reason, foo.confidence, \
                 foo.ion_id, foo.charge_state, foo.mz, foo.precursor_mass, foo.retention_time, foo.spectrum, \
                 foo.dataset_id, foo.dataset_title, foo.confidence_cutoff, \
                 foo.lodgement_id, foo.lodgement_title, foo.datafilename, foo.\"isFree", \
@@ -1120,7 +1120,7 @@ class Uploads(dbtools.DBTools):
                 array_agg((foo.ptm_id, foo.ptm_description)::text order by foo.ptm_id) AS ptmarray \
                 FROM \
                 (SELECT \
-                t1.idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, \
+                t1.idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, \
                 t1.ion_id, t1.charge_state, t1.mz, t1.precursor_mass, t1.retention_time, t1.spectrum, \
                 t1.dataset_id, t1.dataset_title, t1.confidence_cutoff, \
                 t1.lodgement_id, t1.lodgement_title, t1.datafilename, t1.\"isFree", \
@@ -1131,7 +1131,7 @@ class Uploads(dbtools.DBTools):
                 array_to_string( array_agg( CAST(t1.initial_res AS text) || \'-\' || CAST(t1.final_res AS text) ORDER BY t1.initial_res ), \' \') as posnstr \
                 FROM mega_unagg t1 \
                 GROUP BY \
-                t1.idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, \
+                t1.idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, \
                 t1.ion_id, t1.charge_state, t1.mz, t1.precursor_mass, t1.retention_time, t1.spectrum, \
                 t1.dataset_id, t1.dataset_title, t1.confidence_cutoff, \
                 t1.lodgement_id, t1.lodgement_title, t1.datafilename, t1.\"isFree", \
@@ -1141,7 +1141,7 @@ class Uploads(dbtools.DBTools):
                 t1.protein_id, t1.protein_description )\
                 AS foo \
                 GROUP BY \
-                foo.idestimate_id, foo.\"isRemoved\", foo.\"isValid\", foo.reason, \
+                foo.idestimate_id, foo.\"isRemoved\", foo.\"isValid\", foo.reason, foo.confidence, \
                 foo.ion_id, foo.charge_state, foo.mz, foo.precursor_mass, foo.retention_time, foo.spectrum, \
                 foo.dataset_id, foo.dataset_title, foo.confidence_cutoff, \
                 foo.lodgement_id, foo.lodgement_title, foo.datafilename, foo.\"isFree", \
@@ -1151,6 +1151,24 @@ class Uploads(dbtools.DBTools):
         cursor.execute( sqlmega_agg )
         cursor.execute( 'SELECT COUNT(*) FROM mega_posns t1' )
         print 'mega_posns', cursor.fetchall(  )
+        sqlcompare = 'CREATE VIEW mega_comparisons AS \
+                SELECT t1.*, array_agg( DISTINCT t2.experiment_id ORDER BY t2.experiment_id ) AS allowed_array \
+                FROM mega_posns t1 \
+                LEFT JOIN mega_posns t2 \
+                ON ( t1.peptide_id = t2.peptide_id AND t1.ptmarray = t2.ptmarray ) \
+                WHERE t2.\"isRemoved\" = false AND t2.confidence > t2.confidence_cutoff \
+                GROUP BY \
+                t1.idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, \
+                t1.ion_id, t1.charge_state, t1.mz, t1.precursor_mass, t1.retention_time, t1.spectrum, \
+                t1.dataset_id, t1.dataset_title, t1.confidence_cutoff, \
+                t1.lodgement_id, t1.lodgement_title, t1.datafilename, t1.\"isFree", \
+                t1.experiment_id, t1.experiment_title, \
+                t1.peptide_id, t1.peptide_sequence, \
+                t1.proteinarray, t1.ptmarray \
+                '
+        cursor.execute( sqlcompare )
+        cursor.execute( 'SELECT COUNT(*) FROM mega_comparisons t1' )
+        print 'mega_comparisons', cursor.fetchall(  )
         cursor.close()
         t1 = time.time()
         tt = t1 - t0
