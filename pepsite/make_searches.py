@@ -640,6 +640,10 @@ class ExptArrayAssemble( BaseSearch ):
             for key, val in zip( [col[0] for col in desc], row ):
                 if key in ('ptmarray', 'exptarray'):
                     local[ key ] = [ [ c.strip('\"').strip('\"') for c in b.strip('(').strip(')').split(',')] for b in val ]
+                ## this is a nasty hack due to my lack of re expertise 
+                elif key == 'proteinarray':
+                    local[key] = [ [ c.strip('\"').strip('\"').strip(',') for c in b.strip('(').strip(')').split('|||')] for b in val ]
+
                 else:
                     local[ key ] = val
             returnlist.append( local )
@@ -675,6 +679,12 @@ class ExptArrayAssemble( BaseSearch ):
         """
         cursor = connection.cursor()
         sql_expt = "SELECT * \
+                FROM clean_comparisons \
+                WHERE experiment_id = %s \
+                AND confidence > confidence_cutoff \
+                AND \"isRemoved\" = false \
+                "
+        sql_expt_old = "SELECT * \
                 FROM master_allowed \
                 WHERE experiment_id = %s\
                 "
@@ -687,11 +697,11 @@ class ExptArrayAssemble( BaseSearch ):
         cursor = connection.cursor()
         sql_expt = "WITH foo AS \
                 ( SELECT *, 1 as ranking, \'displayed\' as spec \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE experiment_id = %s \
                 UNION \
                 SELECT *, 2 as ranking, \'not displayed\' as spec \
-                FROM master_disallowed \
+                FROM notclean_comparisons \
                 WHERE experiment_id = %s \
                 ) \
                 SELECT * FROM foo \
@@ -716,6 +726,32 @@ class ExptArrayAssemble( BaseSearch ):
                 SELECT * FROM foo \
                 ORDER BY ranking ASC \
                 "
+        sql_expt = "WITH foo1 AS \
+                ( SELECT t1.*, 1 as ranking, \'displayed\' as spec \
+                FROM clean_comparisons t1 \
+                WHERE experiment_id = %s \
+                UNION \
+                SELECT t2.*, 2 as ranking, \'not displayed\' as spec \
+                FROM mega_comparisons t2 \
+                EXCEPT (SELECT t3.*, 2 AS ranking, \'not displayed\' as spec \
+                FROM mega_comparisons t3 ) as foo2 \
+                WHERE experiment_id = %s \
+                ) \
+                SELECT * FROM foo1 \
+                ORDER BY ranking ASC \
+                "
+        sql_expt = "WITH foo AS \
+                ( SELECT *, 1 as ranking, \'displayed\' as spec \
+                FROM clean_comparisons \
+                WHERE experiment_id = %s \
+                UNION \
+                SELECT *, 2 as ranking, \'not displayed\' as spec \
+                FROM notclean_comparisons \
+                WHERE experiment_id = %s \
+                ) \
+                SELECT * FROM foo \
+                ORDER BY ranking ASC \
+                "
         cursor.execute( sql_expt, [ expt_id, expt_id ] )
         return self.dictfetchall_augmented( cursor, return_header )
 
@@ -726,6 +762,19 @@ class ExptArrayAssemble( BaseSearch ):
         sql_expt = "SELECT * \
                 FROM master_compare_allowed \
                 WHERE experiment_id = %s\
+                "
+        cursor.execute( sql_expt, [ expt_id ] )
+        return self.dictfetchall_augmented( cursor )
+
+    def new_basic_compare_expt_query( self, expt_id ):
+        """
+        """
+        cursor = connection.cursor()
+        sql_expt = "SELECT * \
+                FROM clean_comparisons \
+                WHERE experiment_id = %s \
+                AND confidence > confidence_cutoff \
+                AND \"isRemoved\" = false \
                 "
         cursor.execute( sql_expt, [ expt_id ] )
         return self.dictfetchall_augmented( cursor )

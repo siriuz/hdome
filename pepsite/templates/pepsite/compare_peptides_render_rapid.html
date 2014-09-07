@@ -16,13 +16,14 @@
         <tr><th class="hilite">Protein</th><th>UniProt code</th><th class="hilite">Peptide</th><th class="hilite">Peptide length</th><th>Position(s) in Protein</th><th class="hilite">Modification</th><th class="hilite">Delta Mass</th><th class="hilite">Confidence</th><th>m/z</th><th class="hilite">Charge State</th><th class="hilite">Retention Time</th><th class="hilite">Precursor Mass</th><th class="hilite">Experiment</th>{% for expt in compare_expts %}<th><strong class="text-warning">Comparison with </strong><span class="text-primary">{{expt.title}}</span></th>{% endfor %}</tr>
     </thead>
     <tbody>
-
+        <h1>HELLO</h1>
     {% for row in rows %}
     <tr>
 
-            <td><a href="{% url 'pepsite:protein_peptides' row.protein_id %}" class="link">{{row.protein_description}}</a></td>
+        <td>{% for prot in row.proteinarray %}{% if prot.0 %}<a href="{% url 'pepsite:protein_peptides' prot.0 %}" class="link">{{prot.1}}</a>{% endif %} {% endfor %}</td>
+
+        <td>{% for prot in row.proteinarray %}{% if prot.0 %}<a href="http://www.uniprot.org/uniprot/{{prot.2}}" class="link" target="_blank">{{prot.2}}</a>{% endif %} {% endfor %}</td>
             
-            <td><a href="http://www.uniprot.org/uniprot/{{row.protein_uniprot_code}}" class="link" target="_blank">{{row.protein_uniprot_code}}</a></td>
             
             <td><a href="{% url 'pepsite:peptide_peptides' row.peptide_id %}" class="link">{{row.peptide_sequence}}</a></td>
             

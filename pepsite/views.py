@@ -467,7 +467,7 @@ def comparison_peptides_render_rapid( request ):
             #    if ( not user.has_perm( 'view_dataset', dataset ) ):
             #        complete = False
             s1 = ExptArrayAssemble()
-            rows = s1.basic_compare_expt_query( expt1 ) 
+            rows = s1.new_basic_compare_expt_query( expt1 ) 
             allrows = s1.all_peptides_compare_expt_query( expt1 ) 
             view_disallowed = False
             if user.has_perm('pepsite.view_experiment_disallowed'):
@@ -1192,16 +1192,16 @@ def send_csv(request ):
         
         #header, bodtrows = allrows[0], allrows[1:]
         with tempfile.NamedTemporaryFile() as f:
-            f.write( 'Protein description\tUniProt code\tPeptide sequence\tPeptide length\tPosition(s) in protein\
+            f.write( 'Protein description\tUniProt code\tPeptide sequence\tPeptide length\
                     \tPTM(s)\tDelta mass\tConfidence\tm/z\tCharge state\tRetention time\tPrecursor mass\tExperiment\t')
             if param == 'compare':
                 for exno in exptz:
                     f.write( 'Compare with: %s\t' % ( Experiment.objects.get( id = exno ).title ) )
             f.write('Display status\n')
             for row in allrows:
-                f.write( '%s\t%s\t%s\t%d\t%s\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t' % ( row['protein_description'], row['protein_uniprot_code'], 
-                    row['peptide_sequence'], row['peptide_length'],
-                    row['posnstr'], row['ptmdescstr'], row['delta_mass'], row['confidence'], row['mz'], row['charge_state'], row['retention_time'],
+                f.write( '%s\t%s\t%s\t%d\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t' % ( row['proteinstr'], row['uniprotstr'], 
+                    row['peptide_sequence'], len(row['peptide_sequence']),
+                    row['ptmstr'], row['delta_mass'], row['confidence'], row['mz'], row['charge_state'], row['retention_time'],
                     row['precursor_mass'], row['experiment_title'] ) )
                 if param == 'compare':
                     for exid in exptz:
@@ -1257,8 +1257,8 @@ def send_csv_simple(request ):
                     f.write( 'Compare with: %s\t' % ( Experiment.objects.get( id = exno ).title ) )
             f.write('Display status\n')
             for row in allrows:
-                f.write( '%s\t%s\t%s\t%d\t%s\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t' % ( row['protein_description'], row['protein_uniprot_code'], 
-                    row['peptide_sequence'], row['peptide_length'],
+                f.write( '%s\t%s\t%s\t%d\t%s\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t' % ( row['proteinstr'], row['uniprotstr'], 
+                    row['peptide_sequence'], len(row['peptide_sequence']),
                     row['posnstr'], row['ptmdescstr'], row['delta_mass'], row['confidence'], row['mz'], row['charge_state'], row['retention_time'],
                     row['precursor_mass'], row['experiment_title'] ) )
                 if param == 'compare':
