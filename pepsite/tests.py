@@ -85,6 +85,6 @@ class ImportSpeedTest(TestCase):
         bulk_main(self.user1.username, ss_master, datadir)
 
     def test_bulk_rapid_upload(self):
-        ss_master = os.path.join( CURDIR, '../background/test_bulk_01.csv')
+        ss_master = os.path.join( CURDIR, '../background/test_bulk_02.csv')
         datadir = os.path.join(CURDIR, '../background/all_august')
         bulk_with_extra(self.user1.username, ss_master, datadir)

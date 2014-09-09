@@ -453,13 +453,11 @@ def bulk_import_with_boilerplate( username, master_ss, datadir ):
     #bi1.insert_alleles( MDIC, cl_obj = cl )
     #bi1.insert_update_antibodies( MDIC )
     #bi1.create_experiment( MDIC, cl )
-    bulk_main( username, master_ss, datadir )
+    bulk_with_extra( username, master_ss, datadir )
 
 if __name__ == '__main__':
     check_files(os.path.join( CURDIR, '../../background/all_bulk_04.csv'), os.path.join(CURDIR, '../../background/all_august') )
-    bulk_import_with_boilerplate( 'admin', os.path.join( CURDIR, '../../background/test_bulk_01.csv'), os.path.join(CURDIR, '../../background/all_august') )
-    ul = pepsite.uploaders.Uploads()
-    ul.create_views()
+    bulk_import_with_boilerplate( 'admin', os.path.join( CURDIR, '../../background/all_bulk_04.csv'), os.path.join(CURDIR, '../../background/all_august') )
 
 
 

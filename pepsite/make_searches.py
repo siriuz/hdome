@@ -685,7 +685,7 @@ class ExptArrayAssemble( BaseSearch ):
                 AND \"isRemoved\" = false \
                 "
         sql_expt_old = "SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE experiment_id = %s\
                 "
         cursor.execute( sql_expt, [ expt_id ] )
@@ -715,32 +715,6 @@ class ExptArrayAssemble( BaseSearch ):
         """
         cursor = connection.cursor()
         sql_expt = "WITH foo AS \
-                ( SELECT t1.*, 1 as ranking, \'displayed\' as spec \
-                FROM master_compare_allowed t1 \
-                WHERE experiment_id = %s \
-                UNION \
-                SELECT t2.*, 2 as ranking, \'not displayed\' as spec \
-                FROM master_compare_disallowed t2 \
-                WHERE experiment_id = %s \
-                ) \
-                SELECT * FROM foo \
-                ORDER BY ranking ASC \
-                "
-        sql_expt = "WITH foo1 AS \
-                ( SELECT t1.*, 1 as ranking, \'displayed\' as spec \
-                FROM clean_comparisons t1 \
-                WHERE experiment_id = %s \
-                UNION \
-                SELECT t2.*, 2 as ranking, \'not displayed\' as spec \
-                FROM mega_comparisons t2 \
-                EXCEPT (SELECT t3.*, 2 AS ranking, \'not displayed\' as spec \
-                FROM mega_comparisons t3 ) as foo2 \
-                WHERE experiment_id = %s \
-                ) \
-                SELECT * FROM foo1 \
-                ORDER BY ranking ASC \
-                "
-        sql_expt = "WITH foo AS \
                 ( SELECT *, 1 as ranking, \'displayed\' as spec \
                 FROM clean_comparisons \
                 WHERE experiment_id = %s \
@@ -760,7 +734,7 @@ class ExptArrayAssemble( BaseSearch ):
         """
         cursor = connection.cursor()
         sql_expt = "SELECT * \
-                FROM master_compare_allowed \
+                FROM clean_comparisons \
                 WHERE experiment_id = %s\
                 "
         cursor.execute( sql_expt, [ expt_id ] )
@@ -782,7 +756,7 @@ class ExptArrayAssemble( BaseSearch ):
     def protein_browse( self ):
         cursor = connection.cursor()
         sql_pr_browse = "WITH foo AS (SELECT DISTINCT protein_id, protein_description, \
-                experiment_id, experiment_title from master_allowed) \
+                experiment_id, experiment_title from clean_comparisons) \
                 SELECT protein_id, protein_description, \
                 array_agg( (experiment_id,experiment_title)::text order by experiment_id  ) AS exptarray \
                 FROM foo \
@@ -794,11 +768,11 @@ class ExptArrayAssemble( BaseSearch ):
         """docstring for protein_peptides"""
         cursor = connection.cursor()
         sql_expt = "SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE protein_id = %s\
                 EXCEPT \
                 SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE experiment_id = ANY(%s) \
                 "
         cursor.execute( sql_expt, [ prot_id, excluded_ids ] )
@@ -808,11 +782,11 @@ class ExptArrayAssemble( BaseSearch ):
         """docstring for protein_peptides"""
         cursor = connection.cursor()
         sql_expt = "SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE %s = ANY(ptmidarray) \
                 EXCEPT \
                 SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE experiment_id = ANY(%s) \
                 "
         cursor.execute( sql_expt, [ ptm_id, excluded_ids ] )
@@ -822,11 +796,11 @@ class ExptArrayAssemble( BaseSearch ):
         """docstring for protein_peptides"""
         cursor = connection.cursor()
         sql_expt = "SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE peptide_id = %s\
                 EXCEPT \
                 SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE experiment_id = ANY(%s) \
                 "
         cursor.execute( sql_expt, [ peptide_id, excluded_ids ] )
@@ -927,12 +901,12 @@ class MassSearch( ExptArrayAssemble ):
     def get_unique_peptide_ides_from_mass( self, mass, tolerance, excluded_ids  ):
         cursor = connection.cursor()
         sql_expt = "SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE precursor_mass >= %s\
                 AND precursor_mass <= %s \
                 EXCEPT \
                 SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE experiment_id = ANY(%s) \
                 "
         cursor.execute( sql_expt, [ str(mass-tolerance), str(mass+tolerance), excluded_ids ] )
@@ -954,12 +928,12 @@ class MassSearch( ExptArrayAssemble ):
     def get_unique_peptide_ides_from_mz( self, mz, tolerance, excluded_ids ):
         cursor = connection.cursor()
         sql_expt = "SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE mz >= %s\
                 AND mz <= %s \
                 EXCEPT \
                 SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE experiment_id = ANY(%s) \
                 "
         cursor.execute( sql_expt, [ str(mz-tolerance), str(mz+tolerance), excluded_ids ] )
@@ -972,11 +946,11 @@ class MassSearch( ExptArrayAssemble ):
     def get_unique_peptide_ides_from_sequence( self, sequence, excluded_ids ):
         cursor = connection.cursor()
         sql_expt = "SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE peptide_sequence ~* %s\
                 EXCEPT \
                 SELECT * \
-                FROM master_allowed \
+                FROM clean_comparisons \
                 WHERE experiment_id = ANY(%s) \
                 "
         cursor.execute( sql_expt, [ sequence, excluded_ids ] )

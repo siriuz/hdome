@@ -870,6 +870,24 @@ class Uploads(dbtools.DBTools):
         cursor.execute( exptprotsql )
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_experiment_proteins' )
         print 'experiment_proteins', cursor.fetchall()
+
+    def junk_old_views(self ):
+        """docstring for simple_expt_query"""
+        t0 = time.time()
+        cursor = connection.cursor()
+        cursor.execute( "DROP VIEW IF EXISTS \"allowedides\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppavail\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"prot_expt\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"semi_master\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"grand_master\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"master_allowed\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"master_disallowed\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"allowed_comparisons\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"disallowed_comparisons\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"all_compares\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"master_compare_allowed\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"suppcorrect\"" )
+        cursor.execute( "DROP VIEW IF EXISTS \"sv2\"" )
     
 
     def create_views(self ):
@@ -1064,14 +1082,16 @@ class Uploads(dbtools.DBTools):
         """docstring for simple_expt_query"""
         t0 = time.time()
         cursor = connection.cursor()
-        cursor.execute( "DROP MATERIALIZED VIEW IF EXISTS \"mega_unagg\" CASCADE" )
+        #cursor.execute( "DROP MATERIALIZED VIEW IF EXISTS \"mega_unagg\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"mega_unagg\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"mega_posns\" CASCADE" )
         cursor.execute( "DROP MATERIALIZED VIEW IF EXISTS \"mega_comparisons\" CASCADE" )
+        cursor.execute( "DROP VIEW IF EXISTS \"mega_comparisons\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"clean_comparisons\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"notclean_comparisons\" CASCADE" )
         # Generate SQL for finding idestimate-ptms combo with lowest possible abs(delta_mass) [per experiment] 
         # NOTE: This contins one row per IdEstimate - it can be a starting point for a 'master' view
-        sqlmega_unagg = 'CREATE MATERIALIZED VIEW mega_unagg AS \
+        sqlmega_unagg = 'CREATE VIEW mega_unagg AS \
                 SELECT t1.id as idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, t1.delta_mass, ABS(t1.delta_mass) AS absdm, \
                 t2.id as ion_id, t2.charge_state, t2.mz, t2.precursor_mass, t2.retention_time, t2.spectrum, \
                 t3.id as dataset_id, t3.title as dataset_title, t3.confidence_cutoff, \
@@ -1109,8 +1129,9 @@ class Uploads(dbtools.DBTools):
                 ON (t12.id = t11.position_id ) \
                 '
         cursor.execute( sqlmega_unagg )
-        cursor.execute( 'SELECT COUNT(t1.idestimate_id) FROM mega_unagg t1' )
-        print 'mega_unagg', cursor.fetchall(  )
+        #cursor.execute( 'SELECT COUNT(t1.idestimate_id) FROM mega_unagg t1' )
+        #print 'mega_unagg', cursor.fetchall(  )
+        print 'mega_unagg done' #, cursor.fetchall(  )
         sqlmega_agg2 = 'CREATE VIEW mega_posns AS \
                 SELECT DISTINCT t2.*, foo1.proteinarray, foo1.ptmarray, foo1.ptmstr, foo1.proteinstr, foo1.uniprotstr FROM \
                 ( SELECT idestimate_id, \
@@ -1126,9 +1147,10 @@ class Uploads(dbtools.DBTools):
                 ORDER BY t2.ptm_id \
                 '
         cursor.execute( sqlmega_agg2 )
-        cursor.execute( 'SELECT COUNT(*) FROM mega_posns t1' )
-        print 'mega_posns', cursor.fetchall(  )
-        sqlcompare = 'CREATE MATERIALIZED VIEW mega_comparisons AS \
+        #cursor.execute( 'SELECT COUNT(*) FROM mega_posns t1' )
+        #print 'mega_posns', cursor.fetchall(  )
+        print 'mega_posns done' #, cursor.fetchall(  )
+        sqlcompare = 'CREATE VIEW mega_comparisons AS \
                 SELECT t1.*, foo1.allowed_array, foo2.disallowed_array \
                 FROM mega_posns t1 \
                 LEFT JOIN \
@@ -1159,8 +1181,9 @@ class Uploads(dbtools.DBTools):
                 ON ( t1.peptide_id = foo2.peptide_id AND t1.ptmarray = foo2.ptmarray ) \
                 '
         cursor.execute( sqlcompare )
-        cursor.execute( 'SELECT COUNT(*) FROM mega_comparisons' )
-        print 'mega_comparisons', cursor.fetchall(  )
+        #cursor.execute( 'SELECT COUNT(*) FROM mega_comparisons' )
+        #print 'mega_comparisons', cursor.fetchall(  )
+        print 'mega_comparisons done ' # cursor.fetchall(  )
         sqlcleancompare = 'CREATE VIEW clean_comparisons AS \
                 SELECT DISTINCT ON (peptide_id, ptmarray, experiment_id ) t2.* \
                 FROM \
@@ -1173,15 +1196,17 @@ class Uploads(dbtools.DBTools):
                 ON (foo1.peptide_id = t2.peptide_id AND foo1.ptmarray = t2.ptmarray AND foo1.minabsdm = t2.absdm ) \
                 '
         cursor.execute( sqlcleancompare )
-        cursor.execute( 'SELECT COUNT(*) FROM clean_comparisons' )
-        print 'clean_comparisons', cursor.fetchall(  )
+        #cursor.execute( 'SELECT COUNT(*) FROM clean_comparisons' )
+        #print 'clean_comparisons', cursor.fetchall(  )
+        print 'clean_comparisons done' #, cursor.fetchall(  )
         sqlnotcleancompare = 'CREATE VIEW notclean_comparisons AS \
                 SELECT * FROM mega_comparisons \
                 EXCEPT SELECT * FROM clean_comparisons \
                 '
         cursor.execute( sqlnotcleancompare )
-        cursor.execute( 'SELECT COUNT(*) FROM notclean_comparisons' )
-        print 'notclean_comparisons', cursor.fetchall(  )
+        #cursor.execute( 'SELECT COUNT(*) FROM notclean_comparisons' )
+        #print 'notclean_comparisons', cursor.fetchall(  )
+        print 'notclean_comparisons done' #, cursor.fetchall(  )
         cursor.close()
         t1 = time.time()
         tt = t1 - t0
