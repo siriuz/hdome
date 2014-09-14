@@ -1,4 +1,0 @@
->>> for p in proteins:
-...   for pep in p.peptide_set.all():
-...     for idestimate in pep.idestimate_set.all():
-...       print idestimate.ion.charge_state
