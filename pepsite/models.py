@@ -155,7 +155,7 @@ class Experiment( models.Model ):
     #lodgement = models.ForeignKey( Lodgement )
     notes = models.TextField( default = '',blank=True, null=True )
     #morenotes = models.TextField( default = '',blank=True, null=True )
-    proteins = models.ManyToManyField( 'Protein', blank=True, null=True )
+    #proteins = models.ManyToManyField( 'Protein', blank=True, null=True )
 
     class Meta:
         permissions = (
@@ -270,6 +270,7 @@ class PepToProt(models.Model):
     """docstring for PepToProt"""
     peptide = models.ForeignKey(Peptide)
     protein = models.ForeignKey(Protein)
+    experiment = models.ForeignKey(Experiment)
     positions = models.ManyToManyField(Position)
 
     def __str__(self):

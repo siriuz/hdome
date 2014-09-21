@@ -806,7 +806,7 @@ class Uploads(dbtools.DBTools):
         for row, proteins in zip( self.singlerows, self.allfields['proteinfields'] ):
             if proteins:
                 for prot in proteins:
-                    peptoprotlist.append( [ row[9], row[11], prot[0], prot[1] ] )
+                    peptoprotlist.append( [ row[9], row[11], prot[0], prot[1], str(self.expt.id) ] )
                     ## handling files which do not specify uniprot id
                     if prot[0]:
                         peptoprotsql = 'WITH f as  \
@@ -839,14 +839,14 @@ class Uploads(dbtools.DBTools):
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptoprot' )
         print 'peptoprot', cursor.fetchall()
         peptoprotsql = 'WITH f as  \
-                (SELECT foo.peptide_id, goo.id AS protein_id FROM (VALUES %s ) AS foo(experiment_id, peptide_id, \
+                (SELECT foo.peptide_id, goo.id AS protein_id, foo.experiment_id FROM (VALUES %s ) AS foo(experiment_id, peptide_id, \
                 prot_id, description  ) \
                 INNER JOIN pepsite_protein AS goo ON ( foo.description = goo.description \
                 AND foo.prot_id = goo.prot_id ) ) \
-                INSERT INTO pepsite_peptoprot ( peptide_id, protein_id ) \
-                SELECT f.peptide_id, f.protein_id \
+                INSERT INTO pepsite_peptoprot ( peptide_id, protein_id, experiment_id ) \
+                SELECT f.peptide_id, f.protein_id, f.experiment_id \
                 FROM f LEFT JOIN pepsite_peptoprot existing \
-                ON ( f.peptide_id = existing.peptide_id AND f.protein_id = existing.protein_id ) \
+                ON ( f.peptide_id = existing.peptide_id AND f.protein_id = existing.protein_id and f.experiment_id = existing.experiment_id ) \
                 WHERE existing.id IS NULL \
                 ' % peptoprotstr
         cursor.execute( peptoprotsql )
@@ -854,8 +854,8 @@ class Uploads(dbtools.DBTools):
         print 'peptoprot', cursor.fetchall()
 
 
-        cursor.execute( 'SELECT COUNT(*) FROM pepsite_experiment_proteins' )
-        print 'experiment_proteins', cursor.fetchall()
+        #cursor.execute( 'SELECT COUNT(*) FROM pepsite_experiment_proteins' )
+        #print 'experiment_proteins', cursor.fetchall()
         exptprotsql = 'WITH f as  \
                 (SELECT foo.experiment_id, goo.id AS protein_id FROM (VALUES %s ) AS foo(experiment_id, peptide_id, \
                 prot_id, description  ) \
@@ -867,9 +867,9 @@ class Uploads(dbtools.DBTools):
                 ON ( f.experiment_id = existing.experiment_id AND f.protein_id = existing.protein_id ) \
                 WHERE existing.id IS NULL \
                 ' % peptoprotstr
-        cursor.execute( exptprotsql )
-        cursor.execute( 'SELECT COUNT(*) FROM pepsite_experiment_proteins' )
-        print 'experiment_proteins', cursor.fetchall()
+        #cursor.execute( exptprotsql )
+        #cursor.execute( 'SELECT COUNT(*) FROM pepsite_experiment_proteins' )
+        #print 'experiment_proteins', cursor.fetchall()
 
     def junk_old_views(self ):
         """docstring for simple_expt_query"""
@@ -1083,7 +1083,7 @@ class Uploads(dbtools.DBTools):
         t0 = time.time()
         cursor = connection.cursor()
         #cursor.execute( "DROP MATERIALIZED VIEW IF EXISTS \"mega_unagg\" CASCADE" )
-        cursor.execute( "DROP VIEW IF EXISTS \"mega_unagg\" CASCADE" )
+        cursor.execute( "DROP MATERIALIZED VIEW IF EXISTS \"mega_unagg\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"mega_posns\" CASCADE" )
         cursor.execute( "DROP MATERIALIZED VIEW IF EXISTS \"mega_comparisons\" CASCADE" )
         cursor.execute( "DROP VIEW IF EXISTS \"mega_comparisons\" CASCADE" )
@@ -1091,7 +1091,7 @@ class Uploads(dbtools.DBTools):
         cursor.execute( "DROP VIEW IF EXISTS \"notclean_comparisons\" CASCADE" )
         # Generate SQL for finding idestimate-ptms combo with lowest possible abs(delta_mass) [per experiment] 
         # NOTE: This contins one row per IdEstimate - it can be a starting point for a 'master' view
-        sqlmega_unagg = 'CREATE VIEW mega_unagg AS \
+        sqlmega_unagg = 'CREATE MATERIALIZED VIEW mega_unagg AS \
                 SELECT t1.id as idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, t1.delta_mass, ABS(t1.delta_mass) AS absdm, \
                 t2.id as ion_id, t2.charge_state, t2.mz, t2.precursor_mass, t2.retention_time, t2.spectrum, \
                 t3.id as dataset_id, t3.title as dataset_title, t3.confidence_cutoff, \
@@ -1113,7 +1113,7 @@ class Uploads(dbtools.DBTools):
                 ON (t4.id = t3.experiment_id) \
                 INNER JOIN pepsite_peptide t5 \
                 ON (t5.id = t1.peptide_id ) \
-                LEFT JOIN pepsite_idestimate_ptms t6 \
+                INNER JOIN pepsite_idestimate_ptms t6 \
                 ON (t1.id = t6.idestimate_id ) \
                 LEFT JOIN pepsite_ptm t7 \
                 ON (t7.id = t6.ptm_id ) \
