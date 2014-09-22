@@ -779,12 +779,17 @@ class Uploads(dbtools.DBTools):
             row.append( new )
 
         ideptmlist = []
-        for row, ptms in zip( self.singlerows, self.allfields['ptmfields'] ):
+        idetoprotlist = []
+        for row, ptms, prots in zip( self.singlerows, self.allfields['ptmfields'], self.allfields['proteinfields'] ):
             if ptms:
                 for ptm in ptms:
                     ideptmlist.append( [ row[-1], ptm ] )
+            if prots:
+                for prot in prots:
+                    idetoprotlist.append( [ row[-1], prot[0], prot[1] ] )
 
         ideptmstr = self.reformat_to_str(ideptmlist).strip(', ')[1:-1]
+        ideprotstr = self.reformat_to_str(idetoprotlist).strip(', ')[1:-1]
 
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate_ptms' )
         print 'idestimate_ptms', cursor.fetchall()
@@ -801,75 +806,23 @@ class Uploads(dbtools.DBTools):
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate_ptms' )
         print 'idestimate_ptms', cursor.fetchall()
 
-        peptoprotlist = []
-        peptoprotstr = ''
-        for row, proteins in zip( self.singlerows, self.allfields['proteinfields'] ):
-            if proteins:
-                for prot in proteins:
-                    peptoprotlist.append( [ row[9], row[11], prot[0], prot[1], str(self.expt.id) ] )
-                    ## handling files which do not specify uniprot id
-                    if prot[0]:
-                        peptoprotsql = 'WITH f as  \
-                                (SELECT foo.peptide_id, goo.id AS protein_id FROM (VALUES %s ) AS foo(experiment_id, peptide_id, \
-                                prot_id, description  ) \
-                                INNER JOIN pepsite_protein AS goo ON ( foo.description = goo.description \
-                                AND foo.prot_id = goo.prot_id ) ) \
-                                INSERT INTO pepsite_peptoprot ( peptide_id, protein_id ) \
-                                SELECT f.peptide_id, f.protein_id \
-                                FROM f LEFT JOIN pepsite_peptoprot existing \
-                                ON ( f.peptide_id = existing.peptide_id AND f.protein_id = existing.protein_id ) \
-                                WHERE existing.id IS NULL \
-                                ' % peptoprotstr
-                    else:
-                        peptoprotsql = 'WITH f as  \
-                                (SELECT foo.peptide_id, goo.id AS protein_id FROM (VALUES %s ) AS foo(experiment_id, peptide_id, \
-                                prot_id, description  ) \
-                                INNER JOIN pepsite_protein AS goo ON ( foo.description = goo.description \
-                                 ) ) \
-                                INSERT INTO pepsite_peptoprot ( peptide_id, protein_id ) \
-                                SELECT f.peptide_id, f.protein_id \
-                                FROM f LEFT JOIN pepsite_peptoprot existing \
-                                ON ( f.peptide_id = existing.peptide_id AND f.protein_id = existing.protein_id ) \
-                                WHERE existing.id IS NULL \
-                                ' % peptoprotstr
-                #proteinstr += '(E\'%s\', E\'%s\'), ' % ( b[x][1].replace('\'', '\\\''), b[x][0].replace('\'', '\\\'') )
 
-        peptoprotstr = self.reformat_to_str(peptoprotlist).strip(', ')[1:-1]
-
-        cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptoprot' )
-        print 'peptoprot', cursor.fetchall()
-        peptoprotsql = 'WITH f as  \
-                (SELECT foo.peptide_id, goo.id AS protein_id, foo.experiment_id FROM (VALUES %s ) AS foo(experiment_id, peptide_id, \
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate_proteins' )
+        print 'idetoprot', cursor.fetchall()
+        idetoprotsql = 'WITH f as  \
+                (SELECT foo.idestimate_id, goo.id AS protein_id FROM (VALUES %s ) AS foo(idestimate_id, \
                 prot_id, description  ) \
                 INNER JOIN pepsite_protein AS goo ON ( foo.description = goo.description \
                 AND foo.prot_id = goo.prot_id ) ) \
-                INSERT INTO pepsite_peptoprot ( peptide_id, protein_id, experiment_id ) \
-                SELECT f.peptide_id, f.protein_id, f.experiment_id \
-                FROM f LEFT JOIN pepsite_peptoprot existing \
-                ON ( f.peptide_id = existing.peptide_id AND f.protein_id = existing.protein_id and f.experiment_id = existing.experiment_id ) \
+                INSERT INTO pepsite_idestimate_proteins ( idestimate_id, protein_id ) \
+                SELECT f.idestimate_id, f.protein_id \
+                FROM f LEFT JOIN pepsite_idestimate_proteins existing \
+                ON ( f.idestimate_id = existing.idestimate_id AND f.protein_id = existing.protein_id ) \
                 WHERE existing.id IS NULL \
-                ' % peptoprotstr
-        cursor.execute( peptoprotsql )
-        cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptoprot' )
-        print 'peptoprot', cursor.fetchall()
-
-
-        #cursor.execute( 'SELECT COUNT(*) FROM pepsite_experiment_proteins' )
-        #print 'experiment_proteins', cursor.fetchall()
-        exptprotsql = 'WITH f as  \
-                (SELECT foo.experiment_id, goo.id AS protein_id FROM (VALUES %s ) AS foo(experiment_id, peptide_id, \
-                prot_id, description  ) \
-                INNER JOIN pepsite_protein AS goo ON ( foo.description = goo.description \
-                AND foo.prot_id = goo.prot_id ) ) \
-                INSERT INTO pepsite_experiment_proteins ( experiment_id, protein_id ) \
-                SELECT DISTINCT f.experiment_id, f.protein_id \
-                FROM f LEFT JOIN pepsite_experiment_proteins existing \
-                ON ( f.experiment_id = existing.experiment_id AND f.protein_id = existing.protein_id ) \
-                WHERE existing.id IS NULL \
-                ' % peptoprotstr
-        #cursor.execute( exptprotsql )
-        #cursor.execute( 'SELECT COUNT(*) FROM pepsite_experiment_proteins' )
-        #print 'experiment_proteins', cursor.fetchall()
+                ' % ideprotstr
+        cursor.execute( idetoprotsql )
+        cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate_proteins' )
+        print 'idetoprot', cursor.fetchall()
 
     def junk_old_views(self ):
         """docstring for simple_expt_query"""

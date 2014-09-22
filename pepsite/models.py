@@ -241,7 +241,6 @@ class Protein(models.Model):
 class Peptide(models.Model):
     sequence = models.CharField(max_length=200)
     mass = models.FloatField( null=True, blank=True )
-    proteins = models.ManyToManyField( Protein, through='PepToProt' )
     #ptms = models.ManyToManyField( Ptm )
 
     def __str__(self):
@@ -266,40 +265,6 @@ class Position(models.Model):
         return "%d-%d" %( self.initial_res, self.final_res )
         
 
-class PepToProt(models.Model):
-    """docstring for PepToProt"""
-    peptide = models.ForeignKey(Peptide)
-    protein = models.ForeignKey(Protein)
-    experiment = models.ForeignKey(Experiment)
-    positions = models.ManyToManyField(Position)
-
-    def __str__(self):
-        """docstring for __str__"""
-        return self.peptide.sequence + '--' + self.protein.name
-
-    def get_positions(self):
-        """docstring for get_positions"""
-        poslist = [(m.start(0), m.end(0)) for m in re.finditer(self.peptide.sequence, self.protein.sequence)]
-        pstr = ''
-        for pos in poslist:
-            pstr += '%d-%d ' %( pos[0], pos[1])
-        return pstr.strip()
-
-    def assign_positions(self):
-        """docstring for get_positions"""
-        poslist = [(m.start(0), m.end(0)) for m in re.finditer(self.peptide.sequence, self.protein.sequence)]
-        pstr = ''
-        for pos in poslist:
-            try:
-                posobj = Position.objects.get(  initial_res = pos[0], final_res = pos[1] )
-            except:
-                assert( not Position.objects.filter(  initial_res = pos[0], final_res = pos[1] ) )
-                posobj = Position.objects.create(  initial_res = pos[0], final_res = pos[1] )
-            if not self.positions.filter( id = posobj.id ).exists():
-                self.positions.add( posobj )
-                
-        
-
 
 
 class Ion(models.Model):
@@ -322,6 +287,7 @@ class IdEstimate(models.Model):
     peptide = models.ForeignKey(Peptide)
     ion = models.ForeignKey(Ion)
     ptms = models.ManyToManyField(Ptm)
+    proteins = models.ManyToManyField( Protein )
     #experiment = models.ForeignKey(Experiment)
     delta_mass = models.FloatField()
     confidence = models.FloatField()
@@ -348,6 +314,10 @@ class IdEstimate(models.Model):
     def get_dataset(self):
         """docstring for get_lodgement"""
         return Dataset.objects.get( ions__idestimate = self )
+
+
+
+
 
 class Manufacturer(models.Model):
     """docstring for Manufacturer"""

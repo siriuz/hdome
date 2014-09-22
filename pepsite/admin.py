@@ -177,13 +177,13 @@ class ExternalDbAdmin(admin.ModelAdmin):
 class PtmAdmin(admin.ModelAdmin):
     pass
 
-class PepToProtInLine(admin.StackedInline):
-    model = PepToProt
-    extra = 1
+#class IdeToProtInLine(admin.StackedInline):
+#    model = IdeToProt
+#    extra = 1
 
 class PeptideAdmin( admin.ModelAdmin):
     inlines = [
-            PepToProtInLine,
+            # PepToProtInLine,
             ]
 
 class PositionAdmin( admin.ModelAdmin):
@@ -193,7 +193,7 @@ class PositionAdmin( admin.ModelAdmin):
 
 class ProteinAdmin( admin.ModelAdmin ):
     inlines = [
-            PepToProtInLine,
+            #IdeToProtInLine,
             LookupCodeInLine,
             ]
 
