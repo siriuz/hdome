@@ -1081,6 +1081,36 @@ class Uploads(dbtools.DBTools):
                 LEFT JOIN pepsite_position t12 \
                 ON (t12.id = t11.position_id ) \
                 '
+        sqlmega_unagg = 'CREATE MATERIALIZED VIEW mega_unagg AS \
+                SELECT t1.id as idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, t1.delta_mass, ABS(t1.delta_mass) AS absdm, \
+                t2.id as ion_id, t2.charge_state, t2.mz, t2.precursor_mass, t2.retention_time, t2.spectrum, \
+                t3.id as dataset_id, t3.title as dataset_title, t3.confidence_cutoff, \
+                t3a.id as lodgement_id, t3a.title as lodgement_title, t3a.datafilename, t3a.\"isFree", \
+                t4.id AS experiment_id, t4.title AS experiment_title, \
+                t5.id as peptide_id, t5.sequence AS peptide_sequence, \
+                t7.id AS ptm_id, t7.description as ptm_description, t7.\"name\" as \"ptm_name\", \
+                t10.id as protein_id, t10.description AS protein_description, t10.prot_id AS uniprot_code \
+                FROM \
+                pepsite_idestimate t1 \
+                INNER JOIN pepsite_ion t2 \
+                ON (t1.ion_id = t2.id) \
+                INNER JOIN pepsite_dataset t3 \
+                ON (t2.dataset_id = t3.id) \
+                INNER JOIN pepsite_lodgement t3a \
+                ON (t3.lodgement_id = t3a.id ) \
+                INNER JOIN pepsite_experiment t4 \
+                ON (t4.id = t3.experiment_id) \
+                INNER JOIN pepsite_peptide t5 \
+                ON (t5.id = t1.peptide_id ) \
+                INNER JOIN pepsite_idestimate_proteins t9 \
+                ON (t9.idestimate_id = t1.id ) \
+                INNER JOIN pepsite_protein t10 \
+                ON (t10.id = t9.protein_id AND t10.id = t9.protein_id ) \
+                LEFT JOIN pepsite_idestimate_ptms t6 \
+                ON (t1.id = t6.idestimate_id ) \
+                LEFT JOIN pepsite_ptm t7 \
+                ON (t7.id = t6.ptm_id ) \
+                '
         cursor.execute( sqlmega_unagg )
         #cursor.execute( 'SELECT COUNT(t1.idestimate_id) FROM mega_unagg t1' )
         #print 'mega_unagg', cursor.fetchall(  )
@@ -1103,7 +1133,7 @@ class Uploads(dbtools.DBTools):
         #cursor.execute( 'SELECT COUNT(*) FROM mega_posns t1' )
         #print 'mega_posns', cursor.fetchall(  )
         print 'mega_posns done' #, cursor.fetchall(  )
-        sqlcompare = 'CREATE VIEW mega_comparisons AS \
+        sqlcompare = 'CREATE MATERIALIZED VIEW mega_comparisons AS \
                 SELECT t1.*, foo1.allowed_array, foo2.disallowed_array \
                 FROM mega_posns t1 \
                 LEFT JOIN \
@@ -1137,7 +1167,7 @@ class Uploads(dbtools.DBTools):
         #cursor.execute( 'SELECT COUNT(*) FROM mega_comparisons' )
         #print 'mega_comparisons', cursor.fetchall(  )
         print 'mega_comparisons done ' # cursor.fetchall(  )
-        sqlcleancompare = 'CREATE VIEW clean_comparisons AS \
+        sqlcleancompare = 'CREATE MATERIALIZED VIEW clean_comparisons AS \
                 SELECT DISTINCT ON (peptide_id, ptmarray, experiment_id ) t2.* \
                 FROM \
                 (SELECT t1.peptide_id, t1.ptmarray, \
@@ -1152,7 +1182,7 @@ class Uploads(dbtools.DBTools):
         #cursor.execute( 'SELECT COUNT(*) FROM clean_comparisons' )
         #print 'clean_comparisons', cursor.fetchall(  )
         print 'clean_comparisons done' #, cursor.fetchall(  )
-        sqlnotcleancompare = 'CREATE VIEW notclean_comparisons AS \
+        sqlnotcleancompare = 'CREATE MATERIALIZED VIEW notclean_comparisons AS \
                 SELECT * FROM mega_comparisons \
                 EXCEPT SELECT * FROM clean_comparisons \
                 '

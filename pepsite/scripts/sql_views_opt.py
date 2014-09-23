@@ -23,7 +23,7 @@ django.setup() #required
 from django.contrib.auth.models import User
 from pepsite.models import *
 from pepsite import dbtools
-import pepsite.uploaders
+import pepsite.uploaders as ul
 
 
 from django.db import connection
@@ -40,8 +40,8 @@ def create_views_better():
     INNER JOIN pepsite_peptide t3 \
     ON (t1.peptide_id = t3.id) \
     '
-    cursor.execute( sql1)
-    print cursor.fetchall()
+    #cursor.execute( sql1)
+    #print cursor.fetchall()
     sqlcreate1 = 'CREATE MATERIALIZED VIEW mega_unagg AS \
                 SELECT t1.id as idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, t1.delta_mass, ABS(t1.delta_mass) AS absdm, \
                 t2.id as ion_id, t2.charge_state, t2.mz, t2.precursor_mass, t2.retention_time, t2.spectrum, \
@@ -50,8 +50,7 @@ def create_views_better():
                 t4.id AS experiment_id, t4.title AS experiment_title, \
                 t5.id as peptide_id, t5.sequence AS peptide_sequence, \
                 t7.id AS ptm_id, t7.description as ptm_description, t7.\"name\" as \"ptm_name\", \
-                t10.id as protein_id, t10.description AS protein_description, t10.prot_id AS uniprot_code, \
-                t12.initial_res, t12.final_res \
+                t10.id as protein_id, t10.description AS protein_description, t10.prot_id AS uniprot_code \
                 FROM \
                 pepsite_idestimate t1 \
                 INNER JOIN pepsite_ion t2 \
@@ -64,18 +63,14 @@ def create_views_better():
                 ON (t4.id = t3.experiment_id) \
                 INNER JOIN pepsite_peptide t5 \
                 ON (t5.id = t1.peptide_id ) \
-                INNER JOIN p2ps t9 \
-                ON (t9.peptide_id = t5.id AND t9.experiment_id = t4.id ) \
+                INNER JOIN pepsite_idestimate_proteins t9 \
+                ON (t9.idestimate_id = t1.id ) \
                 INNER JOIN pepsite_protein t10 \
                 ON (t10.id = t9.protein_id AND t10.id = t9.protein_id ) \
                 LEFT JOIN pepsite_idestimate_ptms t6 \
                 ON (t1.id = t6.idestimate_id ) \
                 LEFT JOIN pepsite_ptm t7 \
                 ON (t7.id = t6.ptm_id ) \
-                LEFT JOIN pepsite_peptoprot_positions t11 \
-                ON (t11.peptoprot_id = t9.id) \
-                LEFT JOIN pepsite_position t12 \
-                ON (t12.id = t11.position_id ) \
                 '
     sqlq2 = 'SELECT COUNT(*) \
                 FROM \
@@ -90,18 +85,14 @@ def create_views_better():
                 ON (t4.id = t3.experiment_id) \
                 INNER JOIN pepsite_peptide t5 \
                 ON (t5.id = t1.peptide_id ) \
-                INNER JOIN p2ps t9 \
-                ON (t9.peptide_id = t5.id AND t9.experiment_id = t4.id ) \
+                INNER JOIN pepsite_idestimate_proteins t9 \
+                ON (t9.idestimate_id = t1.id ) \
                 INNER JOIN pepsite_protein t10 \
                 ON (t10.id = t9.protein_id AND t10.id = t9.protein_id ) \
                 LEFT JOIN pepsite_idestimate_ptms t6 \
                 ON (t1.id = t6.idestimate_id ) \
                 LEFT JOIN pepsite_ptm t7 \
                 ON (t7.id = t6.ptm_id ) \
-                LEFT JOIN pepsite_peptoprot_positions t11 \
-                ON (t11.peptoprot_id = t9.id) \
-                LEFT JOIN pepsite_position t12 \
-                ON (t12.id = t11.position_id ) \
                 '
     morestuff = ' \
                 LEFT JOIN pepsite_peptoprot_positions t11 \
@@ -109,9 +100,11 @@ def create_views_better():
                 LEFT JOIN pepsite_position t12 \
                 ON (t12.id = t11.position_id ) \
                 '
+    cursor.execute(sqlq2)
+    print 'prior count:', cursor.fetchall()
     cursor.execute(sqlcreate1)
     cursor.execute('SELECT COUNT(*) FROM mega_unagg')
-    print cursor.fetchall()
+    print 'mega_unagg count:', cursor.fetchall()
 
     t1 = time.time()
     tt = t1 -t0
@@ -119,5 +112,7 @@ def create_views_better():
 
 
 if __name__ == '__main__':
-    create_views_better()
+    #create_views_better()
+    ulinst = ul.Uploads()
+    ulinst.create_views_rapid()
 
