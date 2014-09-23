@@ -815,7 +815,7 @@ class Uploads(dbtools.DBTools):
                 INNER JOIN pepsite_protein AS goo ON ( foo.description = goo.description \
                 AND foo.prot_id = goo.prot_id ) ) \
                 INSERT INTO pepsite_idestimate_proteins ( idestimate_id, protein_id ) \
-                SELECT f.idestimate_id, f.protein_id \
+                SELECT DISTINCT f.idestimate_id, f.protein_id \
                 FROM f LEFT JOIN pepsite_idestimate_proteins existing \
                 ON ( f.idestimate_id = existing.idestimate_id AND f.protein_id = existing.protein_id ) \
                 WHERE existing.id IS NULL \
