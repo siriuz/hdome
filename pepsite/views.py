@@ -1108,6 +1108,10 @@ def peptides_render_rapid( request, expt_id ):
         s1 = ExptArrayAssemble()
         rows = s1.basic_expt_query(  expt.id )
     print len(rows)
+    if len(rows) > 4:
+        print rows[:4]
+    else:
+        print 'dud rows'
     return render( request, 'pepsite/peptides_render_rapid_views.html', { 'expt' : expt, 'rows' : rows }) 
 
 def peptides_render_sql_improved( request, expt_id ):
