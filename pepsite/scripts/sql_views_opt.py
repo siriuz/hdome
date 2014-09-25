@@ -32,16 +32,11 @@ import time
 def create_views_better():
     t0 = time.time()
     cursor = connection.cursor()
-    cursor.execute('DROP MATERIALIZED VIEW IF EXISTS mega_posns')
-    sql1 = 'SELECT COUNT(*) FROM \
-    pepsite_idestimate t1 \
-    INNER JOIN pepsite_ion t2 \
-    ON (t1.ion_id = t2.id) \
-    INNER JOIN pepsite_peptide t3 \
-    ON (t1.peptide_id = t3.id) \
-    '
-    #cursor.execute( sql1)
-    #print cursor.fetchall()
+    #cursor.execute('DROP MATERIALIZED VIEW IF EXISTS mega_unagg CASCADE')
+    #cursor.execute('DROP MATERIALIZED VIEW IF EXISTS mega_posns CASCADE')
+    #cursor.execute('DROP MATERIALIZED VIEW IF EXISTS mega_comparisons CASCADE')
+    cursor.execute('DROP MATERIALIZED VIEW IF EXISTS clean_comparisons CASCADE')
+    cursor.execute('DROP MATERIALIZED VIEW IF EXISTS notclean_comparisons CASCADE')
     sqlcreate1 = 'CREATE MATERIALIZED VIEW mega_unagg AS \
                 SELECT t1.id as idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, t1.delta_mass, ABS(t1.delta_mass) AS absdm, \
                 t2.id as ion_id, t2.charge_state, t2.mz, t2.precursor_mass, t2.retention_time, t2.spectrum, \
@@ -102,38 +97,92 @@ def create_views_better():
                 '
     sqlmega_agg2 = 'CREATE MATERIALIZED VIEW mega_posns AS \
                 SELECT foo1.idestimate_id, foo1.\"isRemoved\", foo1.\"isValid\", foo1.reason, foo1.confidence, foo1.delta_mass, ABS(foo1.delta_mass) AS absdm, \
-                foo1.id as ion_id, foo1.charge_state, foo1.mz, foo1.precursor_mass, foo1.retention_time, foo1.spectrum, \
+                foo1.ion_id, foo1.charge_state, foo1.mz, foo1.precursor_mass, foo1.retention_time, foo1.spectrum, \
                 foo1.dataset_id, foo1.dataset_title, foo1.confidence_cutoff, \
                 foo1.lodgement_id, foo1.lodgement_title, foo1.datafilename, foo1.\"isFree", \
                 foo1.experiment_id, foo1.experiment_title, \
                 foo1.peptide_id, foo1.peptide_sequence, \
                 foo1.proteinarray, foo1.ptmarray, foo1.ptmstr, foo1.proteinstr, foo1.uniprotstr FROM \
-                ( SELECT t1.idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, t1.delta_mass, ABS(t1.delta_mass) AS absdm, \
-                t1.id as ion_id, t1.charge_state, t1.mz, t1.precursor_mass, t1.retention_time, t1.spectrum, \
+                ( SELECT t1.idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, t1.delta_mass, \
+                t1.ion_id, t1.charge_state, t1.mz, t1.precursor_mass, t1.retention_time, t1.spectrum, \
                 t1.dataset_id, t1.dataset_title, t1.confidence_cutoff, \
                 t1.lodgement_id, t1.lodgement_title, t1.datafilename, t1.\"isFree", \
                 t1.experiment_id, t1.experiment_title, \
                 t1.peptide_id, t1.peptide_sequence, \
-                t1.proteinarray, t1.ptmarray, t1.ptmstr, t1.proteinstr, t1.uniprotstr \
                 array_agg( DISTINCT (t1.protein_id, \'|||\' || t1.protein_description || \'|||\', t1.uniprot_code)::text ORDER BY  (t1.protein_id, \'|||\' || t1.protein_description || \'|||\', t1.uniprot_code)::text  ) AS proteinarray, \
                 array_to_string(array_agg(t1.protein_description order by t1.protein_description),\'; \') AS proteinstr, \
                 array_to_string(array_agg(t1.uniprot_code order by t1.protein_description),\'; \') AS uniprotstr, \
                 array_agg( DISTINCT (t1.ptm_id, t1.ptm_description)::text order by (t1.ptm_id, t1.ptm_description)::text ) AS ptmarray, \
                 array_to_string(array_agg(t1.ptm_description order by t1.ptm_description),\'; \') AS ptmstr \
                 FROM mega_unagg t1 \
-                GROUP BY t1.idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, t1.delta_mass, ABS(t1.delta_mass) AS absdm, \
-                t1.id as ion_id, t1.charge_state, t1.mz, t1.precursor_mass, t1.retention_time, t1.spectrum, \
+                GROUP BY t1.idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, t1.delta_mass, \
+                t1.ion_id, t1.charge_state, t1.mz, t1.precursor_mass, t1.retention_time, t1.spectrum, \
                 t1.dataset_id, t1.dataset_title, t1.confidence_cutoff, \
                 t1.lodgement_id, t1.lodgement_title, t1.datafilename, t1.\"isFree", \
                 t1.experiment_id, t1.experiment_title, \
-                t1.peptide_id, t1.peptide_sequence, \
-                t1.proteinarray, t1.ptmarray, t1.ptmstr, t1.proteinstr, t1.uniprotstr \
+                t1.peptide_id, t1.peptide_sequence \
                 ) as foo1 \
                 \
                 '
-    cursor.execute( sqlmega_agg2 )
+    sqlcompare = 'CREATE MATERIALIZED VIEW mega_comparisons AS \
+                SELECT t1.*, foo1.allowed_array, foo2.disallowed_array \
+                FROM mega_posns t1 \
+                LEFT JOIN \
+                ( SELECT \
+                t2.peptide_id, \
+                t2.ptmarray, \
+                array_agg( DISTINCT t2.experiment_id ORDER BY t2.experiment_id ) AS allowed_array \
+                FROM \
+                ( select * FROM mega_posns mp WHERE mp.\"isRemoved\" = false AND mp.confidence > mp.confidence_cutoff ) AS t2 \
+                GROUP BY \
+                t2.peptide_id, \
+                t2.ptmarray \
+                ) \
+                AS foo1 \
+                ON ( t1.peptide_id = foo1.peptide_id AND t1.ptmarray = foo1.ptmarray ) \
+                LEFT JOIN \
+                ( SELECT \
+                t3.peptide_id, \
+                t3.ptmarray, \
+                array_agg( DISTINCT t3.experiment_id ORDER BY t3.experiment_id ) AS disallowed_array \
+                FROM \
+                ( select * FROM mega_posns mp2 WHERE mp2.\"isRemoved\" = true OR mp2.confidence <= mp2.confidence_cutoff ) AS t3 \
+                GROUP BY \
+                t3.peptide_id, \
+                t3.ptmarray \
+                ) \
+                AS foo2 \
+                ON ( t1.peptide_id = foo2.peptide_id AND t1.ptmarray = foo2.ptmarray ) \
+                '
+    sqlcleancompare = 'CREATE MATERIALIZED VIEW clean_comparisons AS \
+                SELECT DISTINCT ON (peptide_id, ptmarray, experiment_id ) t2.* \
+                FROM \
+                (SELECT t1.peptide_id, t1.ptmarray, \
+                MIN( t1.absdm ) AS minabsdm \
+                FROM mega_comparisons t1 \
+                GROUP BY t1.peptide_id, t1.ptmarray, experiment_id ) as foo1 \
+                LEFT JOIN \
+                mega_comparisons t2 \
+                ON (foo1.peptide_id = t2.peptide_id AND foo1.ptmarray = t2.ptmarray AND foo1.minabsdm = t2.absdm ) \
+                '
+    sqlnotcleancompare = 'CREATE MATERIALIZED VIEW notclean_comparisons AS \
+                SELECT * FROM mega_comparisons \
+                EXCEPT SELECT * FROM clean_comparisons \
+                '
+    cursor.execute('SELECT COUNT(*) FROM mega_unagg')
+    print 'mega_unagg count:', cursor.fetchall()
+    #cursor.execute( sqlmega_agg2 )
     cursor.execute('SELECT COUNT(*) FROM mega_posns')
     print 'mega_posns count:', cursor.fetchall()
+    #cursor.execute( sqlcompare )
+    cursor.execute('SELECT COUNT(*) FROM mega_comparisons')
+    print 'mega_comparisons count:', cursor.fetchall()
+    cursor.execute( sqlcleancompare )
+    cursor.execute( 'SELECT COUNT(*) FROM clean_comparisons' )
+    print 'clean_comparisons', cursor.fetchall(  )
+    cursor.execute( sqlnotcleancompare )
+    cursor.execute( 'SELECT COUNT(*) FROM notclean_comparisons' )
+    print 'notclean_comparisons', cursor.fetchall(  )
 
     t1 = time.time()
     tt = t1 -t0
@@ -141,7 +190,7 @@ def create_views_better():
 
 
 if __name__ == '__main__':
-    #create_views_better()
+    create_views_better()
     #ulinst = ul.Uploads()
     # ulinst.create_views_rapid()
 
