@@ -180,7 +180,7 @@ table_exportable();
     {% for row in rows %}
         <tr>
 
-            <td><a href="{% url 'pepsite:protein_peptides' row.protein_id %}" class="link">{{row.protein_description}}</a></td>
+            <td>{% for protein in row.proteinarray %}<a href="{% url 'pepsite:protein_peptides' protein.0 %}" class="link">{{protein.1}} {% endfor %}</a></td>
             
             <td><a href="http://www.uniprot.org/uniprot/{{row.protein_uniprot_code}}" class="link" target="_blank">{{row.protein_uniprot_code}}</a></td>
             
