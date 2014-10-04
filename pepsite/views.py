@@ -952,7 +952,7 @@ def protein_peptides( request, protein_id ):
     prot1 = get_object_or_404( Protein, id = protein_id )
     complete = True
     excluded_ids = []
-    for expt in Experiment.objects.filter( proteins = protein_id ):
+    for expt in Experiment.objects.filter( ion__idestimate__proteins = protein_id ):
         if ( not user.has_perm( 'view_experiment', expt ) ):
             complete = False
             excluded_ids.append( expt.id )

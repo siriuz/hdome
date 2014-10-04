@@ -32,9 +32,9 @@ import time
 def create_views_better():
     t0 = time.time()
     cursor = connection.cursor()
-    #cursor.execute('DROP MATERIALIZED VIEW IF EXISTS mega_unagg CASCADE')
-    #cursor.execute('DROP MATERIALIZED VIEW IF EXISTS mega_posns CASCADE')
-    #cursor.execute('DROP MATERIALIZED VIEW IF EXISTS mega_comparisons CASCADE')
+    cursor.execute('DROP MATERIALIZED VIEW IF EXISTS mega_unagg CASCADE')
+    cursor.execute('DROP MATERIALIZED VIEW IF EXISTS mega_posns CASCADE')
+    cursor.execute('DROP MATERIALIZED VIEW IF EXISTS mega_comparisons CASCADE')
     cursor.execute('DROP MATERIALIZED VIEW IF EXISTS clean_comparisons CASCADE')
     cursor.execute('DROP MATERIALIZED VIEW IF EXISTS notclean_comparisons CASCADE')
     sqlcreate1 = 'CREATE MATERIALIZED VIEW mega_unagg AS \
@@ -102,7 +102,8 @@ def create_views_better():
                 foo1.lodgement_id, foo1.lodgement_title, foo1.datafilename, foo1.\"isFree", \
                 foo1.experiment_id, foo1.experiment_title, \
                 foo1.peptide_id, foo1.peptide_sequence, \
-                foo1.proteinarray, foo1.ptmarray, foo1.ptmstr, foo1.proteinstr, foo1.uniprotstr FROM \
+                foo1.proteinarray, foo1.ptmarray, foo1.ptmstr, foo1.proteinstr, foo1.uniprotstr , \
+                foo1.ptmidarray, foo1.proteinidarray FROM \
                 ( SELECT t1.idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, t1.delta_mass, \
                 t1.ion_id, t1.charge_state, t1.mz, t1.precursor_mass, t1.retention_time, t1.spectrum, \
                 t1.dataset_id, t1.dataset_title, t1.confidence_cutoff, \
@@ -113,7 +114,9 @@ def create_views_better():
                 array_to_string(array_agg(t1.protein_description order by t1.protein_description),\'; \') AS proteinstr, \
                 array_to_string(array_agg(t1.uniprot_code order by t1.protein_description),\'; \') AS uniprotstr, \
                 array_agg( DISTINCT (t1.ptm_id, t1.ptm_description)::text order by (t1.ptm_id, t1.ptm_description)::text ) AS ptmarray, \
-                array_to_string(array_agg(t1.ptm_description order by t1.ptm_description),\'; \') AS ptmstr \
+                array_to_string(array_agg(t1.ptm_description order by t1.ptm_description),\'; \') AS ptmstr, \
+                array_agg(t1.ptm_id order by t1.ptm_id) AS ptmidarray, \
+                array_agg(t1.protein_id order by t1.protein_id) AS proteinidarray \
                 FROM mega_unagg t1 \
                 GROUP BY t1.idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, t1.delta_mass, \
                 t1.ion_id, t1.charge_state, t1.mz, t1.precursor_mass, t1.retention_time, t1.spectrum, \
@@ -169,12 +172,13 @@ def create_views_better():
                 SELECT * FROM mega_comparisons \
                 EXCEPT SELECT * FROM clean_comparisons \
                 '
+    cursor.execute( sqlcreate1 )
     cursor.execute('SELECT COUNT(*) FROM mega_unagg')
     print 'mega_unagg count:', cursor.fetchall()
-    #cursor.execute( sqlmega_agg2 )
+    cursor.execute( sqlmega_agg2 )
     cursor.execute('SELECT COUNT(*) FROM mega_posns')
     print 'mega_posns count:', cursor.fetchall()
-    #cursor.execute( sqlcompare )
+    cursor.execute( sqlcompare )
     cursor.execute('SELECT COUNT(*) FROM mega_comparisons')
     print 'mega_comparisons count:', cursor.fetchall()
     cursor.execute( sqlcleancompare )

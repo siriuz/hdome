@@ -1116,13 +1116,15 @@ class Uploads(dbtools.DBTools):
         #print 'mega_unagg', cursor.fetchall(  )
         print 'mega_unagg done' #, cursor.fetchall(  )
         sqlmega_agg2 = 'CREATE VIEW mega_posns AS \
-                SELECT DISTINCT t2.*, foo1.proteinarray, foo1.ptmarray, foo1.ptmstr, foo1.proteinstr, foo1.uniprotstr FROM \
+                SELECT DISTINCT t2.*, foo1.proteinarray, foo1.ptmarray, foo1.ptmstr, foo1.proteinstr, foo1.uniprotstr, foo1.ptmidarray, foo1.proteinidarray FROM \
                 ( SELECT idestimate_id, \
                 array_agg( DISTINCT (t1.protein_id, \'|||\' || t1.protein_description || \'|||\', t1.uniprot_code)::text ORDER BY  (t1.protein_id, \'|||\' || t1.protein_description || \'|||\', t1.uniprot_code)::text  ) AS proteinarray, \
                 array_to_string(array_agg(t1.protein_description order by t1.protein_description),\'; \') AS proteinstr, \
                 array_to_string(array_agg(t1.uniprot_code order by t1.protein_description),\'; \') AS uniprotstr, \
                 array_agg( DISTINCT (t1.ptm_id, t1.ptm_description)::text order by (t1.ptm_id, t1.ptm_description)::text ) AS ptmarray, \
                 array_to_string(array_agg(t1.ptm_description order by t1.ptm_description),\'; \') AS ptmstr \
+                array_agg(t1.ptm_id order by t1.ptm_id) AS ptmidarray, \
+                array_agg(t1.protein_id order by t1.protein_id) AS proteinidarray \
                 FROM mega_unagg t1 \
                 GROUP BY idestimate_id ) as foo1 \
                 LEFT JOIN mega_unagg t2 \

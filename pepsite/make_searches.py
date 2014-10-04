@@ -769,7 +769,7 @@ class ExptArrayAssemble( BaseSearch ):
         cursor = connection.cursor()
         sql_expt = "SELECT * \
                 FROM clean_comparisons \
-                WHERE protein_id = %s\
+                WHERE %s = ANY(proteinidarray) \
                 EXCEPT \
                 SELECT * \
                 FROM clean_comparisons \
