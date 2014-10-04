@@ -623,7 +623,7 @@ class Uploads(dbtools.DBTools):
         
         dsstr = ''
         for d in self.allfields['datasetfields']:
-            title = self.entitle_ds( c, self.filename )
+            title = self.entitle_ds( d, self.filename )
             dsstr += '(\'%s\', %d), ' % (title, self.expt.id) 
         dsstr = dsstr.strip(', ')
 
@@ -1471,12 +1471,21 @@ class Curate( Uploads ):
                 #ptm.save()
                 ptms.append( ptm )
             dsno = local['dataset']
-            if True:
-                dataset, _ = Dataset.objects.get_or_create( lodgement = ldg_obj,
-                    title = 'Dataset #%s from %s' % ( dsno, ldg_obj.title )  )
-                ion, _ = Ion.objects.get_or_create( charge_state = local['charge'], precursor_mass = local['precursor_mass'],
-                    retention_time = local['retention_time'], dataset = dataset )
+            dstitle = self.entitle_ds(dsno, ldg_obj.datafilename)
+            try:
+                dataset = Dataset.objects.get( lodgement__id = ldg_obj.id,
+                    title = dstitle ) #title = 'Dataset #%s from %s' % ( dsno, ldg_obj.title )  )
+                print 'Dataset retrieval: %s, %s, %d' % ( dataset.title, dataset.id )
+            except:
+                print 'Dataset retrieval failed for lodgement__id = %d and title = %s' % (ldg_obj.id, dstitle)
+            try:
+                ion = Ion.objects.get( charge_state = local['charge'], precursor_mass = local['precursor_mass'],
+                    retention_time = local['retention_time'], mz = local['mz'], dataset = dataset )
+                print 'Ion retrieval succeded'
+            except:
+                print 'Ion retrieval failed'
                 #ion.save()
+            try:
                 td = []
                 count = 0
                 if not ptms:
@@ -1494,7 +1503,7 @@ class Curate( Uploads ):
                     ide.save()
                 except:
                     pass
-            else:
+            except:
                 pass
 
 
