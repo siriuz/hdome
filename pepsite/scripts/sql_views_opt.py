@@ -111,12 +111,12 @@ def create_views_better():
                 t1.experiment_id, t1.experiment_title, \
                 t1.peptide_id, t1.peptide_sequence, \
                 array_agg( DISTINCT (t1.protein_id, \'|||\' || t1.protein_description || \'|||\', t1.uniprot_code)::text ORDER BY  (t1.protein_id, \'|||\' || t1.protein_description || \'|||\', t1.uniprot_code)::text  ) AS proteinarray, \
-                array_to_string(array_agg(t1.protein_description order by t1.protein_description),\'; \') AS proteinstr, \
-                array_to_string(array_agg(t1.uniprot_code order by t1.protein_description),\'; \') AS uniprotstr, \
+                array_to_string(array_agg( DISTINCT t1.protein_description order by t1.protein_description),\'; \') AS proteinstr, \
+                array_to_string(array_agg( DISTINCT t1.uniprot_code order by t1.uniprot_code),\'; \') AS uniprotstr, \
                 array_agg( DISTINCT (t1.ptm_id, t1.ptm_description)::text order by (t1.ptm_id, t1.ptm_description)::text ) AS ptmarray, \
-                array_to_string(array_agg(t1.ptm_description order by t1.ptm_description),\'; \') AS ptmstr, \
-                array_agg(t1.ptm_id order by t1.ptm_id) AS ptmidarray, \
-                array_agg(t1.protein_id order by t1.protein_id) AS proteinidarray \
+                array_to_string(array_agg( DISTINCT t1.ptm_description order by t1.ptm_description),\'; \') AS ptmstr, \
+                array_agg( DISTINCT t1.ptm_id order by t1.ptm_id) AS ptmidarray, \
+                array_agg( DISTINCT t1.protein_id order by t1.protein_id) AS proteinidarray \
                 FROM mega_unagg t1 \
                 GROUP BY t1.idestimate_id, t1.\"isRemoved\", t1.\"isValid\", t1.reason, t1.confidence, t1.delta_mass, \
                 t1.ion_id, t1.charge_state, t1.mz, t1.precursor_mass, t1.retention_time, t1.spectrum, \

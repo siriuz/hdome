@@ -448,7 +448,7 @@ class Uploads(dbtools.DBTools):
         assign_perm('view_experiment', self.user, self.expt)
         for ab in self.antibodies:
                 self.expt.antibody_set.add( ab )
-        lodgement, _ = Lodgement.objects.get_or_create( user = self.user, title = ldg_name, datetime = self.now, datafilename=filename )
+        lodgement, _ = Lodgement.objects.get_or_create( user = self.user, title = ldg_name, datetime = self.now, datafilename=filename.split('/')[-1] )
         if self.publications:
             for pl in self.publications:
                     pbln = Publication.objects.get( id=pl )
