@@ -133,16 +133,20 @@ class ImportSpeedTest(TestCase):
                 print 'uploading'
                 #ul.upload_simple()
                 ul.upload_megarapid()
+                sr_header = ul.singlerows_header
+                srhl = len(sr_header)
                 for b, c, d in zip(allfields['peptidefields'], sorted(ul.uldict.keys()), ul.singlerows ):
                     ori = ul.uldict[c]['peptide_sequence']
                     fin = d[0]
                     #fin = b
-                    print b, ori, fin
+                    #print b, ori, fin
                     self.assertEqual( fin, ori  )
+                    self.assertEqual( len(d), srhl  )
+                    print d
 
                 #self.bi1.upload_ss_single( user_id, f, expt_id, ab_ids, 'dummy lodgement', cf_cutoff = cf_cutoff )
             print 'upload complete'
-            print ul.singlerows
+            #print ul.singlerows
 
 
 

@@ -382,8 +382,9 @@ class Uploads(dbtools.DBTools):
                 idestimatefields.append( ( uldict[j]['confidence'], uldict[j]['delta_mass'] ) )
                 ptmfields.append( [ b for b in uldict[j]['ptms'] ] )
                 ##
-                singlerows.append( [ uldict[j]['peptide_sequence'], uldict[j]['charge'], uldict[j]['precursor_mass'], 
+                singlerows.append( [ uldict[j]['peptide_sequence'], uldict[j]['charge'], uldict[j]['precursor_mass'],
                         uldict[j]['retention_time'], uldict[j]['mz'], uldict[j]['confidence'], uldict[j]['delta_mass'], uldict[j]['spectrum'], uldict[j]['dataset'] ] )
+                self.singlerows_header = ['peptide_sequence', 'charge', 'precursor_mass', 'retention_time', 'mz', 'confidence', 'delta_mass', 'spectrum', 'dataset']
             j += 1
         allstr += '</tbody></table>'
         self.allstr = allstr
@@ -632,6 +633,7 @@ class Uploads(dbtools.DBTools):
 
         for row in self.singlerows:
             row.append( self.expt.id )
+        self.singlerows_header.append( 'experiment_id' )
 
         sqldsfind = 'WITH f AS \
                 (SELECT t2.id AS dataset_id FROM \
@@ -644,6 +646,7 @@ class Uploads(dbtools.DBTools):
         newmastercol = cursor.fetchall()
         for row, new in zip( self.singlerows, [b[0] for b in newmastercol ] ) :
             row.append( new )
+        self.singlerows_header.append( 'dataset_id' )
 
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_protein' )
         print 'protein', cursor.fetchall()
@@ -696,7 +699,8 @@ class Uploads(dbtools.DBTools):
         #print newmastercol
         for row, new in zip( self.singlerows, [b[0] for b in newmastercol ] ) :
             row.append( new )
-        
+        self.singlerows_header.append( 'peptide_id' )
+
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_ptm' )
         print 'ptm', cursor.fetchall()
         sqlptm = 'INSERT INTO pepsite_ptm (\"description\", \"name\") \
@@ -742,6 +746,7 @@ class Uploads(dbtools.DBTools):
         newmastercol = cursor.fetchall()
         for row, new in zip( self.singlerows, [b[0] for b in newmastercol ] ) :
             row.append( new )
+        self.singlerows_header.append( 'ion_id' )
 
         print self.singlerows[:5]
 
@@ -779,6 +784,7 @@ class Uploads(dbtools.DBTools):
         newmastercol = cursor.fetchall()
         for row, new in zip( self.singlerows, [b[0] for b in newmastercol ] ) :
             row.append( new )
+        self.singlerows_header.append( 'idestimate_id' )
 
         ideptmlist = []
         idetoprotlist = []
