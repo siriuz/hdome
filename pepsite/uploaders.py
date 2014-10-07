@@ -392,6 +392,7 @@ class Uploads(dbtools.DBTools):
                 'ionfields' : ionfields, 'idestimatefields' : idestimatefields, 'ptmfields' : ptmfields } 
         self.singlerows = singlerows
         self.dataset_nos = sorted( self.dataset_nos )
+        return self.allfields
 
 
     #@transaction.atomic

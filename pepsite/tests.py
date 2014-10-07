@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from pepsite.models import *
-#from scripts.imports_rapid import BackgroundImports, bulk_main, bulk_with_extra
+from pepsite.uploaders import Uploads
 from bulk_import_from_spreadsheet import BackgroundImports, bulk_main, bulk_with_extra
 import os
 import datetime
@@ -106,7 +106,43 @@ class ImportSpeedTest(TestCase):
             #lodgement_title = 'Auto Lodgement for %s at datetime = %s' % ( bi1.mdict[en]['Experiment name'], datetime.datetime.utcnow().replace(tzinfo=utc).__str__() )
             #lodgement_title = 'Filename = \"%s\", Datetime = %s, Lodgement for Experiment = \"%s\"' % ( os.path.split(filepath)[-1], now, bi1.mdict[en]['Experiment name']  )
             print 'WORKING ON:', MDIC['Experiment name']
-            t1 = self.bi1.single_upload_from_ss(self.user1.username, MDIC, 'dummy lodgement', filepath )
-            print '\n\nUpload of Experiment: %s took %f seconds\n\n' % ( MDIC['Experiment name'].strip(), t1 )
+            with open( filepath, 'rb' ) as f:
+                cf_cutoff = float( MDIC['5% FDR'] )
+                expt_obj = self.bi1.get_model_object( Experiment, title = MDIC['Experiment name'] )
+                expt_id = expt_obj.id
+                ab_ids = []
+                for ab_name in MDIC['Elution Ab'].strip().split(','):
+                    ab_ids.append( self.bi1.get_model_object( Antibody, name = ab_name.strip() ).id )
+                user_id = self.user1.id
+
+                # ul = Uploads( user = self.user1 )
+                inst, _ = Instrument.objects.get_or_create( name = 'HiLine-Pro' )
+                metadata = { 'expt1' : expt_id, 'expt2' : None, 'pl1' : [], 'ab1' : ab_ids, 'ldg' : 'dummy lodgement', 'inst' : self.inst1.id, 'filename' : f.name  }
+                ul = Uploads( user = self.user1 )
+                ul.preview_ss_simple( metadata )
+                allfields = ul.preprocess_ss_simple( f )
+                ul.add_cutoff_mappings( {'cf_' : cf_cutoff} )
+                #ul.get_protein_metadata(  )
+                print 'preparing upload'
+                ul.prepare_upload_simple( )
+                for b, c in zip(allfields['peptidefields'], sorted(ul.uldict.keys())):
+                    ori = ul.uldict[c]['peptide_sequence']
+                    #fin = b
+                    print b, ori
+                    self.assertEqual( b, ori  )
+                print 'uploading'
+                #ul.upload_simple()
+                ul.upload_megarapid()
+                for b, c, d in zip(allfields['peptidefields'], sorted(ul.uldict.keys()), ul.singlerows ):
+                    ori = ul.uldict[c]['peptide_sequence']
+                    fin = d[0]
+                    #fin = b
+                    print b, ori, fin
+                    self.assertEqual( fin, ori  )
+
+                #self.bi1.upload_ss_single( user_id, f, expt_id, ab_ids, 'dummy lodgement', cf_cutoff = cf_cutoff )
+            print 'upload complete'
+            print ul.singlerows
+
 
 
