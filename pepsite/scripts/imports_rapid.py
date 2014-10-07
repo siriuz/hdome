@@ -321,8 +321,8 @@ class BackgroundImports(dbtools.DBTools):
         if public:
             metadata['rel'] = True
         ul = pepsite.uploaders.Uploads( user = user )
-	ul.preview_ss_simple( metadata )
-	ul.preprocess_ss_simple( fileobj )
+        ul.preview_ss_simple( metadata )
+        ul.preprocess_ss_simple( fileobj )
         ul.add_cutoff_mappings( {'cf_' : cf_cutoff} )
         #ul.get_protein_metadata(  )
         print 'preparing upload'
