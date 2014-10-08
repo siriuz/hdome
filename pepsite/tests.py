@@ -91,20 +91,9 @@ class ImportSpeedTest(TestCase):
         bulk_with_extra(self.user1.username, ss_master, datadir)
 
     def test_single_import(self):
-        expt_name = MDIC['Experiment name'].strip()
         filepath = os.path.join( CURDIR, 'scripts/Time_Trial_Import4_PeptideSummary.trial4' )
-        # if os.path.isfile( filepath ): # and bi1.mdict[en]['File name'][:2] != 'RS':
         if True: # os.path.isfile( filepath ): # and bi1.mdict[en]['File name'][:2] != 'RS':
             print 'FILE FOUND:', filepath
-            #cf_cutoff = float( bi1.mdict[en]['5% FDR'] )
-            #expt_obj = bi1.get_model_object( Experiment, title = bi1.mdict[en]['Experiment name'] )
-            #expt_id = expt_obj.id
-            #ab_ids = []
-            #for ab_name in bi1.mdict[en]['Elution Ab'].strip().split(','):
-            #    ab_ids.append( bi1.get_model_object( Antibody, name = ab_name.strip() ).id )
-            #print 'got here'
-            #lodgement_title = 'Auto Lodgement for %s at datetime = %s' % ( bi1.mdict[en]['Experiment name'], datetime.datetime.utcnow().replace(tzinfo=utc).__str__() )
-            #lodgement_title = 'Filename = \"%s\", Datetime = %s, Lodgement for Experiment = \"%s\"' % ( os.path.split(filepath)[-1], now, bi1.mdict[en]['Experiment name']  )
             print 'WORKING ON:', MDIC['Experiment name']
             with open( filepath, 'rb' ) as f:
                 cf_cutoff = float( MDIC['5% FDR'] )
@@ -122,18 +111,18 @@ class ImportSpeedTest(TestCase):
                 ul.preview_ss_simple( metadata )
                 allfields = ul.preprocess_ss_simple( f )
                 ul.add_cutoff_mappings( {'cf_' : cf_cutoff} )
-                #ul.get_protein_metadata(  )
                 print 'preparing upload'
                 ul.prepare_upload_simple( )
                 for b, c in zip(allfields['peptidefields'], sorted(ul.uldict.keys())):
                     ori = ul.uldict[c]['peptide_sequence']
                     #fin = b
-                    print b, ori
+                    #print b, ori
                     self.assertEqual( b, ori  )
                 print 'uploading'
-                #ul.upload_simple()
                 ul.upload_megarapid()
                 sr_header = ul.singlerows_header
+                ion_index = sr_header.index('ion_id')
+                ide_index = sr_header.index('idestimate_id')
                 srhl = len(sr_header)
                 for b, c, d in zip(allfields['peptidefields'], sorted(ul.uldict.keys()), ul.singlerows ):
                     ori = ul.uldict[c]['peptide_sequence']
@@ -142,7 +131,16 @@ class ImportSpeedTest(TestCase):
                     #print b, ori, fin
                     self.assertEqual( fin, ori  )
                     self.assertEqual( len(d), srhl  )
-                    print d
+                    ion = Ion.objects.get(id = d[ion_index])
+                    self.assertEqual(int(ul.uldict[c]['charge']), ion.charge_state)
+                    self.assertEqual(float(ul.uldict[c]['mz']), ion.mz)
+                    self.assertEqual(float(ul.uldict[c]['precursor_mass']), ion.precursor_mass)
+                    ide = IdEstimate.objects.get(id = d[ide_index])
+                    print ul.uldict[c]
+                    self.assertEqual(float(ul.uldict[c]['confidence']), ide.confidence)
+
+
+                    print ion
 
                 #self.bi1.upload_ss_single( user_id, f, expt_id, ab_ids, 'dummy lodgement', cf_cutoff = cf_cutoff )
             print 'upload complete'

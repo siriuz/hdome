@@ -340,6 +340,9 @@ class Uploads(dbtools.DBTools):
                             else:
                                 uldict[j][m] = [ elements[k] ]
                                 allstr += '<td>%s</td>' % ( elements[k] )
+                        elif m in ('precursor_mass', 'confidence', 'delta_mass'):
+                            allstr += '<td>' + elements[k] + '</td>'
+                            uldict[j][m] = str(round(float(elements[k]), 5))
                         elif m not in ('uniprot_ids'):
                             allstr += '<td>' + elements[k] + '</td>'
                             uldict[j][m] = elements[k]
@@ -754,6 +757,7 @@ class Uploads(dbtools.DBTools):
         print 'idestimate', cursor.fetchall()
 
         masterstr = self.reformat_to_str(self.singlerows).strip(', ')[1:-1]
+        print 'masterstr: %s' % self.reformat_to_str(self.singlerows[:5]).strip(', ')[1:-1]
 
         sqlide_new = 'WITH f AS \
                 (SELECT * FROM  (VALUES %s ) AS foo(peptide_sequence, charge_state, precursor_mass, \
