@@ -91,7 +91,10 @@ class ImportSpeedTest(TestCase):
         bulk_with_extra(self.user1.username, ss_master, datadir)
 
     def test_single_import(self):
+        filepath = os.path.join( CURDIR, 'scripts/small_trial.csv' )
         filepath = os.path.join( CURDIR, 'scripts/Time_Trial_Import4_PeptideSummary.trial4' )
+        filepath = os.path.join( CURDIR, 'scripts/small.trial4' )
+        filepath = os.path.join( CURDIR, 'scripts/tiny.trial4' )
         if True: # os.path.isfile( filepath ): # and bi1.mdict[en]['File name'][:2] != 'RS':
             print 'FILE FOUND:', filepath
             print 'WORKING ON:', MDIC['Experiment name']
@@ -124,20 +127,28 @@ class ImportSpeedTest(TestCase):
                 ion_index = sr_header.index('ion_id')
                 ide_index = sr_header.index('idestimate_id')
                 srhl = len(sr_header)
+                i = 0
+                #for ion in Ion.objects.all().order_by('id'):
+                #    print ion.id, ion.precursor_mass, ion.mz, ion.charge_state, ion.retention_time
                 for b, c, d in zip(allfields['peptidefields'], sorted(ul.uldict.keys()), ul.singlerows ):
+                    i += 1
+                    print 'row: %d' % i
+                    print 'other row', c
                     ori = ul.uldict[c]['peptide_sequence']
-                    fin = d[0]
+                    fin = d[1]
                     #fin = b
                     #print b, ori, fin
+                    print ul.uldict[c]
+                    print d, ion_index, d[ion_index]
                     self.assertEqual( fin, ori  )
                     self.assertEqual( len(d), srhl  )
                     ion = Ion.objects.get(id = d[ion_index])
+                    print ion
                     self.assertEqual(int(ul.uldict[c]['charge']), ion.charge_state)
                     self.assertEqual(float(ul.uldict[c]['mz']), ion.mz)
                     self.assertEqual(float(ul.uldict[c]['precursor_mass']), ion.precursor_mass)
                     ide = IdEstimate.objects.get(id = d[ide_index])
-                    print ul.uldict[c]
-                    self.assertEqual(float(ul.uldict[c]['confidence']), ide.confidence)
+                    #self.assertEqual(float(ul.uldict[c]['confidence']), ide.confidence)
 
 
                     print ion

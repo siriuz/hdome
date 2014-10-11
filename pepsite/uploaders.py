@@ -385,9 +385,9 @@ class Uploads(dbtools.DBTools):
                 idestimatefields.append( ( uldict[j]['confidence'], uldict[j]['delta_mass'] ) )
                 ptmfields.append( [ b for b in uldict[j]['ptms'] ] )
                 ##
-                singlerows.append( [ uldict[j]['peptide_sequence'], uldict[j]['charge'], uldict[j]['precursor_mass'],
+                singlerows.append( [j,  uldict[j]['peptide_sequence'], uldict[j]['charge'], uldict[j]['precursor_mass'],
                         uldict[j]['retention_time'], uldict[j]['mz'], uldict[j]['confidence'], uldict[j]['delta_mass'], uldict[j]['spectrum'], uldict[j]['dataset'] ] )
-                self.singlerows_header = ['peptide_sequence', 'charge', 'precursor_mass', 'retention_time', 'mz', 'confidence', 'delta_mass', 'spectrum', 'dataset']
+                self.singlerows_header = ['rownum', 'peptide_sequence', 'charge', 'precursor_mass', 'retention_time', 'mz', 'confidence', 'delta_mass', 'spectrum', 'dataset']
             j += 1
         allstr += '</tbody></table>'
         self.allstr = allstr
@@ -724,7 +724,7 @@ class Uploads(dbtools.DBTools):
         print self.singlerows[:5]
 
         sqlion_new = 'WITH f AS \
-            (SELECT foo.* FROM  (VALUES %s ) AS foo(peptide_sequence, charge_state, precursor_mass, \
+            (SELECT foo.* FROM  (VALUES %s ) AS foo(rownum, peptide_sequence, charge_state, precursor_mass, \
             retention_time, mz, confidence, delta_mass, spectrum, dataset_title, experiment_id, dataset_id, peptide_id ) ) \
             INSERT INTO pepsite_ion (charge_state, precursor_mass, retention_time, mz, spectrum, dataset_id, experiment_id) \
             SELECT f.charge_state, f.precursor_mass, f.retention_time, f.mz, f.spectrum, f.dataset_id, f.experiment_id \
@@ -733,21 +733,26 @@ class Uploads(dbtools.DBTools):
             AND f.mz = existing.mz AND f.spectrum = existing.spectrum AND f.experiment_id = existing.experiment_id) \
             where existing.id IS NULL\
             ' % ( masterstr )
+        print '\n\n%s\n\n' % sqlion_new
         cursor.execute( sqlion_new )
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_ion' )
         print 'ion', cursor.fetchall()
 
         sqlionfind = 'WITH f AS \
-            (SELECT foo.* FROM  (VALUES %s ) AS foo(peptide_sequence, charge_state, precursor_mass, \
+            (SELECT foo.* FROM  (VALUES %s ) AS foo(rownum, peptide_sequence, charge_state, precursor_mass, \
             retention_time, mz, confidence, delta_mass, spectrum, dataset_title, experiment_id, dataset_id, peptide_id ) ) \
             SELECT existing.id \
             FROM f LEFT JOIN pepsite_ion AS existing \
             ON (f.dataset_id = existing.dataset_id AND f.charge_state = existing.charge_state AND f.retention_time = existing.retention_time \
             AND f.mz = existing.mz AND f.spectrum = existing.spectrum AND f.experiment_id = existing.experiment_id) \
+            ORDER BY rownum \
             ' % ( masterstr )
+        print '\n\n%s\n\n' % sqlionfind
         cursor.execute( sqlionfind )
-        newmastercol = cursor.fetchall()
-        for row, new in zip( self.singlerows, [b[0] for b in newmastercol ] ) :
+        ionsfound = cursor.fetchall()
+        print '\n\nionsfound:\n\n%s\n\n' % str(ionsfound[:5])
+        newmastercol = [b[-1] for b in ionsfound]
+        for row, new in zip( self.singlerows, newmastercol ) :
             row.append( new )
         self.singlerows_header.append( 'ion_id' )
 
@@ -757,32 +762,35 @@ class Uploads(dbtools.DBTools):
         print 'idestimate', cursor.fetchall()
 
         masterstr = self.reformat_to_str(self.singlerows).strip(', ')[1:-1]
-        print 'masterstr: %s' % self.reformat_to_str(self.singlerows[:5]).strip(', ')[1:-1]
+        #masterstr = str(ionsfound)[1:-1]
+        print '\nmasterstr\n', masterstr, '\n'
+        #print 'masterstr: %s' % self.reformat_to_str(self.singlerows[:5]).strip(', ')[1:-1]
 
         sqlide_new = 'WITH f AS \
-                (SELECT * FROM  (VALUES %s ) AS foo(peptide_sequence, charge_state, precursor_mass, \
-                retention_time, mz, confidence, delta_mass, spectrum, dataset_title, experiment_id, dataset_id, peptide_id, ion_id ),  \
-                (VALUES ( false, false )) AS goo(\"isRemoved\", \"isValid\") ) \
+                (SELECT * FROM  (VALUES %s ) AS foo(rownum, peptide_sequence, charge_state, precursor_mass, \
+                retention_time, mz, confidence, delta_mass, spectrum, dataset_title, experiment_id, dataset_id, peptide_id, ion_id ) ) \
                 INSERT INTO pepsite_idestimate (peptide_id, ion_id, delta_mass, confidence, \"isRemoved\", \"isValid\") \
-                select f.peptide_id, f.ion_id, f.delta_mass, f.confidence, f.\"isRemoved\", f.\"isValid\" \
+                select f.peptide_id, f.ion_id, f.delta_mass, f.confidence, false, false \
                 from f \
                 LEFT JOIN pepsite_idestimate AS existing \
                 ON (f.peptide_id = existing.peptide_id AND f.ion_id = existing.ion_id AND f.confidence = existing.confidence \
                 AND f.delta_mass = existing.delta_mass ) \
-                where existing.id IS NULL\
+                where existing.id IS NULL \
                 ' % ( masterstr )
+        print '\n\n%s\n\n' % sqlide_new
         cursor.execute( sqlide_new )
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate' )
         print 'idestimate', cursor.fetchall()
 
         sqlidefind = 'WITH f AS \
-                (SELECT * FROM  (VALUES %s ) AS foo(peptide_sequence, charge_state, precursor_mass, \
-                retention_time, mz, confidence, delta_mass, spectrum, dataset_title, experiment_id, dataset_id, peptide_id, ion_id ) )  \
-                SELECT existing.id \
+                (SELECT * FROM  (VALUES %s ) AS foo(rownum, peptide_sequence, charge_state, precursor_mass, \
+                retention_time, mz, confidence, delta_mass, spectrum, dataset_title, experiment_id, dataset_id, peptide_id, ion_id ) ORDER BY rownum)  \
+                SELECT id \
                 from f \
                 LEFT JOIN pepsite_idestimate AS existing \
                 ON (f.peptide_id = existing.peptide_id AND f.ion_id = existing.ion_id AND f.confidence = existing.confidence \
                 AND f.delta_mass = existing.delta_mass ) \
+                ORDER BY rownum \
                 ' % ( masterstr )
         cursor.execute( sqlidefind )
         newmastercol = cursor.fetchall()
