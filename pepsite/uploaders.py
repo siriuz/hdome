@@ -1325,7 +1325,7 @@ class Uploads(dbtools.DBTools):
                     t2.ptmarray, \
                     array_agg( DISTINCT t2.experiment_id ORDER BY t2.experiment_id ) AS allowed_array \
                     FROM \
-                    ( select * FROM mega_posns mp WHERE mp.\"isRemoved\" = false AND mp.confidence > mp.confidence_cutoff ) AS t2 \
+                    ( select * FROM mega_posns mp WHERE mp.\"isRemoved\" = false AND mp.confidence >= mp.confidence_cutoff ) AS t2 \
                     GROUP BY \
                     t2.peptide_id, \
                     t2.ptmarray \
@@ -1338,7 +1338,7 @@ class Uploads(dbtools.DBTools):
                     t3.ptmarray, \
                     array_agg( DISTINCT t3.experiment_id ORDER BY t3.experiment_id ) AS disallowed_array \
                     FROM \
-                    ( select * FROM mega_posns mp2 WHERE mp2.\"isRemoved\" = true OR mp2.confidence <= mp2.confidence_cutoff ) AS t3 \
+                    ( select * FROM mega_posns mp2 WHERE mp2.\"isRemoved\" = true OR mp2.confidence < mp2.confidence_cutoff ) AS t3 \
                     GROUP BY \
                     t3.peptide_id, \
                     t3.ptmarray \

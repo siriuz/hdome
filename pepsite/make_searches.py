@@ -681,7 +681,7 @@ class ExptArrayAssemble( BaseSearch ):
         sql_expt = "SELECT * \
                 FROM clean_comparisons \
                 WHERE experiment_id = %s \
-                AND confidence > confidence_cutoff \
+                AND confidence >= confidence_cutoff \
                 AND \"isRemoved\" = false \
                 "
         sql_expt_old = "SELECT * \

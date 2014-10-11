@@ -423,7 +423,7 @@ def bulk_with_extra(username, ss_master, datadir):
     tt = tfin - tini
     print '\n\n\nFull import of db took %f seconds\n\n\n' % tt
     ul = pepsite.uploaders.Uploads()
-    #ul.create_views_rapid()
+    ul.create_views_rapid()
 
 def check_files(master_ss, datadir):
     bi1 = BackgroundImports()
@@ -458,10 +458,14 @@ def bulk_import_with_boilerplate( username, master_ss, datadir ):
 def create_simple_bulk_upload():
     bulk_import_with_boilerplate( 'admin', os.path.join( CURDIR, '../background/test_bulk_small.csv'), os.path.join(CURDIR, '../background/all_august') )
 
+def bulk_import_initial():
+    bulk_import_with_boilerplate( 'admin', os.path.join( CURDIR, '../background/all_bulk_04.csv'), os.path.join(CURDIR, '../background/all_august') )
+
+
 if __name__ == '__main__':
+    bulk_import_initial()
     pass
     # check_files(os.path.join( CURDIR, '../background/all_bulk_04.csv'), os.path.join(CURDIR, '../../background/all_august') )
-    #bulk_import_with_boilerplate( 'admin', os.path.join( CURDIR, '../background/test_bulk_small.csv'), os.path.join(CURDIR, '../../background/all_august') )
 
 
 

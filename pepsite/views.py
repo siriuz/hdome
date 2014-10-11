@@ -179,7 +179,7 @@ def upload_ss_form( request ):
             #request.session['ss'] = ss
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
-                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'lodgement_filename' : ul.lodgement_filename, 'expt_desc' : ul.expt_desc, 'allfields' : ul.allfields, 'singlerows' : ul.singlerows }
+                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'lodgement_filename' : ul.lodgement_filename, 'expt_desc' : ul.expt_desc, 'allfields' : ul.allfields, 'singlerows' : ul.singlerows, 'singlerows_header' : ul.singlerows_header }
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
             #context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Cell Line'  }
@@ -196,7 +196,7 @@ def upload_ss_form( request ):
             #request.session['ss'] = ss
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
                     'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
-                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'lodgement_filename' : ul.lodgement_filename, 'expt_desc' : ul.expt_desc, 'allfields' : ul.allfields, 'singlerows' : ul.singlerows  }
+                    'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'lodgement_filename' : ul.lodgement_filename, 'expt_desc' : ul.expt_desc, 'allfields' : ul.allfields, 'singlerows' : ul.singlerows, 'singlerows_header' : ul.singlerows_header  }
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
             request.session['ul_supp'] = upload_dict
@@ -1105,8 +1105,11 @@ def peptides_render_rapid( request, expt_id ):
     expt = get_object_or_404( Experiment, id = expt_id )
     rows = []
     if user.has_perm( 'view_experiment', expt ):
+        print 'permission granted for Expt# %d' % expt.id
         s1 = ExptArrayAssemble()
         rows = s1.basic_expt_query(  expt.id )
+    else:
+        print 'permission denied'
     print len(rows)
     if len(rows) > 4:
         print rows[:4]
