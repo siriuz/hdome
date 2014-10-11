@@ -15,15 +15,15 @@
     {% for row in rows %}
     {% if row.peptide_id and True %}
         <tr>
-        <td>{% for prot in row.proteinarray %}{% if prot.0 %}<a href="{% url 'pepsite:protein_peptides' prot.0 %}" class="link">{{prot.1}}</a>{% endif %} {% endfor %}</td>
+        <td>{% for prot in row.proteinarray %}{% if prot.0 %}<a href="{% url 'pepsite:protein_peptides' prot.0 %}" class="link">{{prot.1}}</a>{% if not forloop.last %}; {% endif %}{% endif %}{% endfor %}</td>
 
-        <td>{% for prot in row.proteinarray %}{% if prot.0 %}<a href="http://www.uniprot.org/uniprot/{{prot.2}}" class="link" target="_blank">{{prot.2}}</a>{% endif %} {% endfor %}</td>
+        <td>{% for prot in row.proteinarray %}{% if prot.0 %}<a href="http://www.uniprot.org/uniprot/{{prot.2}}" class="link" target="_blank">{{prot.2}}</a>{% if not forloop.last %}; {% endif %}{% endif %}{% endfor %}</td>
 
             <td><a href="{% url 'pepsite:peptide_peptides' row.peptide_id %}" class="link">{{row.peptide_sequence}}</a></td>
             
             <td>{{row.peptide_sequence|length}}</td>
 
-            <td>{% for ptm in row.ptmarray %}{% if ptm.0 %}<a href="{% url 'pepsite:ptm_peptides' ptm.0 %}" class="link">{{ptm.1}}</a>{% endif %} {% endfor %}</td>
+            <td>{% for ptm in row.ptmarray %}{% if ptm.0 %}<a href="{% url 'pepsite:ptm_peptides' ptm.0 %}" class="link">{{ptm.1}}</a>{% if not forloop.last %}; {% endif %}{% endif %}{% endfor %}</td>
             
             <td>{{ row.delta_mass | floatformat:4 }}</td>
             

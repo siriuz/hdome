@@ -756,7 +756,7 @@ class ExptArrayAssemble( BaseSearch ):
     def protein_browse( self ):
         cursor = connection.cursor()
         sql_pr_browse = "WITH foo AS (SELECT DISTINCT protein_id, protein_description, \
-                experiment_id, experiment_title from clean_comparisons) \
+                experiment_id, experiment_title from mega_unagg) \
                 SELECT protein_id, protein_description, \
                 array_agg( (experiment_id,experiment_title)::text order by experiment_id  ) AS exptarray \
                 FROM foo \
