@@ -85,8 +85,8 @@ class ImportSpeedTest(TestCase):
         datadir = os.path.join(CURDIR, '../background/all_august')
         bulk_main(self.user1.username, ss_master, datadir)
 
-    def dont_test_bulk_rapid_upload(self):
-        ss_master = os.path.join( CURDIR, '../background/test_bulk_02.csv')
+    def test_bulk_rapid_upload(self):
+        ss_master = os.path.join( CURDIR, '../background/test_bulk_small.csv')
         datadir = os.path.join(CURDIR, '../background/all_august')
         bulk_with_extra(self.user1.username, ss_master, datadir)
 
@@ -148,7 +148,7 @@ class ImportSpeedTest(TestCase):
                     self.assertEqual(float(ul.uldict[c]['mz']), ion.mz)
                     self.assertEqual(float(ul.uldict[c]['precursor_mass']), ion.precursor_mass)
                     ide = IdEstimate.objects.get(id = d[ide_index])
-                    #self.assertEqual(float(ul.uldict[c]['confidence']), ide.confidence)
+                    self.assertEqual(float(ul.uldict[c]['confidence']), ide.confidence)
 
 
                     print ion

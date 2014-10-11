@@ -1218,7 +1218,7 @@ class Uploads(dbtools.DBTools):
         print '\n\nview update time taken = %f seconds\n\n' % tt
 
 
-    def create_views_rapid():
+    def create_views_rapid(self):
         t0 = time.time()
         cursor = connection.cursor()
         cursor.execute('DROP MATERIALIZED VIEW IF EXISTS mega_unagg CASCADE')
