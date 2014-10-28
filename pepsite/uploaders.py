@@ -1492,7 +1492,7 @@ class Curate( Uploads ):
             dsno = local['dataset']
             dstitle = self.entitle_ds(dsno, ldg_obj.datafilename)
             try:
-                dataset = Dataset.objects.get( lodgement__id = ldg_obj.id,
+                dataset = Dataset.objects.get( lodgement_id = ldg_obj.id,
                     title = dstitle ) #title = 'Dataset #%s from %s' % ( dsno, ldg_obj.title )  )
                 print 'Dataset retrieval: %s, %s, %d' % ( dataset.title, dataset.id )
             except:
