@@ -1,0 +1,39 @@
+﻿DROP MATERIALIZED VIEW IF EXISTS mega_comparisons;
+--
+
+CREATE MATERIALIZED VIEW mega_comparisons AS 
+                    SELECT t1.*, foo1.allowed_array, foo2.disallowed_array 
+                    FROM mega_posns t1 
+                    LEFT JOIN 
+                    ( SELECT 
+                    t2.peptide_id, 
+                    t2.ptmarray, 
+                    array_agg( DISTINCT t2.experiment_id ORDER BY t2.experiment_id ) 
+                    AS allowed_array 
+                    FROM 
+                    ( select * FROM mega_posns mp 
+                    WHERE mp."isRemoved" = false AND mp.confidence >= mp.confidence_cutoff ) 
+                    AS t2 
+                    GROUP BY 
+                    t2.peptide_id, 
+                    t2.ptmarray 
+                    ) 
+                    AS foo1 
+                    ON ( t1.peptide_id = foo1.peptide_id AND t1.ptmarray = foo1.ptmarray ) 
+                    LEFT JOIN 
+                    ( SELECT 
+                    t3.peptide_id, 
+                    t3.ptmarray, 
+                    array_agg( DISTINCT t3.experiment_id ORDER BY t3.experiment_id ) 
+                    AS disallowed_array 
+                    FROM 
+                    ( select * FROM mega_posns mp2 WHERE mp2."isRemoved" = true 
+                    OR mp2.confidence < mp2.confidence_cutoff ) AS t3 
+                    GROUP BY 
+                    t3.peptide_id, 
+                    t3.ptmarray 
+                    ) 
+                    AS foo2 
+                    ON ( t1.peptide_id = foo2.peptide_id 
+                    AND t1.ptmarray = foo2.ptmarray );
+                    

@@ -10,8 +10,8 @@ from pepsite.models import *
 import uniprot
 
 @shared_task
-def test(param):
-    return 'The test task executed with argument "%s" ' % param
+def test():
+    return 'test complete'
 
 @shared_task
 def test2_old(param):

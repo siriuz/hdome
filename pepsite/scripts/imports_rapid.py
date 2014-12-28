@@ -135,7 +135,7 @@ class BackgroundImports(dbtools.DBTools):
             #title += '%s %s %s' %( rowdic['Species'], rowdic['Tissue/cell type'], 'tissue' )
             tissue_type = rowdic['Tissue/cell type']
         description += ' %s' %( rowdic['Tissue/cell type'] )
-        title = rowdic['Cell line name']
+        title = "{} {}".format( rowdic['Cell line name'], rowdic['Transfected alelle (s)'])
         defaults = { 'description' : description, 'isTissue' : isTissue,
                 'tissue_type' : tissue_type }
         cl, _ = CellLine.objects.update_or_create( name = title, defaults = defaults )
@@ -456,8 +456,8 @@ def bulk_import_with_boilerplate( username, master_ss, datadir ):
     bulk_with_extra( username, master_ss, datadir )
 
 if __name__ == '__main__':
-    check_files(os.path.join( CURDIR, '../../background/all_bulk_04.csv'), os.path.join(CURDIR, '../../background/all_august') )
-    bulk_import_with_boilerplate( 'admin', os.path.join( CURDIR, '../../background/all_bulk_04.csv'), os.path.join(CURDIR, '../../background/all_august') )
+    check_files(os.path.join( CURDIR, '../../background/all_bulk_05.csv'), os.path.join(CURDIR, '../../background/all_august') )
+    bulk_import_with_boilerplate( 'admin', os.path.join( CURDIR, '../../background/all_bulk_05.csv'), os.path.join(CURDIR, '../../background/all_august') )
 
 
 

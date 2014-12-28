@@ -101,7 +101,7 @@ DATABASES = {
 	'USER': 'rimmer',
         'PASSWORD': 'f',
         # 'HOST': '127.0.0.1', # if we wanna use TCP sockets
-        # 'PORT': '5432', # if we wanna use TCP sockets
+        # 'PORT': '5433', # if we wanna use TCP sockets
     }
 }
 
