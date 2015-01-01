@@ -166,6 +166,9 @@ class MzSearchForm(forms.Form):
 class SequenceSearchForm(forms.Form):
     target_input = forms.CharField( label = 'Enter a peptide sequence')
 
+class PtmSearchForm(forms.Form):
+    target_input = forms.CharField( label = 'Enter PTM of interest')
+
 class UploadSSForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(UploadSSForm, self).__init__(*args, **kwargs)

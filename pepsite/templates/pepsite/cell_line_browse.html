@@ -70,7 +70,7 @@ cursor:pointer;
     </tr>
     </thead>
     <tbody>
-        {% for cell_line in cell_lines %}
+        {% for cell_line in cell_lines|dictsort:"name" %}
         <tr>
             <td>
 	    <a href="{% url 'pepsite:cell_line_expts' cell_line.id %}">{{cell_line.name}}</a> 

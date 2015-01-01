@@ -848,6 +848,32 @@ def sequence_search( request ):
         context = { 'massform' : textform }
         return render( request, 'pepsite/sequence_search.html', context)
 
+def ptm_peptide_search( request ):
+    user = request.user
+    if request.GET.items(): # If the form has been submitted...
+        form = MzSearchForm(request.GET) # A form bound to the POST data
+        search_type, query_on = 'ptm', 'PTM description'
+        target_input = ''
+        desc = 'empty'
+        if form.is_valid(): # All validation rules pass
+	    target_input = str(form.cleaned_data['target_input']) 
+            desc = target_input 
+	else:
+            context = {}
+            for f in form.fields.keys():
+                if f in form.data.keys():
+                    context[f] = form.data[f]
+                else:
+                    context[f] = form.fields[f].initial
+	    target_input = str(context['target_input'])
+            desc = target_input.upper()
+        context = { 'search' : True, 'query_on' : query_on, 'text_input' : desc, 'search_type' : search_type, 'search_args' : [target_input] }
+        return render( request, 'pepsite/find_peptides_ajax.html', context ) # Redirect after POST
+    else:
+        textform = PtmSearchForm()
+        context = { 'massform' : textform }
+        return render( request, 'pepsite/ptm_peptide_search.html', context)
+
 #@login_required
 def allele_search( request ):
     if request.method == 'POST': # If the form has been submitted...

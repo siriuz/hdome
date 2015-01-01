@@ -897,6 +897,8 @@ class MassSearch( ExptArrayAssemble ):
             return self.get_unique_peptide_ides_from_mass( *[ float(arglist[0]), float(arglist[1]), arglist[2] ] )
         elif search_on == 'sequence':
             return self.get_unique_peptide_ides_from_sequence( *arglist )
+        elif search_on == 'ptm':
+            return self.get_unique_peptide_ides_from_ptm( *arglist )
 
     def get_unique_peptide_ides_from_mass( self, mass, tolerance, excluded_ids  ):
         cursor = connection.cursor()
@@ -959,6 +961,20 @@ class MassSearch( ExptArrayAssemble ):
         ides = IdEstimate.objects.filter( peptide__sequence__icontains = sequence ).distinct().order_by( 'peptide__sequence' ) 
         #peptides = set( [ b.peptide for b in ides ] )
         return self.get_peptide_array( ides, user, ion__idestimate__peptide__sequence__icontains = sequence )
+
+    def get_unique_peptide_ides_from_ptm( self, ptm_term, excluded_ids ):
+        cursor = connection.cursor()
+        ptm_term = '%{}%'.format( ptm_term )
+        sql_expt = "SELECT * \
+                FROM clean_comparisons \
+                WHERE ptmstr LIKE %s\
+                EXCEPT \
+                SELECT * \
+                FROM clean_comparisons \
+                WHERE experiment_id = ANY(%s) \
+                "
+        cursor.execute( sql_expt, [ ptm_term, excluded_ids ] )
+        return self.dictfetchall_augmented( cursor )
 
     def get_peptide_array_from_ptm( self, ptm_obj, user ):
         ml = []
