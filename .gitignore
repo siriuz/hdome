@@ -11,6 +11,7 @@ env/
 *.log
 *.sql
 *.csv
+*.odt
 *egg/
 build/
 dist/

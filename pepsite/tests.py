@@ -126,14 +126,24 @@ class ImportSpeedTest(TestCase):
                 sr_header = ul.singlerows_header
                 ion_index = sr_header.index('ion_id')
                 ide_index = sr_header.index('idestimate_id')
+                peptide_index = sr_header.index('peptide_id')
+                ds_index = sr_header.index('dataset_id')
                 srhl = len(sr_header)
                 i = 0
                 #for ion in Ion.objects.all().order_by('id'):
                 #    print ion.id, ion.precursor_mass, ion.mz, ion.charge_state, ion.retention_time
-                for b, c, d in zip(allfields['peptidefields'], sorted(ul.uldict.keys()), ul.singlerows ):
+                with open('qtest.csv',  'wb') as f:
+                    for a, b in zip(ul.singlerows, ul.rawlines):
+                        f.write(str(a) + '\n')
+                        f.write(b + '\n')
+
+                for b, c, d, f in zip(allfields['peptidefields'], sorted(ul.uldict.keys()), ul.singlerows, ul.rawlines ):
                     i += 1
                     print 'row: %d' % i
                     print 'other row', c
+                    print 'inferred row', ul.uldict[c]
+                    print 'rawline', f
+
                     ori = ul.uldict[c]['peptide_sequence']
                     fin = d[1]
                     #fin = b
@@ -149,6 +159,13 @@ class ImportSpeedTest(TestCase):
                     self.assertEqual(float(ul.uldict[c]['precursor_mass']), ion.precursor_mass)
                     ide = IdEstimate.objects.get(id = d[ide_index])
                     self.assertEqual(float(ul.uldict[c]['confidence']), ide.confidence)
+                    pep = Peptide.objects.get(id = ide.peptide_id)
+                    pep2 = Peptide.objects.get(id = d[peptide_index])
+                    print ori, fin, pep.sequence, pep2.sequence
+                    ds = Dataset.objects.get(id = d[ds_index])
+                    print ds.title
+                    self.assertEqual(ori, pep.sequence)
+                    self.assertEqual(ori, ide.peptide.sequence)
 
 
                     print ion

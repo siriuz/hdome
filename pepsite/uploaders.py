@@ -308,9 +308,13 @@ class Uploads(dbtools.DBTools):
         idestimatefields = []
         ptmfields = []
         singlerows = []
+        rawlines = []
+        row_indices = []
 
         for line in fileobj:
             if j:
+                row_indices.append(j)
+                rawlines.append(line)
                 uldict[j] = {}
                 elements = line.split(self.delim )
                 allstr += '<tr>'
@@ -325,7 +329,7 @@ class Uploads(dbtools.DBTools):
                                 self.dataset_nos.append( ds_no )
 
 
-                        elif m == 'uniprot_ids' and len(elements[k].strip().split('|')) > 1: #not in ( 'Segment', 'RRRRRSegment' ):
+                        elif m == 'uniprot_ids' and len(elements[k].strip().split('|')) > 1: #not in ( 'segment', 'rrrrrsegment' ):
                             
                             #print 'element = %s' % elements[k]
           
@@ -353,7 +357,7 @@ class Uploads(dbtools.DBTools):
                     else:
                         entries = []
                         allstr += '<td>'
-                        loclist = [ b.strip() for b in elements[k].split(';') if b.strip() != 'Segment' ]
+                        loclist = [ b.strip() for b in elements[k].split(';') if b.strip() != 'segment' ]
                         for subel in loclist:
                             if m == 'uniprot_ids' and len(subel.split('|')) > 1:
                                 allstr += ' <a href=\"http://www.uniprot.org/uniprot/' + subel.split('|')[1] + '\" target=\"_blank\">' + subel.split('|')[1] + '</a> '
@@ -392,9 +396,10 @@ class Uploads(dbtools.DBTools):
         allstr += '</tbody></table>'
         self.allstr = allstr
         self.uldict = uldict
-        self.allfields = { 'peptidefields' : peptidefields, 'proteinfields' : proteinfields, 'datasetfields' : datasetfields, 
+        self.allfields = { 'row_indices' : row_indices, 'peptidefields' : peptidefields, 'proteinfields' : proteinfields, 'datasetfields' : datasetfields,
                 'ionfields' : ionfields, 'idestimatefields' : idestimatefields, 'ptmfields' : ptmfields } 
         self.singlerows = singlerows
+        self.rawlines = rawlines
         self.dataset_nos = sorted( self.dataset_nos )
         return self.allfields
 
@@ -430,13 +435,13 @@ class Uploads(dbtools.DBTools):
             for group in self.user.groups.all():
                 assign_perm('view_dataset', group, ds)
             if self.public:
-                assign_perm('view_dataset', User.objects.get( id = -1 ), ds)
+                assign_perm('view_dataset', user.objects.get( id = -1 ), ds)
 
 
             self.datasets.append( ds )
     
     def entitle_ds(self, dsno, filename):
-        return 'Dataset #%s from %s' % ( dsno, filename )
+        return 'dataset #%s from %s' % ( dsno, filename )
 
     def prepare_upload_simple_multiple(self ):
         for ldg_no, ldg_name, filename in self.ldg_details:
@@ -444,24 +449,24 @@ class Uploads(dbtools.DBTools):
 
     def prepare_ind_lodgement(self, ldg_no, ldg_name, filename ):
         """docstring for fname(self, cleaned_data"""
-        self.instrument = Instrument.objects.get( id = self.instrument_id )
-        self.cell_line = CellLine.objects.get( id = self.cell_line_id )
+        self.instrument = instrument.objects.get( id = self.instrument_id )
+        self.cell_line = cellline.objects.get( id = self.cell_line_id )
         if not self.expt_id:
-            self.expt, _ = Experiment.objects.get_or_create( cell_line = self.cell_line, title = self.expt_title, description = self.expt_desc )
+            self.expt, _ = experiment.objects.get_or_create( cell_line = self.cell_line, title = self.expt_title, description = self.expt_desc )
         else:
-            self.expt = Experiment.objects.get( id = self.expt_id )
+            self.expt = experiment.objects.get( id = self.expt_id )
         assign_perm('view_experiment', self.user, self.expt)
         for ab in self.antibodies:
                 self.expt.antibody_set.add( ab )
-        lodgement, _ = Lodgement.objects.get_or_create( user = self.user, title = ldg_name, datetime = self.now, datafilename=filename.split('/')[-1] )
+        lodgement, _ = lodgement.objects.get_or_create( user = self.user, title = ldg_name, datetime = self.now, datafilename=filename.split('/')[-1] )
         if self.publications:
             for pl in self.publications:
-                    pbln = Publication.objects.get( id=pl )
+                    pbln = publication.objects.get( id=pl )
                     lodgement.publication_set.add( pl )
         print 'ldg_ds_mappings here:', self.ldg_ds_mappings
         for dsno in self.ldg_ds_mappings[str(ldg_no)]:
-            ds, _ = Dataset.objects.get_or_create( instrument = self.instrument, lodgement = lodgement, experiment = self.expt,
-                    datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, ldg_name ), 
+            ds, _ = dataset.objects.get_or_create( instrument = self.instrument, lodgement = lodgement, experiment = self.expt,
+                    datetime = self.now, title = 'dataset #%s from %s' % ( dsno, ldg_name ),
                     #dmass_cutoff = self.cutoff_mappings[ldg_no]['dm_cutoff'], 
                     confidence_cutoff = self.cutoff_mappings[ldg_no]['cf_cutoff'] )
             print 'cutoffs here for dataset: %s, in lodgement %s, dm cutoff: %s, cf cutoff: %s' % ( ds.title, lodgement.title, ds.dmass_cutoff, ds.confidence_cutoff ) 
@@ -470,7 +475,7 @@ class Uploads(dbtools.DBTools):
             for group in self.user.groups.all():
                 assign_perm('view_dataset', group, ds)
             if self.public:
-                assign_perm('view_dataset', User.objects.get( id = -1 ), ds)
+                assign_perm('view_dataset', user.objects.get( id = -1 ), ds)
 
 
             self.datasets.append( ds )
@@ -481,18 +486,18 @@ class Uploads(dbtools.DBTools):
 
     @transaction.atomic
     def old_upload_simple( self ):
-        """None -> None
+        """none -> none
         """
         i = 0
         for k in self.uldict.keys():
             i += 1
             local = self.uldict[k]
-            pep = self.get_model_object( Peptide, sequence = local['peptide_sequence'] )
+            pep = self.get_model_object( peptide, sequence = local['peptide_sequence'] )
             pep.save()
             proteins = []
             ptms = []
             for prt, unp in zip( local['proteins'], local['uniprot_ids'] ):
-                pr1 = self.get_model_object( Protein,  prot_id = unp, description = prt, name = prt )
+                pr1 = self.get_model_object( protein,  prot_id = unp, description = prt, name = prt )
                 try:
                     sequence = self.uniprot_data[ unp ]['sequence']
                     pr1.sequence = sequence
@@ -501,11 +506,11 @@ class Uploads(dbtools.DBTools):
                     pr1.save()
                 proteins.append( pr1 )
             for ptm_desc in local['ptms']:
-                ptm = self.get_model_object( Ptm, description = ptm_desc, name = ptm_desc )
+                ptm = self.get_model_object( ptm, description = ptm_desc, name = ptm_desc )
                 ptm.save()
                 ptms.append( ptm )
             dsno = local['dataset']
-            dataset = self.get_model_object( Dataset, instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
+            dataset = self.get_model_object( dataset, instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
                     datetime = self.now, title = self.entitle_ds( dsno, self.filename )  )
             dataset.save()
             ## object permissions:
@@ -515,26 +520,26 @@ class Uploads(dbtools.DBTools):
             for group in self.user.groups.all():
                 assign_perm('view_dataset', group, dataset)
             if self.public:
-                assign_perm('view_dataset', User.objects.get( id = -1 ), dataset)
+                assign_perm('view_dataset', user.objects.get( id = -1 ), dataset)
             
             ##
-            ion = self.get_model_object( Ion,  charge_state = local['charge'], precursor_mass = local['precursor_mass'],
+            ion = self.get_model_object( ion,  charge_state = local['charge'], precursor_mass = local['precursor_mass'],
                     retention_time = local['retention_time'], mz = local['mz'], experiment = self.expt, dataset = dataset, spectrum = local['spectrum'] )
             ion.save()
-            ide = self.get_model_object( IdEstimate, ion = ion, peptide = pep, confidence = local['confidence'], delta_mass = local['delta_mass'] )
+            ide = self.get_model_object( idestimate, ion = ion, peptide = pep, confidence = local['confidence'], delta_mass = local['delta_mass'] )
             ide.save()
             for ptm in ptms:
                 self.add_if_not_already( ptm, ide.ptms )
                 #ide.save()
             for protein in proteins:
-                p2p = self.get_model_object( PepToProt, peptide = pep, protein = protein )
-                ex2pr = self.get_model_object( PepToProt, peptide = pep, protein = protein )
+                p2p = self.get_model_object( peptoprot, peptide = pep, protein = protein )
+                ex2pr = self.get_model_object( peptoprot, peptide = pep, protein = protein )
                 p2p.save()
-            #print 'uploaded ion #%d from Experiment: %s, ion: %s' % ( i, self.expt.title, ion.__str__() )
+            #print 'uploaded ion #%d from experiment: %s, ion: %s' % ( i, self.expt.title, ion.__str__() )
 
     @transaction.atomic
     def upload_simple( self ):
-        """None -> None
+        """none -> none
         """
         i = 0
         t0 = time.time()
@@ -545,25 +550,25 @@ class Uploads(dbtools.DBTools):
                 i += 1
                 print i
                 local = self.uldict[k]
-                pep, _ = Peptide.objects.get_or_create( sequence = local['peptide_sequence'] )
+                pep, _ = peptide.objects.get_or_create( sequence = local['peptide_sequence'] )
                 proteins = []
                 ptms = []
                 for prt, unp in zip( local['proteins'], local['uniprot_ids'] ):
-                    pr1, _ = Protein.objects.get_or_create(  prot_id = unp, description = prt, name = prt )
+                    pr1, _ = protein.objects.get_or_create(  prot_id = unp, description = prt, name = prt )
                     proteins.append( pr1 )
                 for ptm_desc in local['ptms']:
-                    ptm, _ = Ptm.objects.get_or_create( description = ptm_desc, name = ptm_desc )
+                    ptm, _ = ptm.objects.get_or_create( description = ptm_desc, name = ptm_desc )
                     ptms.append( ptm )
                 dsno = local['dataset']
-                dataset, _ = Dataset.objects.get_or_create( instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
-                        datetime = self.now, title = 'Dataset #%s from %s' % ( dsno, self.lodgement_title )  )
-                ion, _ = Ion.objects.get_or_create(  charge_state = local['charge'], precursor_mass = local['precursor_mass'],
+                dataset, _ = dataset.objects.get_or_create( instrument = self.instrument, lodgement = self.lodgement, experiment = self.expt,
+                        datetime = self.now, title = 'dataset #%s from %s' % ( dsno, self.lodgement_title )  )
+                ion, _ = ion.objects.get_or_create(  charge_state = local['charge'], precursor_mass = local['precursor_mass'],
                         retention_time = local['retention_time'], mz = local['mz'], experiment = self.expt, dataset = dataset, spectrum = local['spectrum'] )
-                ide, _ = IdEstimate.objects.get_or_create( ion = ion, peptide = pep, confidence = local['confidence'], delta_mass = local['delta_mass'] )
+                ide, _ = idestimate.objects.get_or_create( ion = ion, peptide = pep, confidence = local['confidence'], delta_mass = local['delta_mass'] )
                 for ptm in ptms:
                     ide.ptms.add( ptm )
                 for protein in proteins:
-                    p2p, _ = PepToProt.objects.get_or_create( peptide = pep, protein = protein )
+                    p2p, _ = peptoprot.objects.get_or_create( peptide = pep, protein = protein )
                     self.expt.proteins.add(protein) 
         t1 = time.time()
         tt = t1-t0
@@ -574,7 +579,7 @@ class Uploads(dbtools.DBTools):
         retstr = '('
         for elem in iterable:
             if not elem:
-                retstr += 'NULL, '
+                retstr += 'null, '
 
             elif type( elem ) in ( list, tuple ):
                 retstr += self.reformat_to_str(elem)
@@ -586,7 +591,7 @@ class Uploads(dbtools.DBTools):
                 try:
                     retstr += '%f, ' % float(elem)
                 except ValueError:
-                    retstr += 'E\'%s\', ' % elem.replace('\'', '\\\'')
+                    retstr += 'e\'%s\', ' % elem.replace('\'', '\\\'')
         retstr = retstr.strip(', ') + ' ), '
         return retstr
 
@@ -601,15 +606,18 @@ class Uploads(dbtools.DBTools):
         for b in self.allfields['proteinfields']:
             for x in range( len(b) ):
                 if b[x][0]:
-                    proteinstr += '(E\'%s\', E\'%s\'), ' % ( b[x][1].replace('\'', '\\\''), b[x][0].replace('\'', '\\\'') )
+                    proteinstr += '(e\'%s\', e\'%s\'), ' % ( b[x][1].replace('\'', '\\\''), b[x][0].replace('\'', '\\\'') )
                 else:
-                    proteinstr += '( E\'%s\', NULL ), ' % ( b[x][1].replace('\'', '\\\'') )
+                    proteinstr += '( e\'%s\', null ), ' % ( b[x][1].replace('\'', '\\\'') )
         proteinstr = proteinstr.strip(', ')
 
         peptidestr = ''
-        for b in self.allfields['peptidefields']:
+        peptide_find_str = ''
+        for b, c in zip(self.allfields['peptidefields'], self.allfields['row_indices']):
             peptidestr += '(\'%s\'), ' % ( b )
+            peptide_find_str += '(\'%s\', %d), ' % ( b, c )
         peptidestr = peptidestr.strip(', ')
+        peptide_find_str = peptide_find_str.strip(', ')
 
         ptmstr = ''
         for b in self.allfields['ptmfields']:
@@ -627,10 +635,13 @@ class Uploads(dbtools.DBTools):
 
         
         dsstr = ''
-        for d in self.allfields['datasetfields']:
+        ds_find_str = ''
+        for c, d in zip(self.allfields['row_indices'],  self.allfields['datasetfields']):
             title = self.entitle_ds( d, self.filename )
-            dsstr += '(\'%s\', %d), ' % (title, self.expt.id) 
+            dsstr += '(\'%s\', %d), ' % (title, self.expt.id)
+            ds_find_str += '(%d, \'%s\', %d), ' % (c, title, self.expt.id)
         dsstr = dsstr.strip(', ')
+        ds_find_str = ds_find_str.strip(', ')
 
         cursor = connection.cursor()
 
@@ -638,65 +649,67 @@ class Uploads(dbtools.DBTools):
             row.append( self.expt.id )
         self.singlerows_header.append( 'experiment_id' )
 
-        sqldsfind = 'WITH f AS \
-                (SELECT t2.id AS dataset_id FROM \
-                (VALUES %s) AS ds(ds_title, expt_id) \
-                LEFT JOIN pepsite_dataset t2 \
-                ON (ds.ds_title = t2.title AND t2.experiment_id = ds.expt_id ) ) \
-                SELECT dataset_id FROM f \
-                ' % dsstr
+        sqldsfind = 'with f as \
+                (select t2.id as dataset_id, rownum from \
+                (values %s) as ds(rownum, ds_title, expt_id) \
+                left join pepsite_dataset t2 \
+                on (ds.ds_title = t2.title and t2.experiment_id = ds.expt_id ) ) \
+                select dataset_id from f \
+                order by rownum \
+                ' % ds_find_str
         cursor.execute( sqldsfind )
         newmastercol = cursor.fetchall()
         for row, new in zip( self.singlerows, [b[0] for b in newmastercol ] ) :
             row.append( new )
         self.singlerows_header.append( 'dataset_id' )
 
-        cursor.execute( 'SELECT COUNT(*) FROM pepsite_protein' )
+        cursor.execute( 'select count(*) from pepsite_protein' )
         print 'protein', cursor.fetchall()
         #print proteinstr
-        sqlprot = 'INSERT INTO pepsite_protein (description, name, prot_id)\
-                SELECT DISTINCT i.field1 description, i.field1 \"name\", i.field2 prot_id \
-                FROM (VALUES %s) AS i(field1, field2) \
-                LEFT JOIN pepsite_protein as existing \
-                ON (existing.description = i.field1 AND existing.prot_id = i.field2) \
-                WHERE existing.id IS NULL \
+        sqlprot = 'insert into pepsite_protein (description, name, prot_id)\
+                select distinct i.field1 description, i.field1 \"name\", i.field2 prot_id \
+                from (values %s) as i(field1, field2) \
+                left join pepsite_protein as existing \
+                on (existing.description = i.field1 and existing.prot_id = i.field2) \
+                where existing.id is null \
                 ' % ( proteinstr )
-        sqlprot = 'WITH f AS \
-                ( SELECT DISTINCT ON (description) i.description, i.description AS \"name\", i.prot_id \
-                FROM (VALUES %s) AS i(description, prot_id) \
-                ORDER BY description, prot_id ) \
-                INSERT INTO pepsite_protein (description, \"name\", prot_id) \
-                SELECT f.description, f.\"name\", f.prot_id FROM f \
-                LEFT JOIN pepsite_protein as existing \
-                ON (existing.description = f.description ) \
-                WHERE existing.id IS NULL \
+        sqlprot = 'with f as \
+                ( select distinct on (description) i.description, i.description as \"name\", i.prot_id \
+                from (values %s) as i(description, prot_id) \
+                order by description, prot_id ) \
+                insert into pepsite_protein (description, \"name\", prot_id) \
+                select f.description, f.\"name\", f.prot_id from f \
+                left join pepsite_protein as existing \
+                on (existing.description = f.description ) \
+                where existing.id is null \
                 ' % ( proteinstr )
         cursor.execute( sqlprot )
-        cursor.execute( 'SELECT COUNT(*) FROM pepsite_protein' )
+        cursor.execute( 'select count(*) from pepsite_protein' )
         print 'protein', cursor.fetchall()
 
 
 
-        cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptide' )
+        cursor.execute( 'select count(*) from pepsite_peptide' )
         print 'peptide', cursor.fetchall()
-        sqlpep = 'INSERT INTO pepsite_peptide (\"sequence\") \
-        SELECT DISTINCT i.field1 \"sequence\" \
-            FROM (VALUES %s) AS i(field1) \
-            LEFT JOIN pepsite_peptide as existing \
-            ON (existing.\"sequence\" = i.field1) \
-            WHERE existing.id IS NULL \
+        sqlpep = 'insert into pepsite_peptide (\"sequence\") \
+        select distinct i.field1 \"sequence\" \
+            from (values %s) as i(field1) \
+            left join pepsite_peptide as existing \
+            on (existing.\"sequence\" = i.field1) \
+            where existing.id is null \
             ' % ( peptidestr )
         cursor.execute( sqlpep )
-        cursor.execute( 'SELECT COUNT(*) FROM pepsite_peptide' )
+        cursor.execute( 'select count(*) from pepsite_peptide' )
         print 'peptide', cursor.fetchall()
 
-        sqlpepsfind = 'WITH f AS \
-                (SELECT t2.id AS peptide_id FROM \
-                (VALUES %s) AS peps(peptide_sequence) \
-                LEFT JOIN pepsite_peptide t2 \
-                ON (peps.peptide_sequence = t2.sequence ) ) \
-                SELECT peptide_id FROM f \
-                ' % peptidestr
+        sqlpepsfind = 'with f as \
+                (select t2.id as peptide_id, rownum from \
+                (values %s) as peps( peptide_sequence, rownum) \
+                left join pepsite_peptide t2 \
+                on (peps.peptide_sequence = t2.sequence ) ) \
+                select peptide_id from f \
+                order by rownum \
+                ' % peptide_find_str
         cursor.execute( sqlpepsfind )
         newmastercol = cursor.fetchall()
         #print newmastercol
@@ -704,7 +717,7 @@ class Uploads(dbtools.DBTools):
             row.append( new )
         self.singlerows_header.append( 'peptide_id' )
 
-        cursor.execute( 'SELECT COUNT(*) FROM pepsite_ptm' )
+        cursor.execute( 'select count(*) from pepsite_ptm' )
         print 'ptm', cursor.fetchall()
         sqlptm = 'INSERT INTO pepsite_ptm (\"description\", \"name\") \
                 SELECT DISTINCT i.field1 \"description\", i.field1 \"name\" \
