@@ -348,8 +348,8 @@ def compare_expt_form_ajax( request ):
         form = CompareExptForm(request.GET) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
             
-	    expt1 = form.cleaned_data['expt1'] 
-	    exptz = form.cleaned_data['exptz'] 
+            expt1 = form.cleaned_data['expt1']
+            exptz = form.cleaned_data['exptz']
             print 'exptz =', exptz
             exptz2 = [ int(b) for b in exptz ]
             exptz2_objs = Experiment.objects.filter( id__in = exptz2 ).distinct().order_by('title')
@@ -381,15 +381,15 @@ def compare_expt_form_ajax( request ):
                     message += "</h1></p>" + message2
                 return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'view_disallowed' : view_disallowed, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications, 'message' : message, 'complete' : complete, 'exptz_objs' : exptz2_objs  })
             return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'complete' : complete, 'view_disallowed' : view_disallowed, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications, 'exptz_objs' : exptz2_objs   })
-	else:
+    else:
             context = {}
             for f in form.fields.keys():
                 if f in form.data.keys():
                     context[f] = form.data.getlist(f)
                 else:
                     context[f] = form.fields[f].initial
-	    expt1 = context['expt1'][0]
-	    exptz = context['exptz']
+            expt1 = context['expt1'][0]
+            exptz = context['exptz']
             exptz2 = [ int(b) for b in exptz ]
             #exptz2_objs = [ Experiment.objects.get( id = b ) for b in exptz2 ]
             exptz2_objs = Experiment.objects.filter( id__in = exptz2 ).distinct().order_by('title')
@@ -421,21 +421,7 @@ def compare_expt_form_ajax( request ):
                     message += "</h1></p>" + message2
                 return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'view_disallowed' : view_disallowed, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications, 'message' : message, 'complete' : complete, 'exptz_objs' : exptz2_objs   })
             return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'complete' : complete, 'view_disallowed' : view_disallowed, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz3, 'lodgements' : lodgements, 'publications' : publications, 'exptz_objs' : exptz2_objs   })
-            for experiment in exptz2_objs:
-                if ( not user.has_perm( 'view_experiment', experiment ) ):
-                    complete = False
-                    message2 += '<li class=\"text-info\">' + experiment.title + '</li>'
-            message2 += '</ul></h1></p>'
-            if ( not user.has_perm( 'view_experiment', expt ) ):
-                message = '<h1 class=\"text-danger\"><p>You do not have permission to view primary Experiment: <span class=\"text-info\">%s</span>' % ( expt.title )
-                if not complete:
-                    message += "</h1></p>" + message2
-                return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications, 'message' : message, 'complete' : complete  })
-            return render( request, 'pepsite/render_compare_expt_results_ajax.html', { 'complete' : complete, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz2, 'lodgements' : lodgements, 'publications' : publications  })
-    else:
-        compare_form = CompareExptForm()
-        context = { 'compare_form' : compare_form }
-        return render( request, 'pepsite/compare_expt_form_ajax.html', context)
+
 
 def comparison_peptides_render_rapid( request ):
   user = request.user
@@ -456,7 +442,6 @@ def comparison_peptides_render_rapid( request ):
             if ( not user.has_perm( 'view_experiment', expt ) ):
                 message = 'You do not have permission to view Experiment: %s' % ( expt.title )
                 return render( request, 'pepsite/compare_peptides_render_rapid.html', { 'rows' : [], 'compare_expts' : exptz2, 'expt' : expt, 'complete' : complete  })
-                return render( request, 'pepsite/compare_expt_form_ajax.html', context)
             message = 'You do not have permission to view comparison Experiments: '
             for experiment in exptz2:
                 if ( not user.has_perm( 'view_experiment', experiment ) ):
@@ -499,31 +484,6 @@ def comparison_peptides_render( request ):
             s1 = ExptArrayAssemble()
             rows = s1.mkiii_compare_query( expt1, exptz, user.id ) 
             return render( request, 'pepsite/compare_peptides_render.html', { 'rows' : rows, 'compare_ds' : s1.compare_ds, 'expt' : expt, 'complete' : complete  })
-            context = { 'exptz' : exptz, 'expt1' : expt1  }
-            proteins = Protein.objects.filter( peptide__ion__experiment__id = expt1).distinct()
-            protein_ids = [b.id for b in proteins][:25]
-            expt = get_object_or_404( Experiment, id = expt1 )
-            all_exp = [ expt ]
-            #publications = expt.get_publications()
-            lodgements = Lodgement.objects.filter( dataset__experiment = expt )
-            comp_exz = {}
-            for ex in exptz:
-                ex_obj = get_object_or_404( Experiment, id = ex )
-                comp_exz[ ex_obj ] = []
-                all_exp.append( ex_obj )
-                #publications.append( ex_obj.get_publications() )
-            publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
-            compare_ds = []
-            for exp_cm in comp_exz:
-                for ds in exp_cm.dataset_set.all().distinct().order_by('title'):
-                    if user.has_perm( 'view_dataset', ds ):
-                        compare_ds.append( ds )
-                        comp_exz[ exp_cm ].append( ds )
-            if not( len(lodgements)):
-                lodgements = False
-            s1 = ExptArrayAssemble()
-            rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user, compare = True, comparators = compare_ds, cutoffs=True )
-            return render( request, 'pepsite/compare_peptides_render.html', {"proteins": proteins, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz, 'protein_ids' : protein_ids, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False, 'expt_cm' : comp_exz, 'compare_ds' : compare_ds  })
   else:
       return HttpResponse( 'Nothing!!!' + str( request.POST.keys() )  )
 
@@ -535,61 +495,26 @@ def searched_peptides_render_quicker( request ):
         if ( not user.has_perm( 'view_experiment', expt ) ):
             complete = False
             excluded_ids.append( expt.id )
-  
-    #return HttpResponse( 'Hello!' )
     if request.POST.has_key( 'stype' ) and request.POST.has_key( 'sargs[]' ):
             
             stype = request.POST['stype']
-            #expt = get_object_or_404( Experiment, id = expt1 )
             sargs = request.POST.getlist('sargs[]' )
             sargs.append( excluded_ids )
             print 'stype =', stype, 'sargs =', sargs
-            #return HttpResponse( 'Something!!!' + str( request.POST.keys() )  )
-            #exptz = formdata['exptz']
             s1 = MassSearch()
             rows = s1.get_unique_peptide_ides_views( stype, sargs ) 
             return render( request, 'pepsite/peptides_render_rapid_views.html', { 'rows' : rows  })
 
 def searched_peptides_render( request ):
   user = request.user
-  #return HttpResponse( 'Hello!' )
   if request.POST.has_key( 'stype' ) and request.POST.has_key( 'sargs[]' ):
-            
             stype = request.POST['stype']
-            #expt = get_object_or_404( Experiment, id = expt1 )
             sargs = request.POST.getlist('sargs[]' )
             sargs.append( user )
             print 'stype =', stype, 'sargs =', sargs
-            #return HttpResponse( 'Something!!!' + str( request.POST.keys() )  )
-            #exptz = formdata['exptz']
             s1 = MassSearch()
             rows = s1.get_unique_peptide_ides( stype, sargs ) 
             return render( request, 'pepsite/peptides_render_rapid.html', { 'rows' : rows  })
-            context = { 'exptz' : exptz, 'expt1' : expt1  }
-            proteins = Protein.objects.filter( peptide__ion__experiment__id = expt1).distinct()
-            protein_ids = [b.id for b in proteins][:25]
-            expt = get_object_or_404( Experiment, id = expt1 )
-            all_exp = [ expt ]
-            #publications = expt.get_publications()
-            lodgements = Lodgement.objects.filter( dataset__experiment = expt )
-            comp_exz = {}
-            for ex in exptz:
-                ex_obj = get_object_or_404( Experiment, id = ex )
-                comp_exz[ ex_obj ] = []
-                all_exp.append( ex_obj )
-                #publications.append( ex_obj.get_publications() )
-            publications = Publication.objects.filter( lodgements__dataset__experiment__in = all_exp ).distinct()
-            compare_ds = []
-            for exp_cm in comp_exz:
-                for ds in exp_cm.dataset_set.all().distinct().order_by('title'):
-                    if user.has_perm( 'view_dataset', ds ):
-                        compare_ds.append( ds )
-                        comp_exz[ exp_cm ].append( ds )
-            if not( len(lodgements)):
-                lodgements = False
-            s1 = ExptArrayAssemble()
-            rows = s1.get_peptide_array_from_protein_expt( proteins, expt, user, compare = True, comparators = compare_ds, cutoffs=True )
-            return render( request, 'pepsite/compare_peptides_render.html', {"proteins": proteins, 'expt' : expt, 'expt1' : expt1, 'exptz' : exptz, 'protein_ids' : protein_ids, 'lodgements' : lodgements, 'publications' : publications, 'rows' : rows, 'paginate' : False, 'expt_cm' : comp_exz, 'compare_ds' : compare_ds  })
   else:
       return HttpResponse( 'Nothing!!!' + str( request.POST.keys() )  )
 
@@ -648,13 +573,7 @@ def commit_upload_ss( request ):
         ul = pepsite.uploaders.Uploads( user = user )
         ul.repopulate( elems )
         ul.add_cutoff_mappings( request.POST )
-        #with open( '/home/rimmer/praccie/hdome/background/trial_ul_01.pickle', 'wb' ) as f:
-        #    pickle.dump( ul, f )
         context = { 'data' : request.POST['data'], 'ul' : ul, 'keys' : keys }
-        #ul.get_protein_metadata(  )
-        #ul.prepare_upload_simple( )
-        #ul.upload_simple()
-        #ul.refresh_materialized_views()
         return render( request, 'pepsite/ss_uploading.html', context)
     else:
         textform = UploadSSForm()
@@ -672,8 +591,6 @@ def commit_upload_multiple_ss( request ):
         ul = pepsite.uploaders.Uploads( user = user )
         ul.repopulate( elems )
         ul.add_cutoff_mappings_multiple( request.POST )
-        #with open( '/home/rimmer/praccie/hdome/background/trial_ul_01.pickle', 'wb' ) as f:
-        #    pickle.dump( ul, f )
         context = { 'data' : request.POST['data'], 'ul' : ul, 'keys' : keys }
         ul.get_protein_metadata(  )
         ul.prepare_upload_simple_multiple( )
@@ -690,12 +607,12 @@ def cell_line_search( request ):
     if request.method == 'POST': # If the form has been submitted...
         form = TextOnlyForm(request.POST) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
-	    text_input = form.cleaned_data['text_input']
-	    s1 = CellLineSearch()
-	    expts = s1.get_experiments_basic( text_input )
+            text_input = form.cleaned_data['text_input']
+            s1 = CellLineSearch()
+            expts = s1.get_experiments_basic( text_input )
             context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'CellLine', 'search' : True, 'heading' : 'Cell Line'  }
             return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
-	else:
+        else:
             textform = TextOnlyForm()
             context = { 'search_message' : True, 'textform' : textform }
             return render( request, 'pepsite/cell_line_search.html', context ) # Redirect after POST
@@ -709,12 +626,12 @@ def ptm_search( request ):
     if request.method == 'POST': # If the form has been submitted...
         form = TextOnlyForm(request.POST) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
-	    text_input = form.cleaned_data['text_input']
-	    s1 = PtmSearch()
-	    expts = s1.get_experiments_basic( text_input )
+            text_input = form.cleaned_data['text_input']
+            s1 = PtmSearch()
+            expts = s1.get_experiments_basic( text_input )
             context = { 'msg' : expts, 'text_input' : text_input, 'query_on' : 'Ptm', 'search' : True, 'heading' : 'PTM'  }
             return render( request, 'pepsite/searched_expts.html', context ) # Redirect after POST
-	else:
+        else:
             textform = TextOnlyForm()
             context = { 'search_message' : True, 'textform' : textform }
             return render( request, 'pepsite/ptm_search.html', context ) # Redirect after POST
