@@ -13,6 +13,9 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
+print "BASE_DIR = " + BASE_DIR
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/dev/howto/deployment/checklist/
 
@@ -20,14 +23,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SECRET_KEY = '_0-zw7xmw*(u8te_)ccg&5lq%7&j!4k7bt6&=@)@#0rsz_r!8w'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
+DEBUG = False
 
 TEMPLATE_DEBUG = True
 
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1' ]
+
 
 LOGIN_URL = '/login'
 
@@ -136,10 +141,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join( BASE_DIR, 'static_root' )
+# STATIC_ROOT = '/home/rimmer/praccie/hdome/static_root/'
+print "STATIC_ROOT = " + STATIC_ROOT
 
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, "static"),
-    #'/var/www/static/',
+    os.path.join(BASE_DIR, "static/"),
+    # '/home/rimmer/praccie/hdome/static/',
 )
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
