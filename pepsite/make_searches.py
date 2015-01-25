@@ -190,14 +190,14 @@ class ExptArrayAssemble( BaseSearch ):
     """
     def get_peptide_array_from_protein_expt(self, proteins, expt, user, compare = False, compare_clean = False, comparators = None, cutoffs = False ):
         """docstring for get_peptide_array_from_proteins"""
-        ides = IdEstimate.objects.filter( peptide__proteins__in = proteins, ion__experiment = expt ).order_by( 'peptide__sequence' )
+        ides = IdEstimate.objects.filter( proteins__in = proteins, ion__experiment = expt ).order_by( 'peptide__sequence' )
         peptides = Peptide.objects.filter( idestimate__in = ides ).distinct()
         #return self.get_peptide_array_expt( ides, expt, user, cutoffs = cutoffs )
         return self.get_peptide_array_expt_restricted( ides, peptides, expt, user, compare = compare, compare_clean = compare_clean, comparators = comparators, cutoffs = cutoffs )
 
     def get_peptide_array_from_protein_expt_comparison(self, proteins, expt, exptz, user, cutoffs = False ):
         """docstring for get_peptide_array_from_proteins"""
-        ides = IdEstimate.objects.filter( peptide__proteins__in = proteins, ion__experiment = expt ).order_by( 'peptide__sequence' )
+        ides = IdEstimate.objects.filter( proteins__in = proteins, ion__experiment = expt ).order_by( 'peptide__sequence' )
         peptides = Peptide.objects.filter( idestimate__in = ides ).distinct()
         #return self.get_peptide_array_expt( ides, expt, user, cutoffs = cutoffs )
         return self.get_peptide_array_expt_restricted( ides, peptides, expt, exptz, user, cutoffs = cutoffs )
@@ -210,15 +210,15 @@ class ExptArrayAssemble( BaseSearch ):
                     ptms = ide.ptms.all()
                     for ds in Dataset.objects.filter( ion__idestimate = ide, experiment = expt ).order_by( 'rank' ):
                         if user.has_perm( 'view_dataset', ds ):
-                            for protein in Protein.objects.filter( peptoprot__peptide__idestimate = ide, peptoprot__peptide__idestimate__ion__dataset = ds ): 
-                                p2p = PepToProt.objects.get( peptide = ide.peptide, protein = protein )
+                            for protein in Protein.objects.filter( idestimate = ide, idestimate__ion__dataset = ds ):
+                                #p2p = PepToProt.objects.get( peptide = ide.peptide, protein = protein )
                                 #if cutoffs and ds.dmass_cutoff > abs( ide.delta_mass ) and ds.confidence_cutoff < abs( ide.confidence ):
                                 if cutoffs and ds.confidence_cutoff < abs( ide.confidence ):
-                                    ml.append( { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
+                                    ml.append( { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein } )
                                 elif not cutoffs:
-                                    ml.append( { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
+                                    ml.append( { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein } )
                             break
-	return ml
+        return ml
 
     def get_peptide_array_expt_restricted( self, ides, peptides, expt, user, cutoffs = False, compare = False, compare_clean = False, comparators = None, cutoff_list = [0.05, 99.0], **kwargs ):
             """
@@ -241,10 +241,10 @@ class ExptArrayAssemble( BaseSearch ):
                 except:
                     checkhash[ptmstr] = True
                     ds = ide.ion.dataset
-                    p2pz = PepToProt.objects.filter( peptide__idestimate = ide ).distinct()
-                    for p2p in p2pz:
-                        protein = p2p.protein
-                        ml.append(  { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein, 'peptoprot' : p2p } )
+                    # p2pz = PepToProt.objects.filter( peptide__idestimate = ide ).distinct()
+                    for protein in ide.proteins.all():
+                        # protein = p2p.protein
+                        ml.append(  { 'ide': ide, 'ptms' : ptms, 'expt' : expt, 'ds' : ds, 'protein' : protein } )
             print 'ide processing done!'
             #for pep in peptides.order_by('sequence'):
             #print pep.sequence

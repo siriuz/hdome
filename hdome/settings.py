@@ -23,8 +23,8 @@ print "BASE_DIR = " + BASE_DIR
 SECRET_KEY = '_0-zw7xmw*(u8te_)ccg&5lq%7&j!4k7bt6&=@)@#0rsz_r!8w'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
-DEBUG = False
+DEBUG = True
+# DEBUG = False
 
 TEMPLATE_DEBUG = True
 
