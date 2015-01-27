@@ -847,18 +847,8 @@ class Curate( Uploads ):
         for k in self.uldict.keys():
             local = self.uldict[k]
             pep, _ = Peptide.objects.get_or_create( sequence = local['peptide_sequence'] )
-            #pep.save()
             proteins = []
             ptms = []
-            #for prt, unp in zip( local['proteins'], local['uniprot_ids'] ):
-            #    pr1 = self.get_model_object( Protein,  prot_id = unp, description = prt, name = prt )
-            #    try:
-            #        sequence = self.uniprot_data[ unp ]['sequence']
-            #        pr1.sequence = sequence
-            #        pr1.save()
-            #    except:
-            #        pr1.save()
-            #    proteins.append( pr1 )
             for ptm_desc in local['ptms']:
                 ptm, _ = Ptm.objects.get_or_create( description = ptm_desc, name = ptm_desc )
                 #ptm.save()

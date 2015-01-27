@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from pepsite.models import *
 from pepsite.uploaders import Uploads
-from bulk_import_from_spreadsheet import BackgroundImports, bulk_main, bulk_with_extra
+from pepsite.scripts.imports_rapid import BackgroundImports, bulk_main, bulk_with_extra
 import os
 import datetime
 from django.utils.timezone import utc

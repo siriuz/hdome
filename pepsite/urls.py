@@ -1,5 +1,4 @@
 from django.conf.urls import patterns, include, url
-
 from pepsite.views import common, browse, updates, exports, expt_searches, peptide_searches
 
 urlpatterns = patterns('',
@@ -19,6 +18,7 @@ urlpatterns = patterns('',
     url(r'^cell_line_search$', expt_searches.cell_line_search, name='cell_line_search'),
     url(r'^ptm_search$', expt_searches.ptm_search, name='ptm_search'),
     url(r'^cell_line_tissue_search$', expt_searches.cell_line_tissue_search, name='cell_line_tissue_search'),
+    url(r'^comp_results$', expt_searches.comp_results, name='comp_results'),
     url(r'^allele_browse$', browse.allele_browse, name='allele_browse'),
     url(r'^experiment_browse$', browse.experiment_browse, name='experiment_browse'),
     url(r'^protein_browse$', browse.protein_browse, name='protein_browse'),

@@ -3,26 +3,7 @@ from django.shortcuts import render, get_object_or_404
 from pepsite.pepsite_forms import * # need to comment this out during migrations
 from pepsite.make_searches import *
 from pepsite.models import *
-import sys
-import os, tempfile, zipfile
-from django.core.servers.basehttp import FileWrapper
-from django.conf import settings
-import mimetypes
-from django.db import IntegrityError, transaction
-from django.contrib.auth.models import User
-# celery tasks:
-from celery import chain
 from pepsite.tasks import *
-import datetime
-from django.http import HttpResponse
-import tempfile
-import pepsite.uploaders
-import zipfile
-from django.contrib.auth.decorators import login_required
-import re
-from django.core.mail import send_mail
-import pickle
-
 
 def mass_search( request ):
     user = request.user

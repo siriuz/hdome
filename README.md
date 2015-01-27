@@ -3,6 +3,10 @@
 
 A Django-powered engine for interrogation of immunoproteomic data
 
+Requires postgres >= 9.3, Python2.7
+
+For test data please contact kieranrimmer@gmail.com
+
 Dependencies:
 
 	- django-1.7b1

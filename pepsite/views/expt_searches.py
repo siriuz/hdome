@@ -6,25 +6,7 @@ from django.shortcuts import render, get_object_or_404
 from pepsite.pepsite_forms import * # need to comment this out during migrations
 from pepsite.make_searches import *
 from pepsite.models import *
-import sys
-import os, tempfile, zipfile
-from django.core.servers.basehttp import FileWrapper
-from django.conf import settings
-import mimetypes
-from django.db import IntegrityError, transaction
-from django.contrib.auth.models import User
-# celery tasks:
-from celery import chain
 from pepsite.tasks import *
-import datetime
-from django.http import HttpResponse
-import tempfile
-import pepsite.uploaders
-import zipfile
-from django.contrib.auth.decorators import login_required
-import re
-from django.core.mail import send_mail
-import pickle
 
 
 
@@ -202,4 +184,23 @@ def allele_expts( request, allele_id ):
         context['query_on'] = 'Serotype'
     return render( request, 'pepsite/searched_expts.html', context)
 
+
+def comp_results( request ):
+        post = request.POST.dict()
+        newdic = {}
+        for k in post.keys():
+            #newdic[k] = post[k]
+            if 'input' in str(k) and str(k[-2:]) == '_1':
+                qtype = post[k]
+                qstring = post[ k[:-2] + '_2' ]
+                ordinal =  k.split('_')[1]
+                newdic[ordinal] = { 'qtype' : qtype, 'qstring' : qstring }
+        ndkeys = sorted( newdic.keys(), key = lambda a: int(a) )
+        cs = CompositeSearch()
+        expts = cs.make_qseries( newdic, ndkeys )
+
+        #context = { 'post' : expts }
+        #return render( request, 'pepsite/formdump.html', context )
+        context = { 'msg' : expts, 'search' : True, 'heading' : 'Composite' }
+        return render( request, 'pepsite/composite_results.html', context )
 
