@@ -12,6 +12,9 @@ env/
 *.sql
 *.csv
 *.odt
+*.tmp
+*.sql.gz
+*.gz
 *egg/
 build/
 dist/
@@ -20,6 +23,7 @@ dist/
 db.*
 autocomplete/
 migrations/
+raw_sql/
 pepsite/fixtures/
 hdome/settings.py
 *egg-info/
