@@ -36,9 +36,25 @@ def upload_ss_form( request ):
             formdata['filename'] = ss.name
             ul.preview_ss_simple( formdata )
             ul.preprocess_ss_simple( ss )
-            upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
-                            'antibody_ids' : ul.antibody_ids, 'lodgement_title' : ul.lodgement_title, 'lodgement' : ul.lodgement, 'dataset_nos' : ul.dataset_nos,
-                            'instrument_id' : ul.instrument_id, 'cell_line_id' : ul.cell_line_id, 'expt_id' : ul.expt_id, 'lodgement_filename' : ul.lodgement_filename, 'expt_desc' : ul.expt_desc, 'allfields' : ul.allfields, 'singlerows' : ul.singlerows, 'singlerows_header' : ul.singlerows_header }
+            upload_dict = {'uldict': ul.uldict,
+                           'uniprot_ids': ul.uniprot_ids,
+                           'expt_id': ul.expt_id,
+                           'expt_title': ul.expt_title,
+                           'publications': ul.publications,
+                           'public': ul.public,
+                           'antibody_ids': ul.antibody_ids,
+                           'lodgement_title': ul.lodgement_title,
+                           'lodgement': ul.lodgement,
+                           'dataset_nos': ul.dataset_nos,
+                           'instrument_id': ul.instrument_id,
+                           'cell_line_id': ul.cell_line_id,
+                           'expt_id': ul.expt_id,
+                           'lodgement_filename': ul.lodgement_filename,
+                           'expt_desc': ul.expt_desc,
+                           'allfields': ul.allfields,
+                           'singlerows': ul.singlerows,
+                           'singlerows_header': ul.singlerows_header}
+
             request.session['ul'] = ul.uldict
             request.session['proteins'] = ul.uniprot_ids
             return render( request, 'pepsite/upload_preview.html', { 'upload' : ul, 'ss' : ss, 'formdata' : formdata, 'filled_form' : form, 'ul_supp' : upload_dict }  ) # Redirect after POST

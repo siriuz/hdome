@@ -54,18 +54,62 @@ class Uploads(dbtools.DBTools):
         self.uldict = None
         self.valid = False
         self.match_dict = {
-                'peptide_sequence' : { 'matches' : [ 'Peptide', 'Sequence' ], 'order' : 0, 'display' : 'Peptide Sequence' },
-                'proteins' : { 'matches' : [ 'Names', 'protein', 'description' ], 'order' : 1, 'display' : 'Protein(s)' },
-                'uniprot_ids' : { 'matches' : [ 'uniprot', 'Accessions' ], 'order' : 2, 'display' : 'UniProt code(s)' },
-                'ptms' : { 'matches' : [ 'modification', 'ptm' ], 'order' : 3, 'display' : 'PTM(s)' },
-                'confidence' : { 'matches' : [ 'confidence', 'Conf' ], 'order' : 4, 'display' : 'Confidence' },
-                'charge' : { 'matches' : [ 'Theor z', 'charge' ], 'order' : 5, 'display' : 'Charge State' },
-                'delta_mass' : { 'matches' : [ 'dMass' ], 'order' : 6, 'display' : 'Delta Mass (Da)' },
-                'precursor_mass' : { 'matches' : [ 'Prec MW' ], 'order' : 8, 'display' : 'Precursor Mass (Da)' },
-                'mz' : { 'matches' : [ 'Prec m/z' ], 'order' : 7, 'display' : 'Precursor m/z' },
-                'dataset_id' : { 'matches' : [ 'Spectrum' ], 'order' : 9, 'display' : 'Dataset' },
-                'retention_time' : { 'matches' : [ 'Time'], 'order' : 10, 'display' : 'Restention Time (min)' },
-                }
+            'peptide_sequence': {
+                'matches': ['Peptide', 'Sequence'],
+                'order': 0,
+                'display': 'Peptide Sequence'},
+
+            'proteins': {
+                'matches': ['Names', 'protein', 'description'],
+                'order': 1,
+                'display': 'Protein(s)'},
+
+            'uniprot_ids': {
+                'matches': ['uniprot', 'Accessions'],
+                'order': 2,
+                'display': 'UniProt code(s)'},
+
+            'ptms': {
+                'matches': ['modification', 'ptm'],
+                'order': 3,
+                'display': 'PTM(s)'},
+
+            'confidence': {
+                'matches': ['confidence', 'Conf'],
+                'order': 4,
+                'display': 'Confidence'},
+
+            'charge': {
+                'matches': ['Theor z', 'charge'],
+                'order': 5,
+                'display': 'Charge State'},
+
+            'delta_mass': {
+                'matches': ['dMass'],
+                'order': 6,
+                'display': 'Delta Mass (Da)'},
+
+            'precursor_mass': {
+                'matches': ['Prec MW'],
+                'order': 8,
+                'display': 'Precursor Mass (Da)'},
+
+            'mz': {
+                'matches': ['Prec m/z'],
+                'order': 7,
+                'display': 'Precursor m/z'},
+
+            'dataset_id': {
+                'matches': ['Spectrum'],
+                'order': 9,
+                'display': 'Dataset'},
+
+            'retention_time': {
+                'matches': ['Time'],
+                'order': 10,
+                'display': 'Restention Time (min)'},
+        }
+
         if 'user' in kwargs.keys():
             self.user = kwargs['user']
 
@@ -152,16 +196,29 @@ class Uploads(dbtools.DBTools):
 
     def translate_headers( self, header ):
         coldic = {}
+        # Creates a new dictionary using the keys in match_dict (defined above)
         headerdic = { b : [] for b in self.match_dict.keys() }
         valid = True
+
+        # Iterates over each item in the header
         for i in range(len( header )):
+
+            # header[i] is simply the the i-th item in header
             coldic[header[i]] = []
+
+            # For each key in match_dict do..
             for k in self.match_dict.keys():
+
+                # Sets v to the matching strings for key k
                 v = self.match_dict[k][ 'matches' ]
                 matching = False
+
+                # For each matching string do a regex to see if it is in the header item
                 for trialstr in v:
                     if re.match( '\\w*%s' % ( trialstr ), header[i], flags = re.IGNORECASE ):
                         matching = True
+
+                # If there is a match then add this key to the coldic
                 if matching:
                     coldic[header[i]].append(k)
                     headerdic[k].append(header[i])

@@ -3,11 +3,14 @@ from pepsite.views import common, browse, updates, exports, expt_searches, pepti
 
 urlpatterns = patterns('',
     url(r'^$', browse.index, name='index'),
+
     url(r'^upload_ss_form$', updates.upload_ss_form, name='upload_ss_form'),
     url(r'^upload_manual_curations$', updates.upload_manual_curations, name='upload_manual_curations'),
     url(r'^commit_upload_ss$', updates.commit_upload_ss, name='commit_upload_ss'),
+
     url(r'^compare_expt_form_ajax$', common.compare_expt_form_ajax, name='compare_expt_form_ajax'),
     url(r'^model_info/(?P<model_type>(Protein|Peptide|IdEstimate|Ptm|Ion|Experiment|Antibody|CellLine|Allele|Serotype|Gene|Individual|Entity|Organism))/(?P<model_id>\d+)/$', common.model_info, name='model_info'),
+
     url(r'^composite_search$', expt_searches.composite_search, name='composite_search'),
     url(r'^allele_search$', expt_searches.allele_search, name='allele_search'),
     url(r'^mass_search$', peptide_searches.mass_search, name='mass_search'),
@@ -18,7 +21,9 @@ urlpatterns = patterns('',
     url(r'^cell_line_search$', expt_searches.cell_line_search, name='cell_line_search'),
     url(r'^ptm_search$', expt_searches.ptm_search, name='ptm_search'),
     url(r'^cell_line_tissue_search$', expt_searches.cell_line_tissue_search, name='cell_line_tissue_search'),
+
     url(r'^comp_results$', expt_searches.comp_results, name='comp_results'),
+
     url(r'^allele_browse$', browse.allele_browse, name='allele_browse'),
     url(r'^experiment_browse$', browse.experiment_browse, name='experiment_browse'),
     url(r'^protein_browse$', browse.protein_browse, name='protein_browse'),
@@ -27,6 +32,7 @@ urlpatterns = patterns('',
     url(r'^browsable_proteins_render_quicker$', browse.browsable_proteins_render_quicker, name='browsable_proteins_render_quicker'),
     url(r'^cell_line_browse$', browse.cell_line_browse, name='cell_line_browse'),
     url(r'^cell_line_tissue_browse$', browse.cell_line_tissue_browse, name='cell_line_tissue_browse'),
+
     url(r'^footer$', common.footer, name='footer'),
     url(r'^nav_buttons_allele$', common.nav_buttons_allele, name='nav_buttons_allele'),
     url(r'^nav_buttons$', common.nav_buttons, name='nav_buttons'),
@@ -36,7 +42,7 @@ urlpatterns = patterns('',
     url(r'^comparison_peptides_render$', common.comparison_peptides_render_rapid, name='comparison_peptides_render_rapid'),
     url(r'^searched_peptides_render_quicker$', common.searched_peptides_render_quicker, name='searched_peptides_render_quicker'),
     url(r'^send_expt_csv/(?P<expt_id>\d+)$', exports.send_expt_csv, name='send_expt_csv'),
-    url(r'^send_csv$', exports.send_csv, name='send_csv'),
+    url(r'^send_xcsv$', exports.send_csv, name='send_csv'),
     url(r'^peptide_expts/(?P<peptide_id>\d+)$', expt_searches.peptide_expts, name='peptide_expts'),
     url(r'^gene_expts/(?P<gene_id>\d+)$', expt_searches.gene_expts, name='gene_expts'),
     url(r'^protein_full_listing/(?P<protein_id>\d+)$', common.protein_full_listing, name='protein_full_listing'),
