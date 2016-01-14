@@ -13,7 +13,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
-print "BASE_DIR = " + BASE_DIR
+#print "BASE_DIR = " + BASE_DIR
 
 
 # Quick-start development settings - unsuitable for production
@@ -72,9 +72,9 @@ AUTHENTICATION_BACKENDS = (
 )
 
 
-FIXTURE_DIRS = (
-   '/home/rimmer/praccie/hdome/pepsite/fixtures/',
-)
+#FIXTURE_DIRS = (
+#    os.path.join(BASE_DIR, "pepsite/fixtures/"),
+#)
 
 ANONYMOUS_USER_ID = -1
 
@@ -103,8 +103,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'hdometwo',
 	'HOST' : '',
-	'USER': 'rimmer',
-        'PASSWORD': 'f',
+	'USER': 'vagrant',
+        'PASSWORD': 'vagrant',
         # 'HOST': '127.0.0.1', # if we wanna use TCP sockets
         # 'PORT': '5433', # if we wanna use TCP sockets
     }
@@ -142,7 +142,7 @@ STATIC_URL = '/static/'
 
 STATIC_ROOT = os.path.join( BASE_DIR, 'static_root' )
 # STATIC_ROOT = '/home/rimmer/praccie/hdome/static_root/'
-print "STATIC_ROOT = " + STATIC_ROOT
+#print "STATIC_ROOT = " + STATIC_ROOT
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static/"),

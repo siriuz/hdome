@@ -27,4 +27,4 @@ raw_sql/
 pepsite/fixtures/
 hdome/settings.py
 *egg-info/
-
+.idea/**
