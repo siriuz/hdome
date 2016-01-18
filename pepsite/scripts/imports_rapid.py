@@ -25,6 +25,7 @@ from pepsite.models import *
 from pepsite import dbtools
 import pepsite.uploaders
 import time
+import csv
 
 
 BGFILE = os.path.join( CURDIR, '../../background/newdata_with_files_correct.csv' )
@@ -116,8 +117,9 @@ class BackgroundImports(dbtools.DBTools):
 
 
     def create_full_dic(self, filepath ):
-        """docstring for read_spreadsheet"""
-        self.mdict = self.read_canonical_spreadsheet( filepath )
+        """ Imports the spreadsheet into the BackgroundImports instance under the instance variable mdict """
+        self.mdict = self.read_canonical_spreadsheet(filepath)
+
 
     def get_cell_line(self, rowdic, host_ind = None ):
         """docstring for get_cell_line"""
@@ -254,6 +256,14 @@ class BackgroundImports(dbtools.DBTools):
         self.uniprot = self.get_model_object( ExternalDb, db_name = 'UniProt', url_stump = 'http://www.uniprot.org/uniprot/')
         self.uniprot.save()
 
+    def dummy_boilerplate_with_username(self, dummy_user):
+        self.user1 = User.objects.get(username=dummy_user)
+        self.man1 = self.get_model_object( Manufacturer, name = 'MZTech' )
+        self.man1.save()
+        self.inst1 = self.get_model_object( Instrument, name = 'HiLine-Pro', description = 'MS/MS Spectrometer', manufacturer = self.man1 )
+        self.inst1.save()
+        self.uniprot = self.get_model_object( ExternalDb, db_name = 'UniProt', url_stump = 'http://www.uniprot.org/uniprot/')
+        self.uniprot.save()
 
 
     def import_ss(self):
@@ -394,7 +404,7 @@ def bulk_with_extra(username, ss_master, datadir):
     bi1.create_full_dic( ss_master )
     now = datetime.datetime.utcnow().replace(tzinfo=utc)
     for en in sorted( bi1.mdict.keys(), key = lambda(a) : int(a) ):
-        bi1.dummy_boilerplate()
+        bi1.dummy_boilerplate_with_username(username)
         cl = bi1.get_cell_line( bi1.mdict[en] )
         bi1.insert_alleles( bi1.mdict[en], cl_obj = cl )
         bi1.insert_update_antibodies( bi1.mdict[en] )

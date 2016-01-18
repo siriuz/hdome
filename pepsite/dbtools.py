@@ -102,7 +102,11 @@ class DBTools(object):
     def read_canonical_spreadsheet(self, csvfile, delimiter = '\t'):
         """
         Parses a .csv spreadsheet into a line-by-line representation inside a dictionary.
-        (This function can probably be replaced with the DictReader function in the csv module -- RJ)
+        (This function can probably be replaced with the DictReader function from the csv module -- RJ)
+
+        with open(filepath) as csvfile:
+            reader = csv.DictReader(csvfile, delimiter='\t', skipinitialspace=True)
+
         """
         with open(csvfile, 'rb') as current_file:
             all_lines = [line.strip().split(delimiter) for line in current_file]
