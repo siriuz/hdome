@@ -58,10 +58,6 @@ class BulkWithExtraTest(TestCase):
         bi1.insert_alleles( MDIC, cl_obj = cl )
         bi1.insert_update_antibodies( MDIC )
         bi1.create_experiment( MDIC, cl )
-        #self.filepath = os.path.join( CURDIR, 'scripts/Time_Trial_Import4_PeptideSummary.trial' )
-        self.filepath = os.path.join( CURDIR, 'scripts/sample_large_ss.csv' )
-        #self.filepath = os.path.join( CURDIR, 'scripts/twentyk_trial.csv' )
-        self.BGFILE = os.path.join( CURDIR, '../../background/newdata_with_files_correct.csv' )
         self.bi1 = bi1
 
     def tearDown(self):
@@ -70,8 +66,8 @@ class BulkWithExtraTest(TestCase):
     def test_upload(self):
         print "Starting test case for uploading"
         print self.user1
-        ss_master = os.path.join( CURDIR, '../background/rj_test_experiments_index.csv')
-        datadir = os.path.join(CURDIR, '../background/all_august')
+        ss_master = os.path.join( CURDIR, 'test/rj_test_experiments_index.csv')
+        datadir = os.path.join(CURDIR, 'test/datadir')
         bulk_with_extra(self.user1.username, ss_master, datadir)
         print "done"
 
