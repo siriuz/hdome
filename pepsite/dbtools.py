@@ -45,7 +45,7 @@ class DBTools(object):
         """docstring for fname"""
         pass
 
-    
+
     def old_get_model_object( self, obj_type, **conditions ):
         """(DBTools, <arbitrary Django model object>) -> 
         <unsaved arbitrary Django model object> |  
@@ -57,7 +57,7 @@ class DBTools(object):
             return obj_type.objects.get( **conditions )
         else:
             raise NonUniqueError(  )
-    
+
     def get_model_object( self, obj_type, **conditions ):
         """(DBTools, <arbitrary Django model object>) -> 
         <unsaved arbitrary Django model object> |  
@@ -79,7 +79,7 @@ class DBTools(object):
                     raise ObjectUnreadyError()
 
 
-                
+
 
         if not len( obj_type.objects.filter( **conditions ) ):
             return obj_type( **conditions )
@@ -100,23 +100,33 @@ class DBTools(object):
 
 
     def read_canonical_spreadsheet(self, csvfile, delimiter = '\t'):
-        """docstring for read_canonical_spreadsheet"""
-        with open( csvfile, 'rb' ) as f:
-            info = [ b.strip().split(delimiter) for b in f ] 
-            header = [ b.strip() for b in info[0] ]
-            mdict = {}
-            for i in range(1, len(info)):
-                mdict[i] = {}
-                for j in range(len(header)):
+        """
+        Parses a .csv spreadsheet into a line-by-line representation inside a dictionary.
+        (This function can probably be replaced with the DictReader function in the csv module -- RJ)
+        """
+        with open(csvfile, 'rb') as current_file:
+            all_lines = [line.strip().split(delimiter) for line in current_file]
+            header = [column.strip() for column in all_lines[0]]  # Tokenize header
+            current_spreadsheet = {}
+            for line_count in range(1, len(all_lines)):  # Iterate over all lines after header
+                current_spreadsheet[line_count] = {}
+                for column_count in range(len(header)):
                     try:
-                        mdict[i][ header[j] ] = info[ i ][ j ].strip()
+                        # Some cells in the spreadsheet are empty and this is OK
+                        cell_value = all_lines[line_count][column_count].strip()
+                        if cell_value:
+                            current_spreadsheet[line_count][header[column_count]] = cell_value
+                        else:
+                            current_spreadsheet[line_count][header[column_count]] = ''
+
                     except:
+                        print "Error parsing column %s of line %s" % (column_count, line_count)
                         pass
-        return mdict
+        return current_spreadsheet
 
 
 
-        
+
 
 
 
