@@ -326,11 +326,15 @@ class BackgroundImports(dbtools.DBTools):
     def upload_ss_single( self, user_id, fileobj, expt_id, ab_ids, lodgement_title, cf_cutoff = 99.0, publication_objs = [], public = False ):
         user = self.get_model_object( User, id = user_id )
         ul = pepsite.uploaders.Uploads( user = user )
+
+        # Instrument is hardcoded to 'Hiline-Pro'
+        # get_or_create() returns a tuple of (object, created)
         inst, _ = Instrument.objects.get_or_create( name = 'HiLine-Pro' )
+
         metadata = { 'expt1' : expt_id, 'expt2' : None, 'pl1' : publication_objs, 'ab1' : ab_ids, 'ldg' : lodgement_title, 'inst' : inst.id, 'filename' : fileobj.name  }
         if public:
             metadata['rel'] = True
-        ul = pepsite.uploaders.Uploads( user = user )
+        ul = pepsite.uploaders.Uploads( user = user )  # I don't know why this is instantiated again after above
         ul.preview_ss_simple( metadata )
         ul.preprocess_ss_simple( fileobj )
         ul.add_cutoff_mappings( {'cf_' : cf_cutoff} )
@@ -345,16 +349,24 @@ class BackgroundImports(dbtools.DBTools):
     def single_upload_from_ss(self, username, local, lodgement_title, filepath):
         """docstring for single_upload_from_ss"""
         t0 = time.time()
-        with open( filepath, 'rb' ) as f:
+        with open( filepath, 'rb' ) as proteinpilot_spreadsheet_file:
             cf_cutoff = float( local['5% FDR'] )
+
+            # Populate experiment ID by getting it from the database with local['Experiment name']
             expt_obj = self.get_model_object( Experiment, title = local['Experiment name'] )
             expt_id = expt_obj.id
+
+            # Populate list of antibody IDs from the database by using 'Elution Ab' field from experiments index
+            # There is a possibility of more than one antibody in which case the field is tokenised by ','
             ab_ids = []
             for ab_name in local['Elution Ab'].strip().split(','):
                 ab_ids.append( self.get_model_object( Antibody, name = ab_name.strip() ).id )
+
+            # Populates user ID from database using username parameter
             user_id = self.get_model_object( User, username = username ).id
-            print 'done user_id = %d, file = %s, expt_id = %s, ab_ids = %s, lodgement_title = %s, cf_cutoff = %f' % ( user_id, f.name.split('/')[-1], expt_id, ab_ids, lodgement_title, cf_cutoff )
-            self.upload_ss_single( user_id, f, expt_id, ab_ids, lodgement_title, cf_cutoff = cf_cutoff )
+            print 'done user_id = %d, file = %s, expt_id = %s, ab_ids = %s, lodgement_title = %s, cf_cutoff = %f' % ( user_id, proteinpilot_spreadsheet_file.name.split('/')[-1], expt_id, ab_ids, lodgement_title, cf_cutoff )
+
+            self.upload_ss_single( user_id, proteinpilot_spreadsheet_file, expt_id, ab_ids, lodgement_title, cf_cutoff = cf_cutoff )
             t1 = time.time()
             return t1 -t0
 
@@ -403,6 +415,9 @@ def bulk_with_extra(username, ss_master, datadir):
     bi1 = BackgroundImports()
     bi1.create_full_dic( ss_master )
     now = datetime.datetime.utcnow().replace(tzinfo=utc)
+
+    # This bit loops for every line in experiments index csv - so create the cell lines and alleles and antibodies
+    # and creates the experiment
     for en in sorted( bi1.mdict.keys(), key = lambda(a) : int(a) ):
         bi1.dummy_boilerplate_with_username(username)
         cl = bi1.get_cell_line( bi1.mdict[en] )
@@ -410,6 +425,9 @@ def bulk_with_extra(username, ss_master, datadir):
         bi1.insert_update_antibodies( bi1.mdict[en] )
         bi1.create_experiment( bi1.mdict[en], cl )
         #pass
+
+    # Then for every experiment call single_upload_from_ss with the proteinpilot file path that was described for
+    # each experiment in the experiment index
     for en in sorted( bi1.mdict.keys(), key = lambda(a) : int(a) ):
         expt_name = bi1.mdict[en]['Experiment name'].strip() 
         filepath = os.path.join( datadir, bi1.mdict[en]['File name'] )

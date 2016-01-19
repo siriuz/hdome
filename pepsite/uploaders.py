@@ -146,7 +146,9 @@ class Uploads(dbtools.DBTools):
 
     def preview_ss_simple(self, cleaned_data):
         """docstring for preview_ss_simple"""
-        if int(cleaned_data[ 'expt1' ]) != -1:
+
+        # ['expt1'] comes from the dropdown list in the upload_ss form view and a value of -1 denotes a new experiment
+        if int(cleaned_data[ 'expt1' ]) != -1:  # Hence.. if not a new experiment, populate experiment details from db
             self.expt = self.get_model_object( Experiment, id = cleaned_data[ 'expt1' ] )
             self.expt_desc = self.expt.description
             self.expt_title = self.expt.title
@@ -155,6 +157,8 @@ class Uploads(dbtools.DBTools):
             self.instrument = self.get_model_object( Instrument, id = cleaned_data[ 'inst' ] )
             self.cell_line = self.expt.cell_line
             self.cell_line_id = self.expt.cell_line.id
+
+        # Else if new experiment string given in form field is not empty
         elif cleaned_data[ 'expt2' ].strip() != '':
             self.expt_title = cleaned_data[ 'expt2' ]
             if 'expt2_desc' in cleaned_data.keys():
@@ -174,6 +178,8 @@ class Uploads(dbtools.DBTools):
                 ab_obj = self.get_model_object( Antibody, id = ab ) 
                 self.antibodies.append( ab_obj )
                 self.antibody_ids.append( ab )
+
+        # If 'make public' is checked in the form
         if 'pl1' in cleaned_data.keys():
             #for pl in cleaned_data.getlist( 'pl1' ):
             for pl in cleaned_data[ 'pl1' ]:
@@ -195,44 +201,55 @@ class Uploads(dbtools.DBTools):
             pass
 
     def translate_headers( self, header ):
+        """
+        Populates self.indexmap with a list of tuples:
+        (order, header_column_count, data_field_identifier)
+
+        In other words self.indexmap is a mapping between data fields (e.g peptide_sequence, proteins, etc) and
+         the respective column number that is in the spreadsheet.
+        """
         coldic = {}
         # Creates a new dictionary using the keys in match_dict (defined above)
         headerdic = { b : [] for b in self.match_dict.keys() }
         valid = True
 
         # Iterates over each item in the header
-        for i in range(len( header )):
+        for header_column_count in range(len( header )):
 
-            # header[i] is simply the the i-th item in header
-            coldic[header[i]] = []
+            # instantiate a key in coldic[] with the header item
+            header_item = header[header_column_count]
+            coldic[header_item] = []
 
             # For each key in match_dict do..
-            for k in self.match_dict.keys():
+            for data_field_identifier in self.match_dict.keys():
 
                 # Sets v to the matching strings for key k
-                v = self.match_dict[k][ 'matches' ]
+                data_field_matchstrings = self.match_dict[data_field_identifier][ 'matches' ]
                 matching = False
 
                 # For each matching string do a regex to see if it is in the header item
-                for trialstr in v:
-                    if re.match( '\\w*%s' % ( trialstr ), header[i], flags = re.IGNORECASE ):
+                for trialstr in data_field_matchstrings:
+                    if re.match( '\\w*%s' % ( trialstr ), header_item, flags = re.IGNORECASE):
                         matching = True
 
                 # If there is a match then add this key to the coldic
                 if matching:
-                    coldic[header[i]].append(k)
-                    headerdic[k].append(header[i])
-                    self.indexmap.append([ self.match_dict[k]['order'], i, k ] )
+                    coldic[header_item].append(data_field_identifier)
+                    headerdic[data_field_identifier].append(header_item)
+                    self.indexmap.append([ self.match_dict[data_field_identifier]['order'], header_column_count, data_field_identifier ] )
         self.indexmap = sorted( self.indexmap, key = lambda a : a[0] )
-        for k in coldic.keys():
-            if len( coldic[k] ) != 1:
+        for data_field_identifier in coldic.keys():
+            if len( coldic[data_field_identifier] ) != 1:
                 valid = False
-        for k in headerdic.keys():
-            if len( headerdic[k] ) != 1:
+        for data_field_identifier in headerdic.keys():
+            if len( headerdic[data_field_identifier] ) != 1:
                 valid = False
         self.valid = valid
 
     def preprocess_ss_from_bulk( self, fileobj, ldg_name, ldg_no ):
+        """
+        This function isn't even used anywhere?! -- RJ
+        """
         j = self.counter
         lc = 0
         uldict = {}
@@ -310,14 +327,20 @@ class Uploads(dbtools.DBTools):
     def preprocess_ss_simple( self, fileobj ):
         #with open( ss_files
         self.lodgement_filename = fileobj.name
+
+        # allstr holds the contents of the manually built html table around the preview dataset
         allstr = '<table id=\"cssTable\" class=\"table table-striped tablesorter\">'
+
         headers = fileobj.readline().split( self.delim )
         self.translate_headers( headers )
         allstr += '<thead><tr>'
-        for i, k, m in self.indexmap:
-           allstr += '<th>' + self.match_dict[m]['display'] + '</th>'
+
+        # Generate html table headers with self.indexmap
+        for dictionary_order, column_number, data_field_identifier in self.indexmap:
+           allstr += '<th>' + self.match_dict[data_field_identifier]['display'] + '</th>'
         allstr += '</tr></thead><tbody>'
-        j = 0
+
+        row_number = 0
         uldict = {}
         proteinfields = []
         peptidefields = []
@@ -330,66 +353,70 @@ class Uploads(dbtools.DBTools):
         row_indices = []
 
         for line in fileobj:
-            if j:
-                row_indices.append(j)
+            # Start of loop over each line in spreadsheet
+            if row_number:  # Skip j = 0  (so skip the header -- that was the intention. however readline() above
+                   # already pops off the header line so this skips the first data line)
+
+                row_indices.append(row_number)
                 rawlines.append(line)
-                uldict[j] = {}
+                uldict[row_number] = {}
                 elements = line.split(self.delim )
                 allstr += '<tr>'
-                for i, k, m in self.indexmap:
-                    if ';' not in elements[k]:
-                        if m == 'dataset_id':
-                            ds_no = elements[k].split('.')[0]
-                            uldict[j][ 'spectrum' ] = elements[k]
-                            uldict[j][ 'dataset' ] = ds_no
+                for dictionary_order, column_number, data_field_identifier in self.indexmap:
+                    cell_contents = elements[column_number]
+                    if ';' not in cell_contents:
+                        if data_field_identifier == 'dataset_id':
+                            ds_no = cell_contents.split('.')[0]  # dataset number = first numeric element before '.'
+                            uldict[row_number][ 'spectrum' ] = cell_contents
+                            uldict[row_number][ 'dataset' ] = ds_no
                             allstr += '<td>' + ds_no + '</td>'
                             if ds_no not in self.dataset_nos:
                                 self.dataset_nos.append( ds_no )
 
 
-                        elif m == 'uniprot_ids' and len(elements[k].strip().split('|')) > 1: #not in ( 'segment', 'rrrrrsegment' ):
+                        elif data_field_identifier == 'uniprot_ids' and len(cell_contents.strip().split('|')) > 1: #not in ( 'segment', 'rrrrrsegment' ):
                             
                             #print 'element = %s' % elements[k]
           
-                            allstr += '<td><a href=\"http://www.uniprot.org/uniprot/' + elements[k].split('|')[1] + '\" target=\"_blank\">' + elements[k].split('|')[1] + '</a></td>'
-                            uldict[j]['uniprot_ids'] = [ elements[k].split('|')[1] ]
-                            if elements[k].split('|')[1] not in self.uniprot_ids:
-                                self.uniprot_ids.append( elements[k].split('|')[1] )
-                        elif m in ( 'proteins', 'ptms' ):
-                            if not elements[k]:
-                                uldict[j][m] = []
+                            allstr += '<td><a href=\"http://www.uniprot.org/uniprot/' + cell_contents.split('|')[1] + '\" target=\"_blank\">' + cell_contents.split('|')[1] + '</a></td>'
+                            uldict[row_number]['uniprot_ids'] = [cell_contents.split('|')[1]]
+                            if cell_contents.split('|')[1] not in self.uniprot_ids:
+                                self.uniprot_ids.append(cell_contents.split('|')[1])
+                        elif data_field_identifier in ( 'proteins', 'ptms' ):
+                            if not cell_contents:
+                                uldict[row_number][data_field_identifier] = []
                                 allstr += '<td/>'
                             else:
-                                uldict[j][m] = [ elements[k] ]
-                                allstr += '<td>%s</td>' % ( elements[k] )
-                        elif m in ('precursor_mass', 'confidence', 'delta_mass'):
-                            allstr += '<td>' + elements[k] + '</td>'
-                            uldict[j][m] = str(round(float(elements[k]), 5))
-                        elif m not in ('uniprot_ids'):
-                            allstr += '<td>' + elements[k] + '</td>'
-                            uldict[j][m] = elements[k]
+                                uldict[row_number][data_field_identifier] = [cell_contents]
+                                allstr += '<td>%s</td>' % (cell_contents)
+                        elif data_field_identifier in ('precursor_mass', 'confidence', 'delta_mass'):
+                            allstr += '<td>' + cell_contents + '</td>'
+                            uldict[row_number][data_field_identifier] = str(round(float(cell_contents), 5))
+                        elif data_field_identifier not in ('uniprot_ids'):
+                            allstr += '<td>' + cell_contents + '</td>'
+                            uldict[row_number][data_field_identifier] = cell_contents
                         else:
                             allstr += '<td></td>'
-                            uldict[j][m] = ['']
+                            uldict[row_number][data_field_identifier] = ['']
 
                     else:
                         entries = []
                         allstr += '<td>'
-                        loclist = [ b.strip() for b in elements[k].split(';') if b.strip() != 'segment' ]
+                        loclist = [b.strip() for b in cell_contents.split(';') if b.strip() != 'segment']
                         for subel in loclist:
-                            if m == 'uniprot_ids' and len(subel.split('|')) > 1:
+                            if data_field_identifier == 'uniprot_ids' and len(subel.split('|')) > 1:
                                 allstr += ' <a href=\"http://www.uniprot.org/uniprot/' + subel.split('|')[1] + '\" target=\"_blank\">' + subel.split('|')[1] + '</a> '
                                 entries.append( subel.split('|')[1] )
                                 #uldict[j]['uniprot_ids'] = [ elements[k].split('|')[1] ]
                                 if subel.split('|')[1] not in self.uniprot_ids:
                                     self.uniprot_ids.append( subel.split('|')[1] ) 
                                 #allstr += ' %u ' % ( u'{\% url \'http://www.uniprot.org/uniprot/%u\' \%}' % ( subel.split('|')[1] ) )
-                            elif m in ( 'proteins', 'ptms' ):
+                            elif data_field_identifier in ( 'proteins', 'ptms' ):
                                 if subel:
                                     entries.append( subel )
                                     allstr += ' %s ' % ( subel )
 
-                            elif m not in ('uniprot_ids'):
+                            elif data_field_identifier not in ('uniprot_ids'):
                                 allstr += ' %s ' % ( loclist[0] )
                                 entries.append( loclist[0] )
                             else:
@@ -397,20 +424,24 @@ class Uploads(dbtools.DBTools):
                                 entries.append( '' )
 
                         allstr += '</td>'
-                        uldict[j][m] = entries
+                        uldict[row_number][data_field_identifier] = entries
                 allstr += '</tr>'
-                ## tuples for bulk sql inserts later
-                peptidefields.append( uldict[j]['peptide_sequence'] )
-                proteinfields.append( [ [x[0], x[1]] for x in zip(uldict[j]['uniprot_ids'], uldict[j]['proteins']) ]   )
-                datasetfields.append( uldict[j]['dataset'] )
-                ionfields.append( ( uldict[j]['charge'], uldict[j]['precursor_mass'], uldict[j]['retention_time'], uldict[j]['mz'], uldict[j]['spectrum'] ) ) 
-                idestimatefields.append( ( uldict[j]['confidence'], uldict[j]['delta_mass'] ) )
-                ptmfields.append( [ b for b in uldict[j]['ptms'] ] )
+                ## tuples for bulk sql inserts later; at this point uldict[j] is fully populated with the j'th row data
+                peptidefields.append( uldict[row_number]['peptide_sequence'] )
+                proteinfields.append( [ [x[0], x[1]] for x in zip(uldict[row_number]['uniprot_ids'], uldict[row_number]['proteins']) ]   )
+                datasetfields.append( uldict[row_number]['dataset'] )
+                ionfields.append( ( uldict[row_number]['charge'], uldict[row_number]['precursor_mass'], uldict[row_number]['retention_time'], uldict[row_number]['mz'], uldict[row_number]['spectrum'] ) )
+                idestimatefields.append( ( uldict[row_number]['confidence'], uldict[row_number]['delta_mass'] ) )
+                ptmfields.append( [ b for b in uldict[row_number]['ptms'] ] )
                 ##
-                singlerows.append( [j,  uldict[j]['peptide_sequence'], uldict[j]['charge'], uldict[j]['precursor_mass'],
-                        uldict[j]['retention_time'], uldict[j]['mz'], uldict[j]['confidence'], uldict[j]['delta_mass'], uldict[j]['spectrum'], uldict[j]['dataset'] ] )
+                singlerows.append( [row_number,  uldict[row_number]['peptide_sequence'], uldict[row_number]['charge'], uldict[row_number]['precursor_mass'],
+                        uldict[row_number]['retention_time'], uldict[row_number]['mz'], uldict[row_number]['confidence'], uldict[row_number]['delta_mass'], uldict[row_number]['spectrum'], uldict[row_number]['dataset'] ] )
                 self.singlerows_header = ['rownum', 'peptide_sequence', 'charge', 'precursor_mass', 'retention_time', 'mz', 'confidence', 'delta_mass', 'spectrum', 'dataset']
-            j += 1
+            # End of loop over each line in spreadsheet
+
+            row_number += 1
+
+
         allstr += '</tbody></table>'
         self.allstr = allstr
         self.uldict = uldict
