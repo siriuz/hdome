@@ -340,7 +340,7 @@ class Uploads(dbtools.DBTools):
            allstr += '<th>' + self.match_dict[data_field_identifier]['display'] + '</th>'
         allstr += '</tr></thead><tbody>'
 
-        row_number = 0
+        row_number = 1
         uldict = {}
         proteinfields = []
         peptidefields = []
@@ -653,7 +653,7 @@ class Uploads(dbtools.DBTools):
                 select dataset_id from f \
                 order by rownum \
                 ' % ds_find_str
-        cursor.execute( sqldsfind )
+        cursor.execute( sqldsfind )  # Retrieve dataset (rows? IDs?) from database
         newmastercol = cursor.fetchall()
         for row, new in zip( self.singlerows, [b[0] for b in newmastercol ] ) :
             row.append( new )

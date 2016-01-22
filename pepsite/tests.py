@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.contrib.auth.models import User
 from pepsite.models import *
 from pepsite.uploaders import Uploads
@@ -41,6 +41,79 @@ MDIC = {'# peptides': '1468',
  'Transfectant Y/N': '',
  'Transfected alelle (s)': ''}
 
+
+class VerifyBulkUploadIntegrity(TransactionTestCase):
+
+    def setUp(self):
+        print "Running setUp bulk"
+        user1 = User.objects.create( )
+        user1.set_password( 'f' )
+        user1.username = 'u1'
+        user1.save()
+        self.user1 = user1
+        self.man1 = Manufacturer.objects.create( name = 'MZTech' )
+        self.inst1 = Instrument.objects.create( name = 'HiLine-Pro', description = 'MS/MS Spectrometer', manufacturer = self.man1 )
+        self.uniprot = ExternalDb.objects.create( db_name = 'UniProt', url_stump = 'http://www.uniprot.org/uniprot/')
+        bi1 = BackgroundImports()
+        cl = bi1.get_cell_line( MDIC )
+        bi1.insert_alleles( MDIC, cl_obj = cl )
+        bi1.insert_update_antibodies( MDIC )
+        bi1.create_experiment( MDIC, cl )
+        self.bi1 = bi1
+
+        ss_master = os.path.join( CURDIR, 'test/rj_test_experiments_index.csv')
+        datadir = os.path.join(CURDIR, 'test/datadir')
+        bulk_with_extra(self.user1.username, ss_master, datadir)
+
+    def testRow1Correctness(self):
+        # Assert that row1 values are correct
+        result = Ion.objects.filter(idestimate__confidence=round(float(self.row1_cell()['conf']), 5),
+                                    idestimate__delta_mass=round(float(self.row1_cell()['dMass']), 5),
+                                    idestimate__peptide__sequence__exact=self.row1_cell()['sequence'],
+                                    idestimate__proteins__description__exact=self.row1_cell()['names'],
+                                    idestimate__proteins__prot_id__exact=self.row1_cell()['accessions'].split('|')[1],
+                                    idestimate__ptms__description__exact=self.row1_cell()['modifications'],
+                                    experiment__title__exact=self.row1_cell()['experiment_name'],
+                                    experiment__description__exact=self.row1_cell()['experiment_description']
+                                    )
+
+        self.assertEqual(len(result), 1)  # Check that only one result exists
+
+        # Check that all the values expected on the Ion are correct
+        self.assertEqual(result[0].charge_state, self.row1_cell()['theor_z'])
+        self.assertEqual(result[0].spectrum, self.row1_cell()['spectrum'])
+        self.assertEqual(result[0].mz, self.row1_cell()['prec_mz'])
+        self.assertEqual(result[0].precursor_mass, round(float(self.row1_cell()['prec_mw']), 5))
+        self.assertEqual(result[0].retention_time, self.row1_cell()['time'])
+
+    def row1_cell(self):
+        """
+        String values that exist in the rj_test_experiments
+        """
+        values = {
+            # ProteinPilot analysis spreadsheet
+            "accessions": "sp|Q9BY89|K1671_HUMAN",
+            "names": "Uncharacterized protein KIAA1671 OS=Homo sapiens GN=KIAA1671 PE=1 SV=2",
+            "conf": 99.0000009537,
+            "sequence": "MPGLVGQEVGSGEGPR",
+            "modifications": "Deamidated(Q)@7",
+            "dMass": -0.0842337981,
+            "prec_mw": 1569.6614990234,
+            "prec_mz": 785.838,
+            "theor_mw": 1569.7457275391,
+            "theor_mz": 785.8801269531,
+            "theor_z": 2,
+            "spectrum": "1.1.1.5184.2",
+            "time": 24.3733,
+
+            # Experiments index spreadsheet
+            "experiment_name": "RJ Test experiment #1",
+            "experiment_description": "Test experiment for testing purposes only"
+        }
+        return values
+
+
+
 class BulkWithExtraTest(TestCase):
     def setUp(self):
         """docstring for setup"""
@@ -69,7 +142,7 @@ class BulkWithExtraTest(TestCase):
         ss_master = os.path.join( CURDIR, 'test/rj_test_experiments_index.csv')
         datadir = os.path.join(CURDIR, 'test/datadir')
         bulk_with_extra(self.user1.username, ss_master, datadir)
-        print "done"
+
 
 class ImportSpeedTest(TestCase):
 
