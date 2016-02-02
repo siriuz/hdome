@@ -27,3 +27,4 @@ sqlparse==0.1.11
 tornado==3.2.2
 uniprot==1.0.1
 wsgiref==0.1.2
+pandas==0.17.1
