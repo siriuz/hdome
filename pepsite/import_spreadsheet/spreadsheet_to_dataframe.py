@@ -1,3 +1,5 @@
+import csv
+
 from pepsite.models import *
 from column_parsers import *
 import pandas as pandas
@@ -36,8 +38,8 @@ class HeaderToDataFieldMappings:
 
 class SpreadsheetToDataframe:
 
-    def read_v5_csv(self, spreadsheet_filepath):
-        """ Reads a ProteinPilot v5 spreadsheet and returns a Pandas DataFrame
+    def read_csv(self, spreadsheet_filepath):
+        """ Reads a ProteinPilot spreadsheet and returns a Pandas DataFrame
 
         Uses Pandas' read_csv to parse the spreadsheet into a DataFrame for more efficient column/row operations.
         pandas.read_csv uses a dictionary of converters which applies functions to matching column names.
@@ -49,8 +51,14 @@ class SpreadsheetToDataframe:
         """
         # "20160118_Amanda_QC6_QC6_01012016_afternewloadingpumpbuffer_PeptideSummary.txt"
 
+        spreadsheet_version = identify_proteinpilot_csv_version(spreadsheet_filepath)
+        if spreadsheet_version == 5:
+            column_mapping = HeaderToDataFieldMappings.ProteinPilotV5
+        elif spreadsheet_version == 4:
+            column_mapping = HeaderToDataFieldMappings.ProteinPilotV4
+
         dataframe = pandas.read_csv(spreadsheet_filepath,
-                                    usecols=HeaderToDataFieldMappings.ProteinPilotV5,
+                                    usecols=column_mapping,
                                     delimiter='\t',
                                     converters={"Accessions": accessions_to_uniprot_list,
                                                 "Names": names_to_protein_descriptions,
@@ -61,27 +69,28 @@ class SpreadsheetToDataframe:
 
         return dataframe
 
-    def read_v4_csv(self, spreadsheet_filepath):
-        """ Reads a ProteinPilot v4 spreadsheet and returns a Pandas DataFrame
 
-        Uses Pandas' read_csv to parse the spreadsheet into a DataFrame for more efficient column/row operations.
-        pandas.read_csv uses a dictionary of converters which applies functions to matching column names.
-        These functions are defined in column_parsers.py. The functions also convert multiple-element cells to
-        Python lists. Refer to spreadsheet specifications document for more information.
+def identify_proteinpilot_csv_version(spreadsheet_filepath):
+    """
+    Reads the csv header to identify the version of ProteinPilot that produced the file
+    Raises a ValueError if the file headers do not match ProteinPilot V4 or V5 files
 
-        :param spreadsheet_filepath: String with path to ProteinPilot V4 spreadsheet
-        :return: Pandas DataFrame with column headers renamed to match internal data field identifiers
-        """
-        # "20160118_Amanda_QC6_QC6_01012016_afternewloadingpumpbuffer_PeptideSummary.txt"
+    :param spreadsheet_filepath: Path to spreadsheet to be identified
+    :return: Version of ProteinPilot as an integer (4 or 5)
+    """
 
-        dataframe = pandas.read_csv(spreadsheet_filepath,
-                                    usecols=HeaderToDataFieldMappings.ProteinPilotV4,
-                                    delimiter='\t',
-                                    converters={"Accessions": accessions_to_uniprot_list,
-                                                "Names": names_to_protein_descriptions,
-                                                "Modifications": modifications_to_ptms_descriptions})
+    with open(spreadsheet_filepath, 'r') as csvfile:
+        csvreader = csv.DictReader(csvfile, delimiter='\t')
 
-        # Rename the column names to match models
-        dataframe.rename(columns=HeaderToDataFieldMappings.ProteinPilotV5, inplace=True)
+        file_header_fields = set(csvreader.fieldnames)
+        v5_spec_fields = set(HeaderToDataFieldMappings.ProteinPilotV5.keys())
+        v4_spec_fields = set(HeaderToDataFieldMappings.ProteinPilotV4.keys())
 
-        return dataframe
+        if file_header_fields.issuperset(v5_spec_fields):
+            version = 5
+        elif file_header_fields.issuperset(v4_spec_fields):
+            version = 4
+        else:
+            raise ValueError('File headers do not match ProteinPilot V4 or V5 fields')
+
+    return version

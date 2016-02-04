@@ -1,4 +1,4 @@
-from column_parsers import *
+from pepsite.import_spreadsheet.column_parsers import *
 from django.test import TestCase
 
 
@@ -22,13 +22,20 @@ class AccessionsToUniprotUnitTests(TestCase):
 
 class NamesToProteinDescriptionUnitTests(TestCase):
     def test_single_names_to_protein_descriptions(self):
-        results = names_to_protein_descriptions("Uncharacterized protein KIAA1671 OS=Homo sapiens GN=KIAA1671 PE=1 SV=2")
-        assert results == ["Uncharacterized protein KIAA1671 OS=Homo sapiens GN=KIAA1671 PE=1 SV=2"]
+        results = names_to_protein_descriptions("Uncharacterized protein KIAA1671 "
+                                                "OS=Homo sapiens GN=KIAA1671 PE=1 SV=2")
+        assert results == ["Uncharacterized protein KIAA1671 "
+                           "OS=Homo sapiens GN=KIAA1671 PE=1 SV=2"]
 
     def test_multi_names_to_protein_descriptions(self):
-        results = names_to_protein_descriptions("Uncharacterized protein KIAA1671 OS=Homo sapiens GN=KIAA1671 PE=1 SV=2;Alkaline extracellular protease OS=Yarrowia lipolytica (strain CLIB 122 / E 150) GN=XPR2 PE=1 SV=1")
-        assert results == ["Uncharacterized protein KIAA1671 OS=Homo sapiens GN=KIAA1671 PE=1 SV=2",
-                           "Alkaline extracellular protease OS=Yarrowia lipolytica (strain CLIB 122 / E 150) GN=XPR2 PE=1 SV=1"]
+        results = names_to_protein_descriptions("Uncharacterized protein KIAA1671 OS=Homo sapiens "
+                                                "GN=KIAA1671 PE=1 SV=2;Alkaline extracellular protease "
+                                                "OS=Yarrowia lipolytica (strain CLIB 122 / E 150) "
+                                                "GN=XPR2 PE=1 SV=1")
+        assert results == ["Uncharacterized protein KIAA1671 OS=Homo sapiens "
+                           "GN=KIAA1671 PE=1 SV=2",
+                           "Alkaline extracellular protease OS=Yarrowia lipolytica "
+                           "(strain CLIB 122 / E 150) GN=XPR2 PE=1 SV=1"]
 
     def test_empty_names_to_protein_descriptions(self):
         results = names_to_protein_descriptions("")
