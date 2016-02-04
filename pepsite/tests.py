@@ -139,9 +139,42 @@ class BulkWithExtraTest(TestCase):
     def test_upload(self):
         print "Starting test case for uploading"
         print self.user1
+        ss_master = os.path.join( CURDIR, '../background/all_bulk_1line_paseekd.csv')
+        datadir = os.path.join(CURDIR, '../background/all_august')
+        #ss_master = os.path.join( CURDIR, 'test/rj_test_experiments_index.csv')
+        #datadir = os.path.join(CURDIR, 'test/datadir')
+        bulk_with_extra(self.user1.username, ss_master, datadir)
+        print "done"
+
+class CompareInsertTestCase(TransactionTestCase):
+    def setUp(self):
+        """docstring for setup"""
+        print "Running setUp CompareInsert"
+        user1 = User.objects.create( )
+        user1.set_password( 'f' )
+        user1.username = 'u1'
+        user1.save()
+        self.user1 = user1
+        self.man1 = Manufacturer.objects.create( name = 'MZTech' )
+        self.inst1 = Instrument.objects.create( name = 'HiLine-Pro', description = 'MS/MS Spectrometer', manufacturer = self.man1 )
+        self.uniprot = ExternalDb.objects.create( db_name = 'UniProt', url_stump = 'http://www.uniprot.org/uniprot/')
+        bi1 = BackgroundImports()
+        cl = bi1.get_cell_line( MDIC )
+        bi1.insert_alleles( MDIC, cl_obj = cl )
+        bi1.insert_update_antibodies( MDIC )
+        bi1.create_experiment( MDIC, cl )
+        self.bi1 = bi1
+
+    def tearDown(self):
+        self.bi1 = None
+
+    def test_upload(self):
+        print "Starting test case for CompareInsert"
+        print self.user1
         ss_master = os.path.join( CURDIR, 'test/rj_test_experiments_index.csv')
         datadir = os.path.join(CURDIR, 'test/datadir')
         bulk_with_extra(self.user1.username, ss_master, datadir)
+
 
 
 class ImportSpeedTest(TestCase):

@@ -590,6 +590,20 @@ class Uploads(dbtools.DBTools):
         return retstr
 
 
+    def upload_megarapid_rewrite(self):
+        from import_spreadsheet import spreadsheet_to_dataframe, import_to_database
+        spreadsheet = spreadsheet_to_dataframe.SpreadsheetToDataframe()
+        spreadsheet_dataframe = spreadsheet.read_v4_csv(self.lodgement_filename)
+
+        import_to_database.insert_proteins(spreadsheet_dataframe)
+        import_to_database.insert_peptides(spreadsheet_dataframe)
+        import_to_database.insert_ptms(spreadsheet_dataframe)
+
+        print "debug"
+
+
+
+
 
     def upload_megarapid(self):
         """docstring for upload_rapid"""
@@ -606,6 +620,8 @@ class Uploads(dbtools.DBTools):
                 else:
                     proteinstr += '( e\'%s\', null ), ' % ( b[x][1].replace('\'', '\\\'') )
         proteinstr = proteinstr.strip(', ')
+
+        print proteinstr
 
         peptidestr = ''
         peptide_find_str = ''
@@ -707,16 +723,18 @@ class Uploads(dbtools.DBTools):
 
         cursor.execute( 'select count(*) from pepsite_ptm' )
         print 'ptm', cursor.fetchall()
-        sqlptm = 'INSERT INTO pepsite_ptm (\"description\", \"name\") \
-                SELECT DISTINCT i.field1 \"description\", i.field1 \"name\" \
-                FROM (VALUES %s) AS i(field1) \
-                LEFT JOIN pepsite_ptm as existing \
-                ON (existing.\"description\" = i.field1) \
-                WHERE existing.id IS NULL \
-                ' % ( ptmstr )
-        cursor.execute( sqlptm )
-        cursor.execute( 'SELECT COUNT(*) FROM pepsite_ptm' )
-        print 'ptm', cursor.fetchall()[0]
+
+        if len(ptmstr.strip()) > 0:   # if there are no ptms entity then don't try to insert anything for ptm
+            sqlptm = 'INSERT INTO pepsite_ptm (\"description\", \"name\") \
+                    SELECT DISTINCT i.field1 \"description\", i.field1 \"name\" \
+                    FROM (VALUES %s) AS i(field1) \
+                    LEFT JOIN pepsite_ptm as existing \
+                    ON (existing.\"description\" = i.field1) \
+                    WHERE existing.id IS NULL \
+                    ' % ( ptmstr )
+            cursor.execute( sqlptm )
+            cursor.execute( 'SELECT COUNT(*) FROM pepsite_ptm' )
+            print 'ptm', cursor.fetchall()[0]
 
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_ion' )
         print 'ion', cursor.fetchall()
@@ -818,18 +836,20 @@ class Uploads(dbtools.DBTools):
 
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate_ptms' )
         print 'idestimate_ptms', cursor.fetchall()
-        ideptmsql = 'WITH f as  \
-                (SELECT foo.idestimate_id, goo.id AS ptm_id FROM (VALUES %s ) AS foo(idestimate_id, ptm_description ) \
-                INNER JOIN pepsite_ptm AS goo ON ( foo.ptm_description = goo.description ) ) \
-                INSERT INTO pepsite_idestimate_ptms ( idestimate_id, ptm_id ) \
-                SELECT DISTINCT f.idestimate_id, f.ptm_id \
-                FROM f LEFT JOIN pepsite_idestimate_ptms existing \
-                ON ( f.idestimate_id = existing.idestimate_id AND f.ptm_id = existing.ptm_id ) \
-                WHERE existing.id IS NULL \
-                ' % ideptmstr
-        cursor.execute( ideptmsql )
-        cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate_ptms' )
-        print 'idestimate_ptms', cursor.fetchall()
+
+        if len(ideptmstr.strip()) > 0:  # if nothing in ideptmstr then don't try to insert anything
+            ideptmsql = 'WITH f as  \
+                    (SELECT foo.idestimate_id, goo.id AS ptm_id FROM (VALUES %s ) AS foo(idestimate_id, ptm_description ) \
+                    INNER JOIN pepsite_ptm AS goo ON ( foo.ptm_description = goo.description ) ) \
+                    INSERT INTO pepsite_idestimate_ptms ( idestimate_id, ptm_id ) \
+                    SELECT DISTINCT f.idestimate_id, f.ptm_id \
+                    FROM f LEFT JOIN pepsite_idestimate_ptms existing \
+                    ON ( f.idestimate_id = existing.idestimate_id AND f.ptm_id = existing.ptm_id ) \
+                    WHERE existing.id IS NULL \
+                    ' % ideptmstr
+            cursor.execute( ideptmsql )
+            cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate_ptms' )
+            print 'idestimate_ptms', cursor.fetchall()
 
 
         cursor.execute( 'SELECT COUNT(*) FROM pepsite_idestimate_proteins' )
