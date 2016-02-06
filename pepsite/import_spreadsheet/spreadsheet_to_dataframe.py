@@ -13,8 +13,8 @@ class HeaderToDataFieldMappings:
                       "Conf": "idestimate_confidence",
                   "Sequence": "peptide_sequence",
              "Modifications": "ptms_description",
-                     "dMass": "ion_delta_mass",
-                    "Obs MW": "idestimate_precursor_mass",
+                     "dMass": "idestimate_delta_mass",
+                    "Obs MW": "ion_precursor_mass",
                    "Obs m/z": "ion_mz",
                    "Theor z": "ion_charge",
                   "Spectrum": "ion_spectrum",
@@ -27,8 +27,8 @@ class HeaderToDataFieldMappings:
                       "Conf": "idestimate_confidence",
                   "Sequence": "peptide_sequence",
              "Modifications": "ptms_description",
-                     "dMass": "ion_delta_mass",
-                   "Prec MW": "idestimate_precursor_mass",
+                     "dMass": "idestimate_delta_mass",
+                   "Prec MW": "ion_precursor_mass",
                   "Prec m/z": "ion_mz",
                    "Theor z": "ion_charge",
                   "Spectrum": "ion_spectrum",
@@ -36,38 +36,33 @@ class HeaderToDataFieldMappings:
     }
 
 
-class SpreadsheetToDataframe:
+def read_csv(spreadsheet_filepath):
+    """ Reads a ProteinPilot spreadsheet and returns a Pandas DataFrame
 
-    def read_csv(self, spreadsheet_filepath):
-        """ Reads a ProteinPilot spreadsheet and returns a Pandas DataFrame
+    Uses Pandas' read_csv to parse the spreadsheet into a DataFrame for more efficient column/row operations.
+    pandas.read_csv uses a dictionary of converters which applies functions to matching column names.
+    These functions are defined in column_parsers.py. The functions also convert multiple-element cells to
+    Python lists. Refer to spreadsheet specifications document for more information.
 
-        Uses Pandas' read_csv to parse the spreadsheet into a DataFrame for more efficient column/row operations.
-        pandas.read_csv uses a dictionary of converters which applies functions to matching column names.
-        These functions are defined in column_parsers.py. The functions also convert multiple-element cells to
-        Python lists. Refer to spreadsheet specifications document for more information.
+    :param spreadsheet_filepath: String with path to ProteinPilot V5 spreadsheet
+    :return: Pandas DataFrame with column headers renamed to match internal data field identifiers
+    """
+    spreadsheet_version = identify_proteinpilot_csv_version(spreadsheet_filepath)
+    if spreadsheet_version == 5:
+        column_mapping = HeaderToDataFieldMappings.ProteinPilotV5
+    elif spreadsheet_version == 4:
+        column_mapping = HeaderToDataFieldMappings.ProteinPilotV4
 
-        :param spreadsheet_filepath: String with path to ProteinPilot V5 spreadsheet
-        :return: Pandas DataFrame with column headers renamed to match internal data field identifiers
-        """
-        # "20160118_Amanda_QC6_QC6_01012016_afternewloadingpumpbuffer_PeptideSummary.txt"
+    dataframe = pandas.read_csv(spreadsheet_filepath,
+                                usecols=column_mapping.keys(),
+                                delimiter='\t',
+                                converters={"Accessions": accessions_to_uniprot_list,
+                                            "Names": names_to_protein_descriptions,
+                                            "Modifications": modifications_to_ptms_descriptions})
 
-        spreadsheet_version = identify_proteinpilot_csv_version(spreadsheet_filepath)
-        if spreadsheet_version == 5:
-            column_mapping = HeaderToDataFieldMappings.ProteinPilotV5
-        elif spreadsheet_version == 4:
-            column_mapping = HeaderToDataFieldMappings.ProteinPilotV4
-
-        dataframe = pandas.read_csv(spreadsheet_filepath,
-                                    usecols=column_mapping,
-                                    delimiter='\t',
-                                    converters={"Accessions": accessions_to_uniprot_list,
-                                                "Names": names_to_protein_descriptions,
-                                                "Modifications": modifications_to_ptms_descriptions})
-
-        # Rename the column names to match models
-        dataframe.rename(columns=HeaderToDataFieldMappings.ProteinPilotV5, inplace=True)
-
-        return dataframe
+    # Rename the column names to match models
+    dataframe.rename(columns=column_mapping, inplace=True)
+    return dataframe
 
 
 def identify_proteinpilot_csv_version(spreadsheet_filepath):
