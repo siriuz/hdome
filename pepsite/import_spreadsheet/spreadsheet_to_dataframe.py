@@ -4,7 +4,7 @@ from pepsite.models import *
 from column_parsers import *
 import pandas as pandas
 
-
+#TODO: Write up documentation for dataframe format
 class HeaderToDataFieldMappings:
     """Mapping of header column names (keys) to internal data field identifiers (values)"""
     ProteinPilotV5 = {

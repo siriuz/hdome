@@ -1,6 +1,6 @@
 import itertools
 
-from pepsite.models import Protein, Peptide, Ptm, Ion, IdEstimate
+from pepsite.models import Protein, Peptide, Ptm, Ion, IdEstimate, Dataset, Experiment
 
 
 class ProteinCache:
@@ -35,7 +35,7 @@ class PeptideCache:
     def get_primary_key(self, peptide_sequence):
         return self.peptide_key_cache[peptide_sequence]
 
-    def get_protein_object(self, peptide_sequence):
+    def get_peptide_object(self, peptide_sequence):
         return self.peptide_object_cache[self.get_primary_key(peptide_sequence)]
 
 
@@ -57,8 +57,31 @@ class PtmCache:
         return self.ptm_object_cache[self.get_primary_key(ptm_description)]
 
 
-class IonCache(object):
-    pass
+class IonCache:
+    """
+    Maintains a cache that maps Ion float tuples to its database object. This cache is limited to a specific
+    dataset and a specific experiment as these values are also part of the uniqueness constraint on the
+    Ion model.
+    """
+    def __init__(self, dataset, experiment):
+        self.dataset = dataset
+        self.experiment = experiment
+        self.ion_object_cache = dict()
+        self.refresh_cache()
+
+        self.peptide_key_cache = dict(Peptide.objects.all().values_list('sequence', 'pk'))
+        self.peptide_object_cache = Peptide.objects.in_bulk(self.peptide_key_cache.values())
+
+    def refresh_cache(self):
+        for ion in Ion.objects.filter(dataset=self.dataset, experiment=self.experiment):
+
+            self.ion_object_cache[(ion.charge_state, ion.precursor_mass, ion.mz, ion.retention_time)] = ion
+
+    def get_primary_key(self, charge_state, precursor_mass, mz, retention_time):
+        return self.ion_object_cache[(charge_state, precursor_mass, mz, retention_time)].id
+
+    def get_ion_object(self, charge_state, precursor_mass, mz, retention_time):
+        return self.ion_object_cache[(charge_state, precursor_mass, mz, retention_time)]
 
 
 def insert_proteins(dataframe):
@@ -85,27 +108,46 @@ def insert_ptms(dataframe):
         Ptm.objects.get_or_create(description=modification)
 
 
-def concatenate_lists(series):
+def insert_ions_row_by_row(dataframe, dataset, experiment):
+    """ Deprecated - keeping around for benchmark comparison purposes
+     Use insert_ions() instead which uses bulk_create
     """
-    Helper method for concatenating a list of lists into a single list
-    :param series: A list of lists
-    :return: A list containing all the elements in the input
-    """
-    return list(itertools.chain.from_iterable(series))
+    if not isinstance(dataset, Dataset):
+        raise ValueError('dataset parameter needs to be of type Pepsite.models.Dataset')
+    if not isinstance(experiment, Experiment):
+        raise ValueError('dataset parameter needs to be of type Pepsite.models.Experiment')
 
-# def insert_row(row_tuple):
-#
-#     for protein in itertools.izip(row_tuple.protein_uniprot_ids, row_tuple.protein_description):
-#         Protein.objects.get_or_create()
-#     Ptm.objects.get_or_create()
-#     Peptide.objects.get_or_create(sequence=)
-#
-#     Ion.objects.get_or_create()
+    df = dataframe.itertuples()
 
-
+    for row_tuple in df:
+        Ion.objects.get_or_create(precursor_mass=row_tuple.ion_precursor_mass,
+                                  mz=row_tuple.ion_mz,
+                                  charge_state=row_tuple.ion_charge,
+                                  spectrum=row_tuple.ion_spectrum,
+                                  retention_time=row_tuple.ion_retention_time,
+                                  experiment=experiment,
+                                  dataset=dataset)
 
 def insert_ions(dataframe, dataset, experiment):
-    pass
+    if not isinstance(dataset, Dataset):
+        raise ValueError('dataset parameter needs to be of type Pepsite.models.Dataset')
+    if not isinstance(experiment, Experiment):
+        raise ValueError('dataset parameter needs to be of type Pepsite.models.Experiment')
+
+    df = dataframe.itertuples()
+    ions_bulk_list = []
+
+    for row_tuple in df:
+        new_ion = Ion(precursor_mass=row_tuple.ion_precursor_mass,
+                      mz=row_tuple.ion_mz,
+                      charge_state=row_tuple.ion_charge,
+                      spectrum=row_tuple.ion_spectrum,
+                      retention_time=row_tuple.ion_retention_time,
+                      experiment=experiment,
+                      dataset=dataset)
+        ions_bulk_list.append(new_ion)
+
+    Ion.objects.bulk_create(ions_bulk_list)
 
 
 def insert_idestimates(dataframe):
@@ -117,9 +159,12 @@ def insert_idestimates(dataframe):
     df = dataframe.itertuples()
     protein_cache = ProteinCache()
     ptm_cache = PtmCache()
+    ion_cache = IonCache()
 
     for row_tuple in df:
-        proteins = [protein_cache.get_protein_object(protein_id) for protein_id in row_tuple.protein_uniprot_ids]
+        proteins = [protein_cache.get_protein_object(protein_id)
+                    for protein_id in row_tuple.protein_uniprot_ids]
+
         ptms = [ptm_cache.get_ptm_object(ptm) for ptm in row_tuple.ptm_objs]
 
         peptide = row_tuple.peptide_objs
@@ -139,7 +184,13 @@ def insert_idestimates(dataframe):
         row_idestimate.save()
 
 
-
+def concatenate_lists(series):
+    """
+    Helper method for concatenating a list of lists into a single list
+    :param series: A list of lists
+    :return: A list containing all the elements in the input
+    """
+    return list(itertools.chain.from_iterable(series))
 
 
 class ImportLodgement:
@@ -152,16 +203,16 @@ class ImportLodgement:
         self.dataframe = dataframe
         self.protein_cache = ProteinCache()
         self.peptide_cache = PeptideCache()
+        self.ptm_cache = PtmCache()
         self.ion_cache = IonCache()
 
     def _import_proteins(self):
         insert_proteins(self.dataframe)
         self.protein_cache.refresh_cache()
-        add_protein_objects_column(self.dataframe)
 
     def _import_ptms(self):
         insert_ptms(self.dataframe)
-
+        self.ptm_cache.refresh_cache()
 
     def _import_peptides(self):
         insert_peptides(self.dataframe)

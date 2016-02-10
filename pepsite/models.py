@@ -268,7 +268,24 @@ class Position(models.Model):
         return "%d-%d" %( self.initial_res, self.final_res )
         
 
+class IonFloatsManager(models.Manager):
+    """ Custom manager to deal with floating point retrieval
+    This extension defines a retrieve_by_floats() method which takes floating point
+    parameters of precursor_mass, mz and retention_time then retrieves records that
+    fall within a defined error margin.
+    """
 
+    def retrieve_by_floats(self, precursor_mass, mz, retention_time, charge_state, error_margin=0.00000000001, **kwargs):
+        """
+        Other than precursor_mass, mz, retention_time, charge_state, the rest of the parameters are forwarded as usual
+        to the default Django manager's .get() method so other filters can be applied as usual.
+        :param error_margin: An optional parameter to specify the error margins. E.g: 0.0000000001
+        """
+        return Ion.objects.get(charge_state__exact=charge_state,
+                               retention_time__range=(retention_time - error_margin, retention_time + error_margin),
+                               precursor_mass__range=(precursor_mass - error_margin, precursor_mass + error_margin),
+                               mz__range=(mz - error_margin, mz + error_margin),
+                               **kwargs)
 
 class Ion(models.Model):
     precursor_mass = models.FloatField()
@@ -281,9 +298,14 @@ class Ion(models.Model):
     peptides = models.ManyToManyField( Peptide, through='IdEstimate')
     #antibodies = models.ManyToManyField( Antibody )
     #cell_lines = models.ManyToManyField( CellLine )
+    objects = IonFloatsManager()
 
     def __str__(self):
 	return str(self.precursor_mass) + '|' + str(self.charge_state) + '|' + str(self.mz)
+
+
+
+
 
 
 class IdEstimate(models.Model):
