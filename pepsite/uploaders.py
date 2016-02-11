@@ -93,12 +93,12 @@ class Uploads(dbtools.DBTools):
                 'display': 'Delta Mass (Da)'},
 
             'precursor_mass': {
-                'matches': ['Prec MW'],
+                'matches': ['Prec MW', 'Obs MW'],
                 'order': 8,
                 'display': 'Precursor Mass (Da)'},
 
             'mz': {
-                'matches': ['Prec m/z'],
+                'matches': ['Prec m/z', 'Obs m/z'],
                 'order': 7,
                 'display': 'Precursor m/z'},
 
@@ -108,7 +108,7 @@ class Uploads(dbtools.DBTools):
                 'display': 'Dataset'},
 
             'retention_time': {
-                'matches': ['Time'],
+                'matches': ['Time', 'Acq Time'],
                 'order': 10,
                 'display': 'Restention Time (min)'},
         }

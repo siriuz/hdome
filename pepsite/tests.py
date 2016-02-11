@@ -139,8 +139,8 @@ class BulkWithExtraTest(TestCase):
     def test_upload(self):
         print "Starting test case for uploading"
         print self.user1
-        ss_master = os.path.join( CURDIR, '../background/all_bulk_1line_paseekd.csv')
-        datadir = os.path.join(CURDIR, '../background/all_august')
+        ss_master = os.path.join( CURDIR, 'test/rj_test_experiments_index_2.csv')
+        datadir = os.path.join(CURDIR, 'test/datadir')
         #ss_master = os.path.join( CURDIR, 'test/rj_test_experiments_index.csv')
         #datadir = os.path.join(CURDIR, 'test/datadir')
         bulk_with_extra(self.user1.username, ss_master, datadir)

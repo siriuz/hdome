@@ -1,5 +1,8 @@
 import datetime
+import subprocess
+
 import os
+import sys
 from django.contrib.auth.models import User
 from django.utils.timezone import utc
 
@@ -424,7 +427,6 @@ class TimeBigIonCache(TestCase):
     def test_bulk_insert_and_populate_cache(self):
         insert_ions(self.v5_dataframe, dataset=self.test_dataset, experiment=self.test_experiment)
         ic = IonCache(dataset=self.test_dataset, experiment=self.test_experiment)
-        print "debug"
 
 
 class TestInsertIdEstimate(TestCase):
@@ -472,22 +474,69 @@ class TestInsertIdEstimate(TestCase):
         self.test_experiment = test_experiment
 
     def test_insert_idestimate(self):
+        # Insert stuff into the database. This is the code we're testing!
         insert_proteins(self.v5_dataframe)
         insert_peptides(self.v5_dataframe)
         insert_ptms(self.v5_dataframe)
         insert_ions(self.v5_dataframe, self.test_dataset, self.test_experiment)
         insert_idestimates(self.v5_dataframe, self.test_dataset, self.test_experiment)
 
-        for row_tuple in self.v5_dataframe[['peptide_sequence',
-                                    'protein_uniprot_ids',
-                                    'ion_charge',
-                                    'ion_precursor_mass',
-                                    'ion_mz',
-                                    'ion_retention_time',
-                                    'idestimate_delta_mass',
-                                    'idestimate_confidence' ]].itertuples():
+        # Database dump to reconstruct the input rows
+        original_stdout = sys.stdout
+        output_file = open(os.path.join(current_directory, "py_output"), 'w')
+        sys.stdout = output_file
+        for n in IdEstimate.objects.all(): self.idestimate_to_row(n.id)
+        sys.stdout = original_stdout
+        output_file.close()
 
-            self.verify_row(row_tuple)
+        original_wd = os.getcwd()  # keeping track of this just in case someone was using the current working directory
+        os.chdir(current_directory)
+
+        # I apologise if you have to debug this..
+        # Basically what this test does is goes through every
+        # IdEstimate that has been inserted and reconstructs
+        # the rows based on its database relations.
+
+        # A (well commented!) gawk script applies a few transforms
+        # to get the proteins and ptms cleaned up.
+        # The gawk script is necessary as I cannot reconstruct the
+        # bits of the Accession column that are discarded
+
+        # These two outputs are then compared to make sure they
+        # are exactly identical (less whitespace)
+
+        # If this test is failing the first thing check is whether gawk
+        # is installed and available on your system path
+
+        # gawkoutput is pre-generated now because sorting behavior differs between gawk 3.18 and 4
+        # subprocess.call('''./test_script.sh''', shell=True)
+        total_lines = subprocess.check_output('''( cat gawkoutput; cat py_output ) | awk '{$1=$1};1' |  wc -l ''',
+                                    shell=True)
+
+        total_lines = int(total_lines.rstrip())
+
+        unique_lines = subprocess.check_output(
+            '''( cat gawkoutput; cat py_output ) | awk '{$1=$1};1' | sort | uniq -u | wc -l''',
+            shell=True)
+
+        unique_lines = int(unique_lines.rstrip())
+
+        os.chdir(original_wd)
+        # If total lines == 2*source and unique lines == 0, and there were no duplicates in each file
+        # it follows that every line has a copy and the two program outputs were identical
+        assert total_lines == len(self.v5_dataframe.index)*2
+        assert unique_lines == 0
+
+    def idestimate_to_row(self, idestimate_id):
+        idobj = IdEstimate.objects.filter(id=idestimate_id)\
+            .select_related()\
+            .prefetch_related('peptide')\
+            .prefetch_related('ptms')\
+            .first()
+
+        print '%s %.8f %.8f' % (idobj.peptide.sequence, idobj.confidence, idobj.delta_mass),
+        print '%.8f %.4f %d %s %.5f' % (idobj.ion.precursor_mass, idobj.ion.mz, idobj.ion.charge_state, idobj.ion.spectrum, idobj.ion.retention_time),
+        print " ".join([p.prot_id for p in idobj.proteins.all()]), " ".join(sorted([ptms.description for ptms in idobj.ptms.all()])) if len(idobj.ptms.all()) else " "
 
     def verify_row(self, row_tuple):
         JITTER = 0.000000000001

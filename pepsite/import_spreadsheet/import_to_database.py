@@ -141,8 +141,10 @@ def insert_ions(dataframe, dataset, experiment):
         raise ValueError('dataset parameter needs to be of type Pepsite.models.Dataset')
     if not isinstance(experiment, Experiment):
         raise ValueError('dataset parameter needs to be of type Pepsite.models.Experiment')
-
-    df = dataframe.itertuples()
+    #  Abusing pandas function to remove duplicate ions - i.e mimicking get_or_create()
+    dedup = dataframe[['ion_precursor_mass', 'ion_mz', 'ion_charge', 'ion_spectrum', 'ion_retention_time']]
+    dedup.drop_duplicates()
+    df = dedup.itertuples()
     ions_bulk_list = []
 
     for row_tuple in df:
