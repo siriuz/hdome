@@ -5,6 +5,9 @@ uploads and db updates required by 'hdome.pepsite'
 """
 from guardian.shortcuts import assign_perm
 import dbtools
+from pepsite.import_spreadsheet.import_to_database import insert_proteins, insert_peptides, insert_ptms, insert_ions, \
+    insert_idestimates
+from pepsite.import_spreadsheet.spreadsheet_to_dataframe import read_csv
 from pepsite.models import *
 import datetime
 from django.utils.timezone import utc
@@ -591,13 +594,14 @@ class Uploads(dbtools.DBTools):
 
 
     def upload_megarapid_rewrite(self):
-        from import_spreadsheet import spreadsheet_to_dataframe, import_to_database
-        spreadsheet = spreadsheet_to_dataframe.SpreadsheetToDataframe()
-        spreadsheet_dataframe = spreadsheet.read_v4_csv(self.lodgement_filename)
+        spreadsheet_dataframe = read_csv(self.lodgement_filename)
 
-        import_to_database.insert_proteins(spreadsheet_dataframe)
-        import_to_database.insert_peptides(spreadsheet_dataframe)
-        import_to_database.insert_ptms(spreadsheet_dataframe)
+        insert_proteins(spreadsheet_dataframe)
+        insert_peptides(spreadsheet_dataframe)
+        insert_ptms(spreadsheet_dataframe)
+        insert_ions()
+        insert_idestimates()
+
 
         print "debug"
 

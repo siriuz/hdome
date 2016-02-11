@@ -1,5 +1,7 @@
 import itertools
 
+from decimal import Decimal
+
 from pepsite.models import Protein, Peptide, Ptm, Ion, IdEstimate, Dataset, Experiment
 
 
@@ -69,19 +71,24 @@ class IonCache:
         self.ion_object_cache = dict()
         self.refresh_cache()
 
-        self.peptide_key_cache = dict(Peptide.objects.all().values_list('sequence', 'pk'))
-        self.peptide_object_cache = Peptide.objects.in_bulk(self.peptide_key_cache.values())
-
     def refresh_cache(self):
         for ion in Ion.objects.filter(dataset=self.dataset, experiment=self.experiment):
-
-            self.ion_object_cache[(ion.charge_state, ion.precursor_mass, ion.mz, ion.retention_time)] = ion
+            self.ion_object_cache[(ion.charge_state,
+                                   round(ion.precursor_mass, 11),
+                                   round(ion.mz, 4),
+                                   round(ion.retention_time, 5))] = ion
 
     def get_primary_key(self, charge_state, precursor_mass, mz, retention_time):
-        return self.ion_object_cache[(charge_state, precursor_mass, mz, retention_time)].id
+        return self.ion_object_cache[(charge_state,
+                                      round(precursor_mass, 11),
+                                      round(mz, 4),
+                                      round(retention_time, 5))].id
 
     def get_ion_object(self, charge_state, precursor_mass, mz, retention_time):
-        return self.ion_object_cache[(charge_state, precursor_mass, mz, retention_time)]
+        return self.ion_object_cache[(charge_state,
+                                      round(precursor_mass, 11),
+                                      round(mz, 4),
+                                      round(retention_time, 5))]
 
 
 def insert_proteins(dataframe):
@@ -128,6 +135,7 @@ def insert_ions_row_by_row(dataframe, dataset, experiment):
                                   experiment=experiment,
                                   dataset=dataset)
 
+
 def insert_ions(dataframe, dataset, experiment):
     if not isinstance(dataset, Dataset):
         raise ValueError('dataset parameter needs to be of type Pepsite.models.Dataset')
@@ -150,7 +158,7 @@ def insert_ions(dataframe, dataset, experiment):
     Ion.objects.bulk_create(ions_bulk_list)
 
 
-def insert_idestimates(dataframe):
+def insert_idestimates(dataframe, dataset, experiment):
     """
     populating the foreign keys of each IdEstimate
     :param dataframe:
@@ -159,16 +167,21 @@ def insert_idestimates(dataframe):
     df = dataframe.itertuples()
     protein_cache = ProteinCache()
     ptm_cache = PtmCache()
-    ion_cache = IonCache()
+    peptide_cache = PeptideCache()
+    ion_cache = IonCache(dataset=dataset, experiment=experiment)
 
+    idestimate_list = []
     for row_tuple in df:
         proteins = [protein_cache.get_protein_object(protein_id)
                     for protein_id in row_tuple.protein_uniprot_ids]
 
-        ptms = [ptm_cache.get_ptm_object(ptm) for ptm in row_tuple.ptm_objs]
+        ptms = [ptm_cache.get_ptm_object(ptm) for ptm in row_tuple.ptms_description]
 
-        peptide = row_tuple.peptide_objs
-        ion = row_tuple.ion_objs
+        peptide = peptide_cache.get_peptide_object(row_tuple.peptide_sequence)
+        ion = ion_cache.get_ion_object(charge_state=row_tuple.ion_charge,
+                                       mz=row_tuple.ion_mz,
+                                       precursor_mass=row_tuple.ion_precursor_mass,
+                                       retention_time=row_tuple.ion_retention_time)
 
         delta_mass = row_tuple.idestimate_delta_mass
         confidence = row_tuple.idestimate_confidence
@@ -176,12 +189,16 @@ def insert_idestimates(dataframe):
         row_idestimate = IdEstimate.objects.create(delta_mass=delta_mass,
                                                    confidence=confidence,
                                                    peptide=peptide,
-                                                   ion=ion)
-        row_idestimate.proteins.add(proteins)
-        if len(ptms):
-            row_idestimate.ptms.add(ptms)
+                                                   ion=ion)  # 2.
 
-        row_idestimate.save()
+        for protein in proteins:
+            row_idestimate.proteins.add(protein)
+
+        if len(ptms):  # ptms are optional
+            for ptm in ptms:
+                row_idestimate.ptms.add(ptm)
+
+        idestimate_list.append(row_idestimate)
 
 
 def concatenate_lists(series):
