@@ -9,10 +9,12 @@ PROTEINPILOT_V4_TEST_FILE = os.path.join(current_directory, "test_protein_pilot_
 
 class IdentifyProteinpilotCsvVersion(TestCase):
     def test_identify_proteinpilot_v5(self):
-        assert identify_proteinpilot_csv_version(PROTEINPILOT_V4_TEST_FILE) == 4
+        version, dialect = identify_proteinpilot_csv_version(PROTEINPILOT_V4_TEST_FILE)
+        assert version == 4
 
     def test_identify_proteinpilot_v4(self):
-        assert identify_proteinpilot_csv_version(PROTEINPILOT_V5_TEST_FILE) == 5
+        version, dialect = identify_proteinpilot_csv_version(PROTEINPILOT_V5_TEST_FILE)
+        assert version == 5
 
     def test_identify_fail(self):
         with self.assertRaises(ValueError):

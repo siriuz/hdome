@@ -179,6 +179,9 @@ class TestInsertPtms(TestCase):
         insert_ptms(self.v5_dataframe)
         assert TEST_PTMS == set(Ptm.objects.all().values_list('description', flat=True))
 
+# TODO: TestDatasetCache
+# TODO: TestInsertDataset
+
 
 class TestInsertIons(TestCase):
     def setUp(self):
@@ -205,47 +208,47 @@ class TestInsertIons(TestCase):
         test_user = user1
         lodgement_filename = "test.txt"
         now = datetime.datetime.utcnow().replace(tzinfo=utc)
-        test_instrument = self.inst1
 
         test_lodgement, _ = Lodgement.objects.get_or_create(user=test_user,
                                                             title=lodgement_filename,
                                                             datetime=now,
                                                             datafilename=lodgement_filename)
 
-        test_dataset_title = "Test dataset title"
-
-        test_dataset, _ = Dataset.objects.get_or_create(instrument=test_instrument,
-                                                        lodgement=test_lodgement,
-                                                        experiment=test_experiment,
-                                                        datetime=now,
-                                                        title=test_dataset_title,
-                                                        confidence_cutoff=0.971)
-
-        self.test_dataset = test_dataset
+        self.lodgement = test_lodgement
         self.test_experiment = test_experiment
 
     def test_check_ions_in_database_default_manager(self):
-        JITTER = 0.0000000001  # We need a jitter here because Ion is keyed by floats and float equality comparisons dont work very well.....
-        insert_ions(self.v5_dataframe, dataset=self.test_dataset, experiment=self.test_experiment)
+        insert_datasets(dataframe=self.v5_dataframe,
+                        confidence_cutoff=0.971,
+                        experiment=self.test_experiment,
+                        instrument=self.inst1,
+                        lodgement=self.lodgement)
+
+        ERROR_MARGIN = 0.0000000001
+        insert_ions(self.v5_dataframe, experiment=self.test_experiment)
         assert Ion.objects.all().count() == 5
         for test_ion in TEST_IONS_TUPLES:
-            retrieved_ion_object = Ion.objects.get(dataset=self.test_dataset,
-                                                   experiment=self.test_experiment,
+            retrieved_ion_object = Ion.objects.get(experiment=self.test_experiment,
                                                    charge_state__exact=test_ion['charge_state'],
-                                                   retention_time__range=(test_ion['retention_time'] - JITTER,
-                                                                          test_ion['retention_time'] + JITTER),
+                                                   retention_time__range=(test_ion['retention_time'] - ERROR_MARGIN,
+                                                                          test_ion['retention_time'] + ERROR_MARGIN),
                                                    spectrum__exact=test_ion['spectrum'],
-                                                   precursor_mass__range=(test_ion['precursor_mass'] - JITTER,
-                                                                          test_ion['precursor_mass'] + JITTER),
-                                                   mz__range=(test_ion['mz'] - JITTER, test_ion['mz'] + JITTER))
+                                                   precursor_mass__range=(test_ion['precursor_mass'] - ERROR_MARGIN,
+                                                                          test_ion['precursor_mass'] + ERROR_MARGIN),
+                                                   mz__range=(test_ion['mz'] - ERROR_MARGIN,
+                                                              test_ion['mz'] + ERROR_MARGIN))
             assert type(retrieved_ion_object) == Ion
 
     def test_check_ions_in_database_floats_manager(self):
-        insert_ions(self.v5_dataframe, dataset=self.test_dataset, experiment=self.test_experiment)
+        insert_datasets(dataframe=self.v5_dataframe,
+                        confidence_cutoff=0.971,
+                        experiment=self.test_experiment,
+                        instrument=self.inst1,
+                        lodgement=self.lodgement)
+        insert_ions(self.v5_dataframe, experiment=self.test_experiment)
         assert Ion.objects.all().count() == 5
         for test_ion in TEST_IONS_TUPLES:
-            retrieved_ion_object = Ion.objects.retrieve_by_floats(dataset=self.test_dataset,
-                                                                  experiment=self.test_experiment,
+            retrieved_ion_object = Ion.objects.retrieve_by_floats(experiment=self.test_experiment,
                                                                   charge_state=test_ion['charge_state'],
                                                                   retention_time=test_ion['retention_time'],
                                                                   spectrum__exact=test_ion['spectrum'],
@@ -306,14 +309,14 @@ class TestIonCache(TestCase):
                                         mz=753.3826,
                                         dataset=self.test_dataset,
                                         experiment=self.test_experiment)
-        ic = IonCache(experiment=self.test_experiment, dataset=self.test_dataset)
+        ic = IonCache(experiment=self.test_experiment)
         assert ion_object == ic.get_ion_object(charge_state=2,
                                                precursor_mass=1504.7507324219,
                                                mz=753.3826,
                                                retention_time=36.32075)
 
     def test_get_ion_object_fail(self):
-        ic = IonCache(experiment=self.test_experiment, dataset=self.test_dataset)
+        ic = IonCache(experiment=self.test_experiment)
         with self.assertRaises(KeyError):
             ic.get_ion_object(charge_state=2,
                               precursor_mass=1504.7507324219,
@@ -321,7 +324,7 @@ class TestIonCache(TestCase):
                               retention_time=36.32075)
 
     def test_no_refresh_ioncache(self):
-        ic = IonCache(experiment=self.test_experiment, dataset=self.test_dataset)
+        ic = IonCache(experiment=self.test_experiment)
         ion_object = Ion.objects.create(charge_state=2,
                                         retention_time=36.32075,
                                         spectrum=u'1.1.1.3740.19',
@@ -337,7 +340,7 @@ class TestIonCache(TestCase):
                               retention_time=36.32075)
 
     def test_refresh_ioncache(self):
-        ic = IonCache(experiment=self.test_experiment, dataset=self.test_dataset)
+        ic = IonCache(experiment=self.test_experiment)
         ion_object = Ion.objects.create(charge_state=2,
                                         retention_time=36.32075,
                                         spectrum=u'1.1.1.3740.19',
@@ -360,7 +363,7 @@ class TestIonCache(TestCase):
                                         mz=753.3826,
                                         dataset=self.test_dataset,
                                         experiment=self.test_experiment)
-        ic = IonCache(experiment=self.test_experiment, dataset=self.test_dataset)
+        ic = IonCache(experiment=self.test_experiment)
         from django.db import connection
         assert len(connection.queries) == 0
         assert ion_object == ic.get_ion_object(charge_state=2,
@@ -400,21 +403,11 @@ class TimeBigIonCache(TestCase):
         now = datetime.datetime.utcnow().replace(tzinfo=utc)
         test_instrument = self.inst1
 
-        test_lodgement, _ = Lodgement.objects.get_or_create(user=test_user,
-                                                            title=lodgement_filename,
-                                                            datetime=now,
-                                                            datafilename=lodgement_filename)
+        self.test_lodgement, _ = Lodgement.objects.get_or_create(user=test_user,
+                                                                 title=lodgement_filename,
+                                                                 datetime=now,
+                                                                 datafilename=lodgement_filename)
 
-        test_dataset_title = "Test dataset title"
-
-        test_dataset, _ = Dataset.objects.get_or_create(instrument=test_instrument,
-                                                        lodgement=test_lodgement,
-                                                        experiment=test_experiment,
-                                                        datetime=now,
-                                                        title=test_dataset_title,
-                                                        confidence_cutoff=0.971)
-
-        self.test_dataset = test_dataset
         self.test_experiment = test_experiment
 
     # def test_insert_and_populate_cache(self):
@@ -425,8 +418,14 @@ class TimeBigIonCache(TestCase):
     #     ic = IonCache(dataset=self.test_dataset, experiment=self.test_experiment)
 
     def test_bulk_insert_and_populate_cache(self):
-        insert_ions(self.v5_dataframe, dataset=self.test_dataset, experiment=self.test_experiment)
-        ic = IonCache(dataset=self.test_dataset, experiment=self.test_experiment)
+        insert_datasets(dataframe=self.v5_dataframe,
+                        confidence_cutoff=0.971,
+                        experiment=self.test_experiment,
+                        instrument=self.inst1,
+                        lodgement=self.test_lodgement)
+
+        insert_ions(self.v5_dataframe, experiment=self.test_experiment)
+        IonCache(experiment=self.test_experiment)
 
 
 class TestInsertIdEstimate(TestCase):
@@ -456,21 +455,11 @@ class TestInsertIdEstimate(TestCase):
         now = datetime.datetime.utcnow().replace(tzinfo=utc)
         test_instrument = self.inst1
 
-        test_lodgement, _ = Lodgement.objects.get_or_create(user=test_user,
-                                                            title=lodgement_filename,
-                                                            datetime=now,
-                                                            datafilename=lodgement_filename)
+        self.test_lodgement, _ = Lodgement.objects.get_or_create(user=test_user,
+                                                                 title=lodgement_filename,
+                                                                 datetime=now,
+                                                                 datafilename=lodgement_filename)
 
-        test_dataset_title = "Test dataset title"
-
-        test_dataset, _ = Dataset.objects.get_or_create(instrument=test_instrument,
-                                                        lodgement=test_lodgement,
-                                                        experiment=test_experiment,
-                                                        datetime=now,
-                                                        title=test_dataset_title,
-                                                        confidence_cutoff=0.971)
-
-        self.test_dataset = test_dataset
         self.test_experiment = test_experiment
 
     def test_insert_idestimate(self):
@@ -478,8 +467,13 @@ class TestInsertIdEstimate(TestCase):
         insert_proteins(self.v5_dataframe)
         insert_peptides(self.v5_dataframe)
         insert_ptms(self.v5_dataframe)
-        insert_ions(self.v5_dataframe, self.test_dataset, self.test_experiment)
-        insert_idestimates(self.v5_dataframe, self.test_dataset, self.test_experiment)
+        insert_datasets(dataframe=self.v5_dataframe,
+                        confidence_cutoff=0.971,
+                        experiment=self.test_experiment,
+                        instrument=self.inst1,
+                        lodgement=self.test_lodgement)
+        insert_ions(self.v5_dataframe, self.test_experiment)
+        insert_idestimates(self.v5_dataframe, self.test_experiment)
 
         # Database dump to reconstruct the input rows
         original_stdout = sys.stdout

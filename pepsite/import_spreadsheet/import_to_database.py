@@ -2,6 +2,10 @@ import itertools
 
 from decimal import Decimal
 
+import datetime
+
+from django.utils.timezone import utc
+
 from pepsite.models import Protein, Peptide, Ptm, Ion, IdEstimate, Dataset, Experiment
 
 
@@ -61,18 +65,17 @@ class PtmCache:
 
 class IonCache:
     """
-    Maintains a cache that maps Ion float tuples to its database object. This cache is limited to a specific
-    dataset and a specific experiment as these values are also part of the uniqueness constraint on the
+    Maintains a cache that maps Ion float tuples to its database object. This cache is limited
+    to a specific experiment as these values are also part of the uniqueness constraint on the
     Ion model.
     """
-    def __init__(self, dataset, experiment):
-        self.dataset = dataset
+    def __init__(self, experiment):
         self.experiment = experiment
         self.ion_object_cache = dict()
         self.refresh_cache()
 
     def refresh_cache(self):
-        for ion in Ion.objects.filter(dataset=self.dataset, experiment=self.experiment):
+        for ion in Ion.objects.filter(experiment=self.experiment):
             self.ion_object_cache[(ion.charge_state,
                                    round(ion.precursor_mass, 11),
                                    round(ion.mz, 4),
@@ -89,6 +92,27 @@ class IonCache:
                                       round(precursor_mass, 11),
                                       round(mz, 4),
                                       round(retention_time, 5))]
+
+
+class DatasetCache:
+    """ Maintains a cache that maps its dataset number to a dataset object
+    This cache is specific to an experiment.
+    """
+
+    def __init__(self, experiment):
+        self.experiment = experiment
+        self.dataset_object_cache = dict()
+        self.refresh_cache()
+
+    def refresh_cache(self):
+        for dataset in Dataset.objects.filter(experiment=self.experiment):
+            self.dataset_object_cache[dataset.dataset_number] = dataset
+
+    def get_primary_key(self, dataset_number):
+        return self.dataset_object_cache[dataset_number].id
+
+    def get_dataset_object(self, dataset_number):
+        return self.dataset_object_cache[dataset_number]
 
 
 def insert_proteins(dataframe):
@@ -115,6 +139,24 @@ def insert_ptms(dataframe):
         Ptm.objects.get_or_create(description=modification)
 
 
+def insert_datasets(dataframe, instrument, lodgement, experiment, confidence_cutoff):
+    datasets = dataframe['ion_spectrum'].apply(spectrum_to_dataset_number)
+    datasets.drop_duplicates()
+    now = datetime.datetime.utcnow().replace(tzinfo=utc)
+
+    for dataset_number in datasets:
+        Dataset.objects.get_or_create(instrument=instrument,
+                                      lodgement=lodgement,
+                                      experiment=experiment,
+                                      datetime=now,
+                                      title=entitle_ds(dataset_number, lodgement.filename),
+                                      confidence_cutoff=confidence_cutoff)
+
+
+def entitle_ds(dsno, filename):
+    return 'dataset #%s from %s' % (dsno, filename)
+
+
 def insert_ions_row_by_row(dataframe, dataset, experiment):
     """ Deprecated - keeping around for benchmark comparison purposes
      Use insert_ions() instead which uses bulk_create
@@ -136,9 +178,7 @@ def insert_ions_row_by_row(dataframe, dataset, experiment):
                                   dataset=dataset)
 
 
-def insert_ions(dataframe, dataset, experiment):
-    if not isinstance(dataset, Dataset):
-        raise ValueError('dataset parameter needs to be of type Pepsite.models.Dataset')
+def insert_ions(dataframe, experiment):
     if not isinstance(experiment, Experiment):
         raise ValueError('dataset parameter needs to be of type Pepsite.models.Experiment')
     #  Abusing pandas function to remove duplicate ions - i.e mimicking get_or_create()
@@ -147,7 +187,11 @@ def insert_ions(dataframe, dataset, experiment):
     df = dedup.itertuples()
     ions_bulk_list = []
 
+    dataset_cache = DatasetCache(experiment=experiment)
+
     for row_tuple in df:
+        dataset = dataset_cache.get_dataset_object(spectrum_to_dataset_number(row_tuple.ion_spectrum))
+
         new_ion = Ion(precursor_mass=row_tuple.ion_precursor_mass,
                       mz=row_tuple.ion_mz,
                       charge_state=row_tuple.ion_charge,
@@ -155,12 +199,13 @@ def insert_ions(dataframe, dataset, experiment):
                       retention_time=row_tuple.ion_retention_time,
                       experiment=experiment,
                       dataset=dataset)
+
         ions_bulk_list.append(new_ion)
 
     Ion.objects.bulk_create(ions_bulk_list)
 
 
-def insert_idestimates(dataframe, dataset, experiment):
+def insert_idestimates(dataframe, experiment):
     """
     populating the foreign keys of each IdEstimate
     :param dataframe:
@@ -170,7 +215,7 @@ def insert_idestimates(dataframe, dataset, experiment):
     protein_cache = ProteinCache()
     ptm_cache = PtmCache()
     peptide_cache = PeptideCache()
-    ion_cache = IonCache(dataset=dataset, experiment=experiment)
+    ion_cache = IonCache(experiment=experiment)
 
     idestimate_list = []
     for row_tuple in df:
@@ -210,6 +255,11 @@ def concatenate_lists(series):
     :return: A list containing all the elements in the input
     """
     return list(itertools.chain.from_iterable(series))
+
+
+def spectrum_to_dataset_number(spectrum):
+    """ Helper method that returns the dataset number for an experiment, given a spectrum string """
+    return spectrum.split('.')[0]
 
 
 class ImportLodgement:

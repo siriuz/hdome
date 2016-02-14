@@ -404,6 +404,10 @@ class Dataset(models.Model):
             self.rank = 0
         self.save()
 
+    @property
+    def dataset_number(self):
+        return self.title.split("#")[1].split(" ")[0]
+
 
         
 

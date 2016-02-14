@@ -592,15 +592,18 @@ class Uploads(dbtools.DBTools):
         retstr = retstr.strip(', ') + ' ), '
         return retstr
 
-
     def upload_megarapid_rewrite(self):
         spreadsheet_dataframe = read_csv(self.lodgement_filename)
 
-        insert_proteins(spreadsheet_dataframe)
-        insert_peptides(spreadsheet_dataframe)
-        insert_ptms(spreadsheet_dataframe)
-        insert_ions()
-        insert_idestimates()
+        insert_proteins(dataframe=spreadsheet_dataframe)
+        insert_peptides(dataframe=spreadsheet_dataframe)
+        insert_ptms(dataframe=spreadsheet_dataframe)
+        # Datasets have already been inserted by prepare_upload_simple()
+        insert_ions(dataframe=spreadsheet_dataframe,
+                    experiment=self.expt)
+
+        insert_idestimates(dataframe=spreadsheet_dataframe,
+                           experiment=self.expt)
 
 
         print "debug"

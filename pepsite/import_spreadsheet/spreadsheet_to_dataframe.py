@@ -47,7 +47,7 @@ def read_csv(spreadsheet_filepath):
     :param spreadsheet_filepath: String with path to ProteinPilot V5 spreadsheet
     :return: Pandas DataFrame with column headers renamed to match internal data field identifiers
     """
-    spreadsheet_version = identify_proteinpilot_csv_version(spreadsheet_filepath)
+    spreadsheet_version, dialect = identify_proteinpilot_csv_version(spreadsheet_filepath)
     if spreadsheet_version == 5:
         column_mapping = HeaderToDataFieldMappings.ProteinPilotV5
     elif spreadsheet_version == 4:
@@ -55,7 +55,7 @@ def read_csv(spreadsheet_filepath):
 
     dataframe = pandas.read_csv(spreadsheet_filepath,
                                 usecols=column_mapping.keys(),
-                                delimiter='\t',
+                                delimiter=dialect.delimiter,
                                 converters={"Accessions": accessions_to_uniprot_list,
                                             "Names": names_to_protein_descriptions,
                                             "Modifications": modifications_to_ptms_descriptions})
@@ -75,7 +75,9 @@ def identify_proteinpilot_csv_version(spreadsheet_filepath):
     """
 
     with open(spreadsheet_filepath, 'r') as csvfile:
-        csvreader = csv.DictReader(csvfile, delimiter='\t')
+        dialect = csv.Sniffer().sniff(csvfile.readline())
+        csvfile.seek(0)
+        csvreader = csv.DictReader(csvfile, dialect=dialect)
 
         file_header_fields = set(csvreader.fieldnames)
         v5_spec_fields = set(HeaderToDataFieldMappings.ProteinPilotV5.keys())
@@ -88,4 +90,4 @@ def identify_proteinpilot_csv_version(spreadsheet_filepath):
         else:
             raise ValueError('File headers do not match ProteinPilot V4 or V5 fields')
 
-    return version
+    return version, dialect

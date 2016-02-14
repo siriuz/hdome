@@ -485,8 +485,8 @@ def bulk_import_with_boilerplate( username, master_ss, datadir ):
     bulk_with_extra( username, master_ss, datadir )
 
 if __name__ == '__main__':
-    check_files(os.path.join( CURDIR, '../../background/all_bulk_7lines.csv'), os.path.join(CURDIR, '../../background/all_august') )
-    bulk_import_with_boilerplate( 'admin', os.path.join( CURDIR, '../../background/all_bulk_7lines.csv'), os.path.join(CURDIR, '../../background/all_august') )
+    check_files(os.path.join( CURDIR, '../../background/all_bulk_04.csv'), os.path.join(CURDIR, '../../background/all_august') )
+    bulk_import_with_boilerplate( 'admin', os.path.join( CURDIR, '../../background/all_bulk_04.csv'), os.path.join(CURDIR, '../../background/all_august') )
 
 
 
