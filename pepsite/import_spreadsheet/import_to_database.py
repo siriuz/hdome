@@ -122,7 +122,9 @@ def insert_proteins(dataframe):
     protein_tuples_list = itertools.izip(protein_ids, protein_descriptions)
 
     for prot_id, prot_description in protein_tuples_list:
-        Protein.objects.get_or_create(prot_id=prot_id, description=prot_description)
+        Protein.objects.get_or_create(prot_id=prot_id,
+                                      description=prot_description,
+                                      name=prot_description)
 
 
 def insert_peptides(dataframe):
@@ -183,7 +185,7 @@ def insert_ions(dataframe, experiment):
         raise ValueError('dataset parameter needs to be of type Pepsite.models.Experiment')
     #  Abusing pandas function to remove duplicate ions - i.e mimicking get_or_create()
     dedup = dataframe[['ion_precursor_mass', 'ion_mz', 'ion_charge', 'ion_spectrum', 'ion_retention_time']]
-    dedup.drop_duplicates()
+    dedup.drop_duplicates(inplace=True)
     df = dedup.itertuples()
     ions_bulk_list = []
 

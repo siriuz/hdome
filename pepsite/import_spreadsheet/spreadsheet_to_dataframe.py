@@ -62,6 +62,10 @@ def read_csv(spreadsheet_filepath):
 
     # Rename the column names to match models
     dataframe.rename(columns=column_mapping, inplace=True)
+
+    # filter out rows with invalid accessions (i.e "segment" and "rrrrrsegment")
+    dataframe = dataframe[dataframe['protein_uniprot_ids'].apply(len) > 0]
+
     return dataframe
 
 
