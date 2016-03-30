@@ -41,6 +41,13 @@ MDIC = {'# peptides': '1468',
  'Transfectant Y/N': '',
  'Transfected alelle (s)': ''}
 
+class BackgroundImportsGetCellLine(TestCase):
+    def test_get_cell_line_output(self):
+        bi1 = BackgroundImports()
+        cl = bi1.get_cell_line(MDIC)
+
+        print CellLine.objects.all().values()
+
 
 class VerifyBulkUploadIntegrity(TransactionTestCase):
 

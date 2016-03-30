@@ -69,7 +69,7 @@ def upload_ss_celery( userid, elems, postdic ):
     ul.user = user
     ul.add_cutoff_mappings( postdic )
     ul.prepare_upload_simple( )
-    ul.upload_megarapid()
+    ul.upload_megarapid_rewrite()
     protein_seq_update_celery_nofunction.delay()
     ul.refresh_materialized_views()
     return send_mail('Your data upload is complete', 'The HaploDome database has been updated following your spreadsheet upload for lodgement \"%s\" - all new data should now be visible as prescribed.\n\nBest Regards,\n\nThe HaploDome Team\nwww.haplodome.com' % ( ul.lodgement.title ), admin.email, [ user.email ], fail_silently=False)

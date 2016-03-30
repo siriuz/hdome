@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load bootstrap3 %}
+{% load render_table from django_tables2 %}
+
+{% block headline %}
+    <h1>Add a <span class="text-primary">Gene</span></h1>
+    <p class="text-info">Add a new Gene</p>
+{% endblock %}
+
+{% block content %}
+    <h3>Existing Genes in Database</h3><br>
+
+    {% render_table gene_table %}
+
+    <hr>
+    <br>
+    <h3>Add a new Gene</h3>
+    <br>
+    <form method="post" action="">
+        {% bootstrap_form gene_form %}
+        {% csrf_token %}
+        {% buttons align="right" %}
+            <button type="submit" class="btn btn-primary">
+                Submit
+            </button>
+        {% endbuttons %}
+    </form>
+{% endblock %}

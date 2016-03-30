@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load bootstrap3 %}
+{% load render_table from django_tables2 %}
+
+{% block headline %}
+    <h1>Add a <span class="text-primary">Cell Line</span></h1>
+    <p class="text-info">Add a new Cell Line used in an experiment</p>
+{% endblock %}
+
+{# Table of existing Cell Lines #}
+{% block content %}
+    <h3>Existing Cell Lines in Database</h3><br>
+
+    {% render_table celllines_table %}
+
+    {# Form for new cell line #}
+    <hr>
+    <br>
+    <h3>Add a new Cell Line</h3>
+    <br>
+    <form method="post" action="">
+        {% bootstrap_form cellline_form %}
+        {% csrf_token %}
+        {% buttons align="right" %}
+            <button type="submit" class="btn btn-primary">
+                Submit
+            </button>
+        {% endbuttons %}
+    </form>
+{% endblock %}

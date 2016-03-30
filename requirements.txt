@@ -28,3 +28,5 @@ tornado==3.2.2
 uniprot==1.0.1
 wsgiref==0.1.2
 pandas==0.17.1
+django-tables2==1.0.5
+django-bootstrap3==6.2.2

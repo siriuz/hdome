@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/dev/ref/settings/
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
+from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
+
 
 #print "BASE_DIR = " + BASE_DIR
 
@@ -23,7 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SECRET_KEY = '_0-zw7xmw*(u8te_)ccg&5lq%7&j!4k7bt6&=@)@#0rsz_r!8w'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 # DEBUG = False
 
 TEMPLATE_DEBUG = True
@@ -31,7 +33,7 @@ TEMPLATE_DEBUG = True
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1' ]
+ALLOWED_HOSTS = ['*']
 
 
 LOGIN_URL = '/login'
@@ -52,9 +54,14 @@ INSTALLED_APPS = (
     "djcelery_email",
     #'debug_toolbar.apps.DebugToolbarConfig',
     'djcelery',
+    'django_tables2',
+    'bootstrap3'
     #'south',
     
 )
+
+
+TEMPLATE_CONTEXT_PROCESSORS += ('django.core.context_processors.request',)
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',

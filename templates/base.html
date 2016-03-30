@@ -15,9 +15,19 @@
     <title>Submissions available</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
+      {# Load the tag library #}
+    {% load bootstrap3 %}
+
+    {# Load CSS and JavaScript #}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+
+    {# Display django.contrib.messages as Bootstrap alerts #}
+    {% bootstrap_messages %}
+    <!-- <link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
 
     <link href="{% static "css/bootstrap-theme.min.css" %}" rel="stylesheet">
+    -->
 
     <link href="{% static "css/dropdown-theme.css" %}" rel="stylesheet">
 
@@ -67,6 +77,14 @@
 	    
               <ul class="dropdown-menu">
                   <li><a href="{% url 'pepsite:index' %}">Query the database</a></li>
+                  <li class="divider"></li>
+                  <li><a href="{% url 'pepsite:add_manufacturer' %}">Add a new Manufacturer</a></li>
+                  <li><a href="{% url 'pepsite:add_instrument' %}">Add a new Instrument</a></li>
+                  <li><a href="{% url 'pepsite:add_cell_line' %}">Add a new Cell Line</a></li>
+                  <li><a href="{% url 'pepsite:add_antibody' %}">Add a new Antibody</a></li>
+                  <li><a href="{% url 'pepsite:add_gene' %}">Add a new Gene</a></li>
+                  <li><a href="{% url 'pepsite:add_allele' %}">Add a new Allele</a></li>
+                  <li class="divider"></li>
                   <li><a href="{% url 'pepsite:upload_ss_form' %}">Upload a Spreadsheet</a></li>
                   <li><a href="{% url 'pepsite:upload_manual_curations' %}">Manually Curate Lodgement(s)</a></li>
                   <li><a href="{% url 'logout' %}"><strong class="text-danger">Logout</strong></a></li>

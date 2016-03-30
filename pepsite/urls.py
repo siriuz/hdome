@@ -4,6 +4,13 @@ from pepsite.views import common, browse, updates, exports, expt_searches, pepti
 urlpatterns = patterns('',
     url(r'^$', browse.index, name='index'),
 
+    url(r'^add_cell_line_form$', updates.add_cell_line, name='add_cell_line'),
+    url(r'^add_instrument_form$', updates.add_instrument, name='add_instrument'),
+    url(r'^add_manufacturer_form$', updates.add_manufacturer, name='add_manufacturer'),
+    url(r'^add_antibody_form$', updates.add_antibody, name='add_antibody'),
+    url(r'^add_gene_form$', updates.add_gene, name='add_gene'),
+    url(r'^add_allele_form$', updates.add_allele, name='add_allele'),
+
     url(r'^upload_ss_form$', updates.upload_ss_form, name='upload_ss_form'),
     url(r'^upload_manual_curations$', updates.upload_manual_curations, name='upload_manual_curations'),
     url(r'^commit_upload_ss$', updates.commit_upload_ss, name='commit_upload_ss'),

@@ -23,6 +23,9 @@ from django.contrib.auth.decorators import login_required
 import re
 from django.core.mail import send_mail
 import pickle
+import django_tables2 as tables
+from django_tables2   import RequestConfig
+
 
 @login_required
 def upload_ss_form( request ):
@@ -128,3 +131,178 @@ def commit_upload_ss( request ):
         textform = UploadSSForm()
         context = { 'textform' : textform }
         return render( request, 'pepsite/upload_ss_form.html', context)
+
+
+@login_required
+def add_cell_line(request):
+    """
+    View for adding a new cell line
+    """
+
+    if request.method == 'POST':
+        form = AddCellLineForm(request.POST)
+
+        if form.is_valid():
+            alleles = form.cleaned_data.pop('alleles')
+            new_cellline = form.save()
+
+            for allele in alleles:
+                Expression.objects.create(cell_line=new_cellline, allele=allele)
+
+    cellline_form = AddCellLineForm()
+
+    celllines_table = CellLineTable(CellLine.objects.all())
+    RequestConfig(request).configure(celllines_table)
+
+    context = {'cellline_form': cellline_form, 'celllines_table': celllines_table}
+    return render(request, 'pepsite/add_cell_line_form.html', context)
+
+# def add_gene(request):
+#     """
+#     Add a new gene
+#     """
+#
+#     if request.method == 'POST':
+#         pass
+
+
+
+class CellLineTable(tables.Table):
+    class Meta:
+        model = CellLine
+        attrs = {"class": "table"}
+
+
+@login_required
+def add_instrument(request):
+    """
+    View for adding a new instrument
+    """
+
+    if request.method == 'POST':
+        form = AddInstrumentForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+    instrument_form = AddInstrumentForm()
+
+    instrument_table = InstrumentTable(Instrument.objects.all())
+    RequestConfig(request).configure(instrument_table)
+
+    context = {'instrument_form': instrument_form, 'instrument_table': instrument_table}
+    return render(request, 'pepsite/add_instrument_form.html', context)
+
+
+class InstrumentTable(tables.Table):
+    class Meta:
+        model = Instrument
+        attrs = {"class": "table"}
+
+
+@login_required
+def add_manufacturer(request):
+    """
+    View for adding a new manufacturer
+    """
+
+    if request.method == 'POST':
+        form = AddManufacturerForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+    manufacturer_form = AddManufacturerForm()
+
+    manufacturer_table = ManufacturerTable(Manufacturer.objects.all())
+    RequestConfig(request).configure(manufacturer_table)
+
+    context = {'manufacturer_form': manufacturer_form, 'manufacturer_table': manufacturer_table}
+    return render(request, 'pepsite/add_manufacturer_form.html', context)
+
+
+class ManufacturerTable(tables.Table):
+    class Meta:
+        model = Manufacturer
+        attrs = {"class": "table"}
+
+
+@login_required
+def add_antibody(request):
+    """
+    View for adding a new Antibody
+    """
+
+    if request.method == 'POST':
+        form = AddAntibodyForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+    antibody_form = AddAntibodyForm()
+
+    antibody_table = AntibodyTable(Antibody.objects.all())
+    RequestConfig(request).configure(antibody_table)
+
+    context = {'antibody_form': antibody_form, 'antibody_table': antibody_table}
+    return render(request, 'pepsite/add_antibody_form.html', context)
+
+
+class AntibodyTable(tables.Table):
+    class Meta:
+        model = Antibody
+        attrs = {"class": "table"}
+
+
+@login_required
+def add_gene(request):
+    """
+    View for adding a new Gene
+    """
+
+    if request.method == 'POST':
+        form = AddGeneForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+    gene_form = AddGeneForm()
+
+    gene_table = GeneTable(Gene.objects.all())
+    RequestConfig(request).configure(gene_table)
+
+    context = {'gene_form': gene_form, 'gene_table': gene_table}
+    return render(request, 'pepsite/add_gene_form.html', context)
+
+
+class GeneTable(tables.Table):
+    class Meta:
+        model = Gene
+        attrs = {"class": "table"}
+
+
+@login_required
+def add_allele(request):
+    """
+    View for adding a new Allele
+    """
+
+    if request.method == 'POST':
+        form = AddAlleleForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+    allele_form = AddAlleleForm()
+
+    allele_table = AlleleTable(Allele.objects.all())
+    RequestConfig(request).configure(allele_table)
+
+    context = {'allele_form': allele_form, 'allele_table': allele_table}
+    return render(request, 'pepsite/add_allele_form.html', context)
+
+
+class AlleleTable(tables.Table):
+    class Meta:
+        model = Allele
+        attrs = {"class": "table"}

@@ -1,5 +1,5 @@
 from django import forms
-from pepsite.models import Experiment, Antibody, CellLine, Publication, Instrument, Lodgement
+from pepsite.models import Experiment, Antibody, CellLine, Publication, Instrument, Lodgement, Manufacturer, Gene, Allele
 import os, sys
 from django.forms.util import ValidationError as FormValidationError
 
@@ -260,3 +260,37 @@ class AjaxForm(forms.Form):
         self.text_input = forms.CharField()
         
 
+class AddCellLineForm(forms.ModelForm):
+    class Meta:
+        model = CellLine
+        fields = [ 'name', 'tissue_type', 'isTissue', 'description', 'alleles']
+
+
+class AddInstrumentForm(forms.ModelForm):
+    class Meta:
+        model = Instrument
+        fields = ['name', 'description', 'manufacturer']
+
+
+class AddManufacturerForm(forms.ModelForm):
+    class Meta:
+        model = Manufacturer
+        fields = ['name']
+
+
+class AddAntibodyForm(forms.ModelForm):
+    class Meta:
+        model = Antibody
+        fields = ['name', 'description', 'link']
+
+
+class AddGeneForm(forms.ModelForm):
+    class Meta:
+        model = Gene
+        fields = ['name', 'gene_class', 'description']
+
+
+class AddAlleleForm(forms.ModelForm):
+    class Meta:
+        model = Allele
+        fields = ['gene', 'code', 'isSer', 'description']

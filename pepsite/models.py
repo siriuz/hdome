@@ -86,7 +86,7 @@ class CellLine(models.Model):
     #host = models.ForeignKey( Organism, related_name = 'HostCell' )
     #infecteds = models.ManyToManyField( Organism, related_name = 'Infections' )
     individuals = models.ManyToManyField( Individual )
-    alleles = models.ManyToManyField( Allele, through='Expression' )
+    alleles = models.ManyToManyField(Allele, through='Expression')
     parent = models.ForeignKey( 'self', null = True, blank = True )
     #antibodies = models.ManyToManyField( Antibody )
 
@@ -190,8 +190,6 @@ class Experiment( models.Model ):
         return Lodgement.objects.filter( dataset__experiment__id = self.id ).distinct().order_by('datafilename')
 
 
-
-
 class Antibody(models.Model):
     name = models.CharField(max_length=200, unique = True )
     link = models.CharField(max_length=400, blank=True, null=True)
@@ -200,10 +198,11 @@ class Antibody(models.Model):
     experiments = models.ManyToManyField( Experiment, blank=True, null=True)
 
     def __str__(self):
-	return self.name
+        return self.name
 
     def get_cell_lines_targeted( self ):
-	return CellLine.objects.filter( alleles__antibody = self, experiment__antibody = self ).distinct()
+        return CellLine.objects.filter(alleles__antibody=self, experiment__antibody=self).distinct()
+
 
 class Ptm(models.Model):
     name = models.CharField(max_length=200)
@@ -215,7 +214,7 @@ class Ptm(models.Model):
         pass
 
     def __str__(self):
-	return self.description + '|' + str( self.mass_change )
+        return self.description + '|' + str( self.mass_change )
 
 
 class Protein(models.Model):
@@ -235,10 +234,10 @@ class Protein(models.Model):
         return lu.code
 
     def __str__(self):
-	return self.description
+        return self.description
     
     def get_experiments( self ):
-	return Experiment.objects.filter( ion__peptides__proteins = self ).distinct()
+        return Experiment.objects.filter( ion__peptides__proteins = self ).distinct()
 
 
 class Peptide(models.Model):
@@ -247,7 +246,7 @@ class Peptide(models.Model):
     #ptms = models.ManyToManyField( Ptm )
 
     def __str__(self):
-	return self.sequence
+        return self.sequence
 
     def get_ptms(self):
         """docstring for get_ptms"""
@@ -330,7 +329,7 @@ class IdEstimate(models.Model):
             return True
 
     def __str__(self):
-	return str(self.delta_mass) + '|' + str(self.confidence)
+        return str(self.delta_mass) + '|' + str(self.confidence)
 
     def get_lodgement(self):
         """docstring for get_lodgement"""
@@ -341,9 +340,6 @@ class IdEstimate(models.Model):
         return Dataset.objects.get( ions__idestimate = self )
 
 
-
-
-
 class Manufacturer(models.Model):
     """docstring for Manufacturer"""
     name = models.CharField(max_length=200)
@@ -351,18 +347,18 @@ class Manufacturer(models.Model):
     def __str__(self):
         """docstring for __str__"""
         return self.name
-        
+
 
 class Instrument(models.Model):
     """docstring for Instrument"""
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True,null=True)
-    manufacturer = models.ForeignKey(Manufacturer,blank=True, null=True)
+    manufacturer = models.ForeignKey(Manufacturer, blank=True, null=True)
 
     def __unicode__(self):
         """docstring for __str__"""
         return force_unicode(self.name)
-        
+
 
 class Dataset(models.Model):
     """docstring for Dataset"""
