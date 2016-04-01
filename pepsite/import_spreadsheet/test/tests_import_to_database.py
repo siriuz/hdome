@@ -552,3 +552,126 @@ class TestInsertIdEstimate(TestCase):
 
             assert len(result_row) > 0  # it turns out that you can have duplicate lines in the protein pilot files
 
+class TestBrokenCalreticulin(TestCase):
+    def setUp(self):
+        self.v5_dataframe = read_csv("/home/vagrant/hdome/background/all_august/haplodome 20140228_Ting_TC 0.5 DC2.4 Kb.txt")
+
+        """ Below block borrowed from legacy test code """
+        user1 = User.objects.create()
+        user1.set_password('f')
+        user1.username = 'u1'
+        user1.save()
+        self.user1 = user1
+        self.man1 = Manufacturer.objects.create(name='MZTech')
+        self.inst1 = Instrument.objects.create(name='HiLine-Pro', description='MS/MS Spectrometer',
+                                               manufacturer=self.man1)
+        self.uniprot = ExternalDb.objects.create(db_name='UniProt', url_stump='http://www.uniprot.org/uniprot/')
+        bi1 = BackgroundImports()
+        cl = bi1.get_cell_line(MDIC)
+        bi1.insert_alleles(MDIC, cl_obj=cl)
+        bi1.insert_update_antibodies(MDIC)
+        bi1.create_experiment(MDIC, cl)
+        self.bi1 = bi1
+        """ End of borrowed block """
+        test_experiment = Experiment.objects.first()
+        test_user = user1
+        lodgement_filename = "test.txt"
+        now = datetime.datetime.utcnow().replace(tzinfo=utc)
+        test_instrument = self.inst1
+
+        self.test_lodgement, _ = Lodgement.objects.get_or_create(user=test_user,
+                                                                 title=lodgement_filename,
+                                                                 datetime=now,
+                                                                 datafilename=lodgement_filename)
+
+        self.test_experiment = test_experiment
+
+    def test_insert_idestimate(self):
+        # Insert stuff into the database. This is the code we're testing!
+        insert_proteins(self.v5_dataframe)
+        insert_peptides(self.v5_dataframe)
+        insert_ptms(self.v5_dataframe)
+        insert_datasets(dataframe=self.v5_dataframe,
+                        confidence_cutoff=0.971,
+                        experiment=self.test_experiment,
+                        instrument=self.inst1,
+                        lodgement=self.test_lodgement)
+        insert_ions(self.v5_dataframe, self.test_experiment)
+        insert_idestimates(self.v5_dataframe, self.test_experiment)
+
+        # Database dump to reconstruct the input rows
+        original_stdout = sys.stdout
+        output_file = open(os.path.join(current_directory, "py_output"), 'w')
+        sys.stdout = output_file
+        for n in IdEstimate.objects.all(): self.idestimate_to_row(n.id)
+        sys.stdout = original_stdout
+        output_file.close()
+
+        original_wd = os.getcwd()  # keeping track of this just in case someone was using the current working directory
+        os.chdir(current_directory)
+
+        # I apologise if you have to debug this..
+        # Basically what this test does is goes through every
+        # IdEstimate that has been inserted and reconstructs
+        # the rows based on its database relations.
+
+        # A (well commented!) gawk script applies a few transforms
+        # to get the proteins and ptms cleaned up.
+        # The gawk script is necessary as I cannot reconstruct the
+        # bits of the Accession column that are discarded
+
+        # These two outputs are then compared to make sure they
+        # are exactly identical (less whitespace)
+
+        # If this test is failing the first thing check is whether gawk
+        # is installed and available on your system path
+
+        # gawkoutput is pre-generated now because sorting behavior differs between gawk 3.18 and 4
+        # subprocess.call('''./test_script.sh''', shell=True)
+        total_lines = subprocess.check_output('''( cat gawkoutput; cat py_output ) | awk '{$1=$1};1' |  wc -l ''',
+                                    shell=True)
+
+        total_lines = int(total_lines.rstrip())
+
+        unique_lines = subprocess.check_output(
+            '''( cat gawkoutput; cat py_output ) | awk '{$1=$1};1' | sort | uniq -u | wc -l''',
+            shell=True)
+
+        unique_lines = int(unique_lines.rstrip())
+
+        os.chdir(original_wd)
+        # If total lines == 2*source and unique lines == 0, and there were no duplicates in each file
+        # it follows that every line has a copy and the two program outputs were identical
+        assert total_lines == len(self.v5_dataframe.index)*2
+        assert unique_lines == 0
+
+    def idestimate_to_row(self, idestimate_id):
+        idobj = IdEstimate.objects.filter(id=idestimate_id)\
+            .select_related()\
+            .prefetch_related('peptide')\
+            .prefetch_related('ptms')\
+            .first()
+
+        print '%s %.8f %.8f' % (idobj.peptide.sequence, idobj.confidence, idobj.delta_mass),
+        print '%.8f %.4f %d %s %.5f' % (idobj.ion.precursor_mass, idobj.ion.mz, idobj.ion.charge_state, idobj.ion.spectrum, idobj.ion.retention_time),
+        print " ".join([p.prot_id for p in idobj.proteins.all()]), " ".join(sorted([ptms.description for ptms in idobj.ptms.all()])) if len(idobj.ptms.all()) else " "
+
+    def verify_row(self, row_tuple):
+        JITTER = 0.000000000001
+        for protein_id in row_tuple.protein_uniprot_ids:
+            result_row = IdEstimate.objects.filter(
+                    proteins__prot_id__exact=protein_id,
+                    peptide__sequence__exact=row_tuple.peptide_sequence,
+                    ion__charge_state__exact=row_tuple.ion_charge,
+                    ion__precursor_mass__range=(row_tuple.ion_precursor_mass - JITTER,
+                                                row_tuple.ion_precursor_mass + JITTER),
+                    ion__mz__range=(row_tuple.ion_mz - JITTER,
+                                    row_tuple.ion_mz + JITTER),
+                    ion__retention_time__range=(row_tuple.ion_retention_time - JITTER,
+                                                row_tuple.ion_retention_time + JITTER),
+                    delta_mass__range=(row_tuple.idestimate_delta_mass - JITTER,
+                                       row_tuple.idestimate_delta_mass + JITTER),
+                    confidence__range=(row_tuple.idestimate_confidence - JITTER,
+                                       row_tuple.idestimate_confidence + JITTER))
+
+            assert len(result_row) > 0  # it turns out that you can have duplicate lines in the protein pilot files

@@ -12,7 +12,7 @@ def accessions_to_uniprot_list(input_string):
     output_list = []
     accession_list = input_string.split(';')
     for accession in accession_list:
-        tokens = accession.split('|')
+        tokens = [token.strip(' \t\n\r') for token in accession.split('|')]
 
         #  Check that there are actually uniprot IDs to add
         if (len(tokens) > 1) and (len(tokens[1]) > 0):
@@ -30,6 +30,7 @@ def names_to_protein_descriptions(input_string):
     output_list = []
     protein_list = input_string.split(';')
     for protein in protein_list:
+        protein = protein.strip(' \t\n\r')
         if len(protein) > 0:
             output_list.append(protein)
 
@@ -45,6 +46,7 @@ def modifications_to_ptms_descriptions(input_string):
     output_list = []
     modifications_list = input_string.split(';')
     for modification in modifications_list:
+        modification = modification.strip(' \t\n\r')
         if len(modification) > 0:
             output_list.append(modification)
 

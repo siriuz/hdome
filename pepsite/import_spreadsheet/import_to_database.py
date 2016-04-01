@@ -239,7 +239,10 @@ def insert_idestimates(dataframe, experiment):
                                                    confidence=confidence,
                                                    peptide=peptide,
                                                    ion=ion)  # 2.
-
+        # notes for future optimisation:
+        # can bulk create Idestimate_protein many-to-many using
+        # Idestimate.proteins.through(idestimate_id=x, protein_id=y)
+        # http://stackoverflow.com/questions/6996176/how-to-create-an-object-for-a-django-model-with-a-many-to-many-field/10116452#10116452
         for protein in proteins:
             row_idestimate.proteins.add(protein)
 
