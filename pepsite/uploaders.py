@@ -335,6 +335,7 @@ class Uploads(dbtools.DBTools):
         allstr = '<table id=\"cssTable\" class=\"table table-striped tablesorter\">'
 
         headers = fileobj.readline().split( self.delim )
+        fileobj.seek(0)
         self.translate_headers( headers )
         allstr += '<thead><tr>'
 
@@ -343,7 +344,7 @@ class Uploads(dbtools.DBTools):
            allstr += '<th>' + self.match_dict[data_field_identifier]['display'] + '</th>'
         allstr += '</tr></thead><tbody>'
 
-        row_number = 1
+        row_number = 0
         uldict = {}
         proteinfields = []
         peptidefields = []
@@ -357,8 +358,7 @@ class Uploads(dbtools.DBTools):
 
         for line in fileobj:
             # Start of loop over each line in spreadsheet
-            if row_number:  # Skip j = 0  (so skip the header -- that was the intention. however readline() above
-                   # already pops off the header line so this skips the first data line)
+            if row_number:  # Skip j = 0  (so skip the header)
 
                 row_indices.append(row_number)
                 rawlines.append(line)
