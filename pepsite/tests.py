@@ -41,6 +41,37 @@ MDIC = {'# peptides': '1468',
  'Transfectant Y/N': '',
  'Transfected alelle (s)': ''}
 
+class TestUploadSSForm(TestCase):
+    def setUp(self):
+        self.man1 = Manufacturer.objects.create( name = 'MZTech' )
+        self.inst1 = Instrument.objects.create( name = 'HiLine-Pro', description = 'MS/MS Spectrometer', manufacturer = self.man1 )
+        self.uniprot = ExternalDb.objects.create( db_name = 'UniProt', url_stump = 'http://www.uniprot.org/uniprot/')
+        bi1 = BackgroundImports()
+        cl = bi1.get_cell_line( MDIC )
+        bi1.insert_alleles( MDIC, cl_obj = cl )
+        bi1.insert_update_antibodies( MDIC )
+        bi1.create_experiment( MDIC, cl )
+
+    def test_upload_2016_amanda(self):
+        c = self.client
+        print "Creating admin user.."
+        User.objects.create_superuser('admin', 'test@example.com', 'password')
+        print "Logging in.."
+        c.post('/login/', {'username': "admin", 'password': "password"})
+
+        with open('uploads/20160118_Amanda_QC6_QC6_01012016_afternewloadingpumpbuffer_PeptideSummary.txt') as file_attachment:
+            response = c.post('/pepsite/upload_ss_form',
+                              {'expt1': -1,
+                               'expt2': "new experi",
+                               'expt2_desc': "new experiment details",
+                               'ab1': 1,
+                               'cl1': 1,
+                               'inst': 1,
+                               'ldg': "test lodge",
+                               'ss': file_attachment})
+            print response
+
+
 class BackgroundImportsGetCellLine(TestCase):
     def test_get_cell_line_output(self):
         bi1 = BackgroundImports()

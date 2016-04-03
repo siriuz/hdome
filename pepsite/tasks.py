@@ -5,6 +5,7 @@ from celery import shared_task
 import pepsite.uploaders
 
 from django.core.mail import send_mail
+from django.conf import settings
 from django.contrib.auth.models import User
 from pepsite.models import *
 import uniprot
@@ -69,6 +70,7 @@ def upload_ss_celery( userid, elems, postdic ):
     ul.user = user
     ul.add_cutoff_mappings( postdic )
     ul.prepare_upload_simple( )
+    ul.lodgement_filename = os.path.join(settings.BASE_DIR, 'uploads/', ul.lodgement_filename)
     ul.upload_megarapid_rewrite()
     protein_seq_update_celery_nofunction.delay()
     ul.refresh_materialized_views()

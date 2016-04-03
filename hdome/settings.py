@@ -15,9 +15,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS
 
 
-#print "BASE_DIR = " + BASE_DIR
-
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/dev/howto/deployment/checklist/
 

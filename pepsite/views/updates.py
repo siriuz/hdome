@@ -24,8 +24,14 @@ import re
 from django.core.mail import send_mail
 import pickle
 import django_tables2 as tables
-from django_tables2   import RequestConfig
+from django_tables2 import RequestConfig
 
+def write_upload_to_disk(spreadsheet_file):
+    print "entering upload"
+    with open(os.path.join(settings.BASE_DIR, 'uploads/', spreadsheet_file.name), 'wb+') as destination_file:
+        print "opened file as: " + destination_file.name
+        for chunk in spreadsheet_file.chunks():
+            destination_file.write(chunk)
 
 @login_required
 def upload_ss_form( request ):
@@ -66,6 +72,7 @@ def upload_ss_form( request ):
             ss = request.FILES['ss']
             formdata = request.POST
             formdata['filename'] = ss.name
+            write_upload_to_disk(ss)
             ul.preview_ss_simple( formdata )
             ul.preprocess_ss_simple( ss )
             upload_dict = { 'uldict' : ul.uldict, 'uniprot_ids' : ul.uniprot_ids, 'expt_id' : ul.expt_id, 'expt_title' : ul.expt_title, 'publications' : ul.publications, 'public' : ul.public,
@@ -80,6 +87,28 @@ def upload_ss_form( request ):
         textform = UploadSSForm()
         context = { 'textform' : textform }
         return render( request, 'pepsite/upload_ss_form.html', context)
+
+
+@login_required
+@transaction.atomic
+def commit_upload_ss( request ):
+    """
+    """
+    user = request.user
+    elems = request.session['ul_supp']
+    if request.method == 'POST':
+        upload_ss_celery.delay( user.id, elems, request.POST )
+        keys = request.POST.keys()
+        ul = pepsite.uploaders.Uploads( user = user )
+        ul.repopulate( elems )
+        ul.add_cutoff_mappings( request.POST )
+        context = { 'data' : request.POST['data'], 'ul' : ul, 'keys' : keys }
+        return render( request, 'pepsite/ss_uploading.html', context)
+    else:
+        textform = UploadSSForm()
+        context = { 'textform' : textform }
+        return render( request, 'pepsite/upload_ss_form.html', context)
+
 
 @login_required
 def upload_manual_curations( request ):
@@ -113,27 +142,6 @@ def upload_manual_curations( request ):
 
 
 @login_required
-@transaction.atomic
-def commit_upload_ss( request ):
-    """
-    """
-    user = request.user
-    elems = request.session['ul_supp']
-    if request.method == 'POST':
-        upload_ss_celery.delay( user.id, elems, request.POST )
-        keys = request.POST.keys()
-        ul = pepsite.uploaders.Uploads( user = user )
-        ul.repopulate( elems )
-        ul.add_cutoff_mappings( request.POST )
-        context = { 'data' : request.POST['data'], 'ul' : ul, 'keys' : keys }
-        return render( request, 'pepsite/ss_uploading.html', context)
-    else:
-        textform = UploadSSForm()
-        context = { 'textform' : textform }
-        return render( request, 'pepsite/upload_ss_form.html', context)
-
-
-@login_required
 def add_cell_line(request):
     """
     View for adding a new cell line
@@ -156,15 +164,6 @@ def add_cell_line(request):
 
     context = {'cellline_form': cellline_form, 'celllines_table': celllines_table}
     return render(request, 'pepsite/add_cell_line_form.html', context)
-
-# def add_gene(request):
-#     """
-#     Add a new gene
-#     """
-#
-#     if request.method == 'POST':
-#         pass
-
 
 
 class CellLineTable(tables.Table):

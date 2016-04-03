@@ -333,7 +333,7 @@ class Uploads(dbtools.DBTools):
 
         # allstr holds the contents of the manually built html table around the preview dataset
         allstr = '<table id=\"cssTable\" class=\"table table-striped tablesorter\">'
-
+        fileobj.seek(0)
         headers = fileobj.readline().split( self.delim )
         fileobj.seek(0)
         self.translate_headers( headers )
