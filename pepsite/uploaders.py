@@ -467,8 +467,9 @@ class Uploads(dbtools.DBTools):
         assign_perm('edit_experiment', self.user, self.expt)
         for group in self.user.groups.all():
             assign_perm('view_experiment', group, self.expt)
-        for ab in self.antibodies:
-                self.expt.antibody_set.add( ab )
+        for ab_id in self.antibody_ids:
+                ab = Antibody.objects.get(id=ab_id)
+                self.expt.antibody_set.add(ab)
         if not self.lodgement:
             self.lodgement, _ = Lodgement.objects.get_or_create( user = self.user, title = self.lodgement_filename, datetime = self.now, datafilename=self.lodgement_filename )
             if self.publications:
@@ -489,7 +490,7 @@ class Uploads(dbtools.DBTools):
 
 
             self.datasets.append( ds )
-    
+
     def entitle_ds(self, dsno, filename):
         return 'dataset #%s from %s' % ( dsno, filename )
 

@@ -69,7 +69,7 @@ def upload_ss_celery( userid, elems, postdic ):
     ul.repopulate( elems )
     ul.user = user
     ul.add_cutoff_mappings( postdic )
-    ul.prepare_upload_simple( )
+    ul.prepare_upload_simple()
     ul.lodgement_filename = os.path.join(settings.BASE_DIR, 'uploads/', ul.lodgement_filename)
     ul.upload_megarapid_rewrite()
     protein_seq_update_celery_nofunction.delay()
