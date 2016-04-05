@@ -213,7 +213,7 @@ Public = {{ul_supp.public}}
 <h2 class="text-primary">Please set a confidence cutoff for your Lodgement...</h2>
 <form action="{% url 'pepsite:commit_upload_ss' %}" method='post'>
     {% csrf_token %}
-    Confidence cutoff for this Lodgement<input type="number" label="Confidence cutoff for Dataset #{{number}}" name="cf_" value="99.0"/><br>
+    Confidence cutoff for this Lodgement<input type="number" label="Confidence cutoff for Dataset #{{number}}" name="cf_" step="any" value="99.0"/><br>
 
 
 <div class="div-1">
