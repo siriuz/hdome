@@ -19,7 +19,7 @@ def yello():
 
 class Gene(models.Model):
     name = models.CharField(max_length=200)
-    gene_class = models.IntegerField( null = True, blank = True )
+    gene_class = models.IntegerField("MHC Class (I or II)", null = True, blank = True )
     description = models.TextField( default = '' , blank = True )
 
     def __str__(self):
@@ -27,10 +27,10 @@ class Gene(models.Model):
 
 class Allele(models.Model):
     gene = models.ForeignKey( Gene, null = True, blank = True )
-    code = models.CharField(max_length=200)
+    code = models.CharField("Allele", max_length=200)
     #dna_type = models.CharField(max_length=200)
     #ser_type = models.CharField(max_length=200)
-    isSer = models.BooleanField( default = False )
+    isSer = models.BooleanField("Is Serotype", default = False )
     description = models.TextField( default = '' , blank = True, null=True )
 
     def get_summary( self ):
