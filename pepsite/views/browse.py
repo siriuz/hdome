@@ -6,6 +6,7 @@ from pepsite.pepsite_forms import * # need to comment this out during migrations
 from pepsite.make_searches import *
 from pepsite.models import *
 from pepsite.tasks import *
+from django.contrib.auth.decorators import login_required
 
 def index( request ):
     return render( request, 'pepsite/index.html', {})
@@ -64,3 +65,20 @@ def cell_line_tissue_browse( request ):
     context = { 'cell_lines' : cell_lines }
     return render( request, 'pepsite/cell_line_tissue_browse.html', context)
 
+
+@login_required
+def stats_dashboard(request):
+    protein_count = Protein.objects.all().count()
+    peptide_count = Peptide.objects.all().count()
+    allele_count = Allele.objects.all().count()
+    lodgement_count = Lodgement.objects.all().count()
+
+    idestimate_count = IdEstimate.objects.all().count()
+
+    return render(request,
+                  'pepsite/stats_dashboard.html',
+                  {'protein_count': protein_count,
+                   'allele_count': allele_count,
+                   'peptide_count': peptide_count,
+                   'lodgement_count': lodgement_count,
+                   'idestimate_count': idestimate_count})

@@ -3,6 +3,7 @@ from pepsite.views import common, browse, updates, exports, expt_searches, pepti
 
 urlpatterns = patterns('',
     url(r'^$', browse.index, name='index'),
+    url(r'^stats_dashboard$', browse.stats_dashboard, name='stats_dashboard'),
 
     url(r'^add_cell_line_form$', updates.add_cell_line, name='add_cell_line'),
     url(r'^add_instrument_form$', updates.add_instrument, name='add_instrument'),

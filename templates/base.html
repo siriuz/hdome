@@ -30,6 +30,7 @@
     -->
 
     <link href="{% static "css/dropdown-theme.css" %}" rel="stylesheet">
+      <link href="{% static "css/table_row.css" %}" rel="stylesheet">
 
 
     <script src="{% static "js/jquery-2.0.3.min.js" %}"></script>
@@ -85,6 +86,7 @@
                   <li><a href="{% url 'pepsite:add_gene' %}">Add a new Gene</a></li>
                   <li><a href="{% url 'pepsite:add_allele' %}">Add a new Allele</a></li>
                   <li class="divider"></li>
+                  <li><a href="{% url 'pepsite:stats_dashboard' %}">Dashboard</a></li>
                   <li><a href="{% url 'pepsite:upload_ss_form' %}">Upload a Spreadsheet</a></li>
                   <li><a href="{% url 'pepsite:upload_manual_curations' %}">Manually Curate Lodgement(s)</a></li>
                   <li><a href="{% url 'logout' %}"><strong class="text-danger">Logout</strong></a></li>
