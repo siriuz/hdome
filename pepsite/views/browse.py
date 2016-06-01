@@ -72,7 +72,7 @@ def stats_dashboard(request):
     peptide_count = Peptide.objects.all().count()
     allele_count = Allele.objects.all().count()
     lodgement_count = Lodgement.objects.all().count()
-
+    cellline_count = CellLine.objects.all().count()
     idestimate_count = IdEstimate.objects.all().count()
 
     return render(request,
@@ -81,4 +81,5 @@ def stats_dashboard(request):
                    'allele_count': allele_count,
                    'peptide_count': peptide_count,
                    'lodgement_count': lodgement_count,
-                   'idestimate_count': idestimate_count})
+                   'idestimate_count': idestimate_count,
+                   'cellline_count': cellline_count,})
